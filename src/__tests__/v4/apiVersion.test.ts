@@ -82,6 +82,8 @@ describe('v4 api version selection', () => {
       'list_transfers',
       'update_transfer',
       'retry_transfer',
+      'verify_payment',
+      'verify_payout',
     ]);
   });
 

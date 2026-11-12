@@ -39,6 +39,8 @@ export const V3_ACCEPTED_TOOLS = [
   'get_stablecoin_fee',
   'send_stablecoin',
   'convert_to_stablecoin',
+  'verify_payment',
+  'verify_payout',
 ] as const;
 
 export const V4_ACCEPTED_TOOLS = [
@@ -99,6 +101,8 @@ export const V4_ACCEPTED_TOOLS = [
   'list_transfers',
   'update_transfer',
   'retry_transfer',
+  'verify_payment',
+  'verify_payout',
 ] as const;
 
 export function acceptedToolsFor(version: ApiVersion): readonly string[] {

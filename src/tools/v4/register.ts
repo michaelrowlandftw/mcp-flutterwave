@@ -863,6 +863,7 @@ export function registerV4Tools() {
   server.tool(
     'create_refund',
     [
+      'Sandbox: refund and settlement statuses and data can differ from live. Check status with verify_payment or the get tool, and treat unknown statuses as pending.',
       'Create a Flutterwave v4 refund (POST /refunds).',
       'Requires charge_id from create_charge, amount, and reason',
       '(duplicate | fraudulent | requested_by_customer | expired_uncaptured_charge).',
@@ -885,6 +886,7 @@ export function registerV4Tools() {
   server.tool(
     'get_refund',
     [
+      'Sandbox: refund and settlement statuses and data can differ from live. Check status with verify_payment or the get tool, and treat unknown statuses as pending.',
       'Retrieve a Flutterwave v4 refund by id (GET /refunds/{id}).',
       'Use after create_refund to poll status. Available in v4 mode (the default).',
     ].join(' '),
@@ -959,6 +961,7 @@ export function registerV4Tools() {
   server.tool(
     'list_refunds',
     [
+      'Sandbox: refund and settlement statuses and data can differ from live. Check status with verify_payment or the get tool, and treat unknown statuses as pending.',
       'List Flutterwave v4 refunds (GET /refunds).',
       'Optional from/to range: ISO 8601 date-times, but only the date is used. Pages with page and size.',
       'Available in v4 mode (the default).',
@@ -1055,6 +1058,7 @@ export function registerV4Tools() {
   server.tool(
     'list_settlements',
     [
+      'Sandbox: refund and settlement statuses and data can differ from live. Check status with verify_payment or the get tool, and treat unknown statuses as pending.',
       'List Flutterwave v4 settlements (GET /settlements).',
       'Optional from/to range: ISO 8601 date-times on transaction_datetime, but only the date is used. Pages with page and size (10 to 50).',
       'Available in v4 mode (the default).',
@@ -1066,6 +1070,7 @@ export function registerV4Tools() {
   server.tool(
     'get_settlement',
     [
+      'Sandbox: refund and settlement statuses and data can differ from live. Check status with verify_payment or the get tool, and treat unknown statuses as pending.',
       'Retrieve a Flutterwave v4 settlement by id (GET /settlements/{id}).',
       'Optional page and size select settlement lines.',
       'Available in v4 mode (the default).',
