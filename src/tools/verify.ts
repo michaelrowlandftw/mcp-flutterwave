@@ -5,6 +5,7 @@ import { flwV4Fetch } from '../client/v4/http.js';
 import { lookupTransfer } from './v4/safeCreate.js';
 import { normaliseStatus, type StatusObject } from '../verify/statusMaps.js';
 import { describeEnvironment } from '../verify/environment.js';
+import { setUsageHeaders } from '../config/userAgent.js';
 
 type Record_ = Record<string, unknown>;
 type Fetcher = (path: string) => Promise<Record_ | null>;
@@ -14,7 +15,7 @@ const V3_BASE = 'https://api.flutterwave.com/v3';
 /** GET a v3 record. Returns data, or null on 404. */
 const v3Get: Fetcher = async (path) => {
   const response = await fetch(`${V3_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`, 'User-Agent': 'flutterwave-mcp' },
+    headers: setUsageHeaders(new Headers({ Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` })),
     signal: AbortSignal.timeout(60_000),
   });
   if (response.status === 404) return null;

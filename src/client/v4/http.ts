@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { getAccessToken, invalidateAccessTokenCache } from './auth.js';
 import { getV4BaseUrl } from './environment.js';
+import { setUsageHeaders } from '../../config/userAgent.js';
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
@@ -44,6 +45,7 @@ async function performFetch(
 
   headers.set('Authorization', `Bearer ${token}`);
   headers.set('Content-Type', 'application/json');
+  setUsageHeaders(headers);
   // Every POST carries an idempotency key, so a resend is processed once.
   if (method === 'POST' && !headers.has('X-Idempotency-Key')) {
     headers.set('X-Idempotency-Key', `mcp-idem-${randomUUID()}`);

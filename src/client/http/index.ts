@@ -10,10 +10,10 @@ import type { paths as fxTradePaths } from "../types/v3/fx-trade.js";
 import type { paths as verificationPaths } from "../types/v3/verification.js";
 import authMiddlewareV3 from "../middleware/authMiddlewareV3.js";
 import { config } from "../../config/index.js";
+import { USER_AGENT } from "../../config/userAgent.js";
 
 const FLW_API_VERSION = process.env.FLW_VERSION || config.flutterwave.version;
 const FLW_API_BASE = `${config.flutterwave.apiUrl}/${FLW_API_VERSION}`;
-const USER_AGENT = "flutterwave-mcp/0.1.0";
 
 // Shared configuration for all clients to reduce memory overhead
 const clientConfig = {
