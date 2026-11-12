@@ -111,6 +111,10 @@ The server refuses live credentials at start-up:
 
 To use live credentials on purpose, pass `--allow-live` or set `FLW_ALLOW_LIVE=true`. The server then prints a warning.
 
+### Read-only mode
+
+`--read-only` (or `FLW_READ_ONLY=true`) registers only tools that read data: `get_`, `list_`, `read_`, `resolve_` and `verify_` tools, and a few checks and quotes. Read-only mode is **on by default whenever live is allowed**. To allow writes with live credentials, pass `--read-only=false` or set `FLW_READ_ONLY=false`; the server then prints a warning. Naming a write tool in `--tools` while read-only mode is on stops start-up with an error.
+
 ### Raw card tools are off by default
 
 These tools take a full card number, CVV or PIN as input, so card data passes through the AI model. For most merchants that is a PCI DSS problem.

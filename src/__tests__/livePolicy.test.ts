@@ -69,3 +69,46 @@ describe('raw card tool switch', () => {
     expect(parseArgs(['--tools=all'], v3Test).rawCardTools).toBe(false);
   });
 });
+
+describe('read-only mode', () => {
+  const quiet = () => vi.spyOn(console, 'error').mockImplementation(() => {});
+
+  it('is off by default in test mode', () => {
+    expect(parseArgs(['--tools=all'], v3Test).readOnly).toBe(false);
+  });
+
+  it('is on by default whenever live is allowed', () => {
+    const warn = quiet();
+    expect(parseArgs(['--tools=all', '--allow-live'], v3Live).readOnly).toBe(true);
+    expect(parseArgs(['--tools=all'], { ...v4Prod, FLW_ALLOW_LIVE: 'true' }).readOnly).toBe(true);
+    warn.mockRestore();
+  });
+
+  it('can be turned off in live mode, with a warning', () => {
+    const warn = quiet();
+    expect(parseArgs(['--tools=all', '--allow-live', '--read-only=false'], v3Live).readOnly).toBe(false);
+    expect(parseArgs(['--tools=all', '--allow-live'], { ...v3Live, FLW_READ_ONLY: 'false' }).readOnly).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/live mode with writes on/));
+    warn.mockRestore();
+  });
+
+  it('can be turned on in test mode', () => {
+    const warn = quiet();
+    expect(parseArgs(['--tools=all', '--read-only'], v3Test).readOnly).toBe(true);
+    expect(parseArgs(['--tools=all'], { ...v3Test, FLW_READ_ONLY: 'true' }).readOnly).toBe(true);
+    warn.mockRestore();
+  });
+
+  it('refuses write tools named in --tools', () => {
+    const warn = quiet();
+    expect(() => parseArgs(['--tools=read_transaction,create_transfer', '--allow-live'], v3Live)).toThrow(
+      /cannot be registered: create_transfer.*--read-only=false/,
+    );
+    expect(parseArgs(['--tools=read_transaction', '--allow-live'], v3Live).readOnly).toBe(true);
+    warn.mockRestore();
+  });
+
+  it('rejects a bad --read-only value', () => {
+    expect(() => parseArgs(['--tools=all', '--read-only=yes'], v3Test)).toThrow(/--read-only takes/);
+  });
+});

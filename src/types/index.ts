@@ -3,6 +3,7 @@ export type Options = {
     apiKey?: string;
     allowLive?: boolean;
     rawCardTools?: boolean;
+    readOnly?: boolean;
 };
 
 export type CheckoutPayload = {

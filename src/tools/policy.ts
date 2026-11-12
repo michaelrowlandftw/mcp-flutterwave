@@ -2,7 +2,7 @@ import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server
 import type { Options } from '../types/index.js';
 import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
-import { annotationsFor } from '../config/toolSafety.js';
+import { annotationsFor, isReadOnlyTool } from '../config/toolSafety.js';
 
 /** Tools that create payments or payouts, or resend webhooks: they all point to the verify tools. */
 const GIVES_VALUE_SIGNAL = /^(create_|charge_|pay_bill$|send_stablecoin$|convert_to_stablecoin$|initiate_fx_trade$|resend_(transaction_)?webhook$|retry_transfer$)/;
@@ -17,6 +17,7 @@ export function registeredTools(server: McpServer): Record<string, RegisteredToo
  * Apply start-up options to the tools already registered.
  * --tools: keep only the tools listed ("all" keeps every tool).
  * Raw card tools stay off unless options.rawCardTools is true.
+ * Read-only mode keeps only tools that read data.
  * Returns the names of the tools that stay registered.
  */
 export function applyToolPolicy(server: McpServer, options: Options): string[] {
@@ -25,7 +26,8 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
 
   for (const [name, tool] of Object.entries(registeredTools(server))) {
     const cardBlocked = RAW_CARD_TOOLS.has(name) && options.rawCardTools !== true;
-    if (cardBlocked || (!keepAll && !wanted.has(name))) {
+    const writeBlocked = options.readOnly === true && !isReadOnlyTool(name);
+    if (cardBlocked || writeBlocked || (!keepAll && !wanted.has(name))) {
       tool.remove();
     }
   }
