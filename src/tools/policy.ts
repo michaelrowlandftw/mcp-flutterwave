@@ -2,6 +2,7 @@ import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server
 import type { Options } from '../types/index.js';
 import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
+import { annotationsFor } from '../config/toolSafety.js';
 
 /** Tools that create payments or payouts, or resend webhooks: they all point to the verify tools. */
 const GIVES_VALUE_SIGNAL = /^(create_|charge_|pay_bill$|send_stablecoin$|convert_to_stablecoin$|initiate_fx_trade$|resend_(transaction_)?webhook$|retry_transfer$)/;
@@ -34,6 +35,7 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
     if (GIVES_VALUE_SIGNAL.test(name) && tool.description && !tool.description.includes('verify_payment')) {
       tool.description = `${tool.description} ${VERIFY_HINT}`;
     }
+    tool.annotations = { ...tool.annotations, ...annotationsFor(name) };
     // Every result says which environment it came from.
     const handler = tool.handler as (...args: unknown[]) => Promise<{ content?: unknown[] }>;
     (tool as { handler: unknown }).handler = async (...args: unknown[]) => {
