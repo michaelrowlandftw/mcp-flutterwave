@@ -11,7 +11,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
  *    token; the call runs only when repeated with the same arguments and that
  *    token. Tokens are bound to the tool and arguments, single use, and expire
  *    after 5 minutes.
- * FLW_CONFIRM=false turns confirmation off, but never when live is allowed.
+ * FLW_CONFIRM=false turns confirmation off (for automated sandbox tests).
  */
 
 const TOKEN_TTL_MS = 5 * 60_000;
@@ -83,8 +83,8 @@ export function capError(args: Args, env: NodeJS.ProcessEnv = process.env): stri
     : null;
 }
 
-export function confirmationRequired(allowLive: boolean, env: NodeJS.ProcessEnv = process.env): boolean {
-  return allowLive || env.FLW_CONFIRM !== 'false';
+export function confirmationRequired(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.FLW_CONFIRM !== 'false';
 }
 
 const text = (value: unknown, isError = false): Result => ({
@@ -97,13 +97,12 @@ export function guardMoneyTool(
   server: McpServer,
   name: string,
   handler: (args: Args, extra: unknown) => Promise<unknown>,
-  allowLive: boolean,
 ) {
   return async (rawArgs: Args, extra: unknown) => {
     const { confirmation_token: token, ...args } = rawArgs ?? {};
     const cap = capError(args);
     if (cap) return text(cap, true);
-    if (!confirmationRequired(allowLive)) return handler(args, extra);
+    if (!confirmationRequired()) return handler(args, extra);
 
     const summary = { tool: name, arguments: args };
     if (server.server.getClientCapabilities()?.elicitation) {

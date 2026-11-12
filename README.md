@@ -102,18 +102,18 @@ The `-i` flag keeps stdin open so Claude Desktop can communicate with the server
 
 **Requirements:** Node.js 20 or later (for npm/npx).
 
-### Test keys only by default
+### Test mode only
 
-The server refuses live credentials at start-up:
+Live mode is disabled until the security review is complete. The server refuses live credentials at start-up:
 
 - v3: `FLW_SECRET_KEY` must start with `FLWSECK_TEST`.
 - v4: `FLW_ENVIRONMENT=production` is refused.
 
-To use live credentials on purpose, pass `--allow-live` or set `FLW_ALLOW_LIVE=true`. The server then prints a warning.
+No flag or environment variable turns live mode back on.
 
 ### Read-only mode
 
-`--read-only` (or `FLW_READ_ONLY=true`) registers only tools that read data: `get_`, `list_`, `read_`, `resolve_` and `verify_` tools, and a few checks and quotes. Read-only mode is **on by default whenever live is allowed**. To allow writes with live credentials, pass `--read-only=false` or set `FLW_READ_ONLY=false`; the server then prints a warning. Naming a write tool in `--tools` while read-only mode is on stops start-up with an error.
+`--read-only` (or `FLW_READ_ONLY=true`) registers only tools that read data: `get_`, `list_`, `read_`, `resolve_` and `verify_` tools, and a few checks and quotes. Read-only mode is off by default. Naming a write tool in `--tools` while read-only mode is on stops start-up with an error.
 
 ### Confirmation and amount cap on money-moving tools
 
@@ -122,7 +122,7 @@ Tools that move money (charges, transfers, refunds, bills, FX, stablecoins, and 
 - If the MCP client supports elicitation, the server asks the user to confirm a summary directly.
 - Otherwise the first call returns the summary and a `confirmation_token`. The tool runs only when called again with exactly the same arguments plus that token. Tokens are bound to the tool and its arguments, work once, and expire after 5 minutes.
 - `FLW_MAX_AMOUNT` (any currency) and `FLW_MAX_AMOUNT_<CURRENCY>` (for example `FLW_MAX_AMOUNT_NGN=50000`) refuse larger amounts before anything is sent.
-- `FLW_CONFIRM=false` turns confirmation off for automated sandbox tests. It is ignored when live is allowed.
+- `FLW_CONFIRM=false` turns confirmation off for automated sandbox tests.
 
 ### Raw card tools are off by default
 
@@ -241,7 +241,7 @@ v4 signs in with OAuth client credentials and encrypts card fields with AES-256-
 | `FLW_CLIENT_ID` | Yes | OAuth client id from Dashboard → Settings → API Keys |
 | `FLW_CLIENT_SECRET` | Yes | OAuth client secret from that same view |
 | `FLW_ENCRYPTION_KEY_V4` | Only for raw card tools | Base64 AES-256-GCM key. Decoded length is 32 bytes. |
-| `FLW_ENVIRONMENT` | No | `sandbox` (default) or `production`. `production` also needs `--allow-live` or `FLW_ALLOW_LIVE=true` |
+| `FLW_ENVIRONMENT` | No | `sandbox` (default) or `production`. `production` is refused: live mode is disabled |
 
 `sandbox` uses `https://developersandbox-api.flutterwave.com`. `production` uses `https://f4bexperience.flutterwave.com`. `FLW_SECRET_KEY` and `FLW_ENCRYPTION_KEY` are the v3 credentials and are not used in this mode.
 

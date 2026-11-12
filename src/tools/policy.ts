@@ -56,7 +56,6 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
         server,
         name,
         tool.handler as (args: Record<string, unknown>, extra: unknown) => Promise<unknown>,
-        options.allowLive === true,
       );
     }
     // Every result says which environment it came from, and is redacted:

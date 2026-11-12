@@ -9,7 +9,7 @@ import { amountOf, capError, checkToken, issueToken } from '../tools/confirm.js'
 
 const ARGS = { amount: 1500, currency: 'NGN', account_bank: '044', account_number: '0690000031' };
 
-async function setup(opts: { elicit?: 'accept' | 'decline'; allowLive?: boolean } = {}) {
+async function setup(opts: { elicit?: 'accept' | 'decline'} = {}) {
   const server = new McpServer({ name: 't', version: '0' });
   const inner = vi.fn(async () => ({ content: [{ type: 'text' as const, text: 'sent' }] }));
   server.tool(
@@ -19,7 +19,7 @@ async function setup(opts: { elicit?: 'accept' | 'decline'; allowLive?: boolean 
     inner,
   );
   server.tool('get_banks', 'Banks.', async () => ({ content: [{ type: 'text' as const, text: 'banks' }] }));
-  applyToolPolicy(server, { allowLive: opts.allowLive });
+  applyToolPolicy(server, {});
 
   const client = new Client({ name: 'c', version: '0' }, { capabilities: opts.elicit ? { elicitation: {} } : {} });
   if (opts.elicit) {
@@ -84,10 +84,9 @@ describe('confirmation token flow (client without elicitation)', () => {
     expect((await call({}, 'get_banks')).body).toBe('banks');
   });
 
-  it('FLW_CONFIRM=false skips confirmation in test mode, never in live mode', async () => {
+  it('FLW_CONFIRM=false skips confirmation', async () => {
     process.env.FLW_CONFIRM = 'false';
     expect((await (await setup()).call(ARGS)).body).toBe('sent');
-    expect((await (await setup({ allowLive: true })).call(ARGS)).body.status).toBe('confirmation_required');
   });
 });
 

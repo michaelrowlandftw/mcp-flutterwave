@@ -2,22 +2,22 @@
 
 This page is for security reviewers. It lists the threats we designed against, the control for each, where it lives in the code, the test that proves it, and what remains open.
 
-PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. They run #1 to #15, and each PR builds on the one before. The branch `chore/security-hygiene` (#15) holds all of them.
+PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. They run #1 to #18, and each PR builds on the one before.
 
 ## Default configuration
 
 | Setting | Default | What changes it |
 |---|---|---|
-| Credentials | Test only. v3 keys must start with `FLWSECK_TEST`; v4 must point at the sandbox | `--allow-live` or `FLW_ALLOW_LIVE=true` |
+| Credentials | Test only. v3 keys must start with `FLWSECK_TEST`; v4 must point at the sandbox | Nothing. Live mode is disabled until the security review is complete (#16) |
 | API version | v4 (v3 only with `FLW_API_VERSION=v3`, or an old install with only a v3 key) | `FLW_API_VERSION` |
 | Tools | Only those named in `--tools` (`all` for every tool) | `--tools` |
 | Raw card tools | Off, even with `--tools=all` | `--enable-raw-card-tools` |
-| Read-only mode | Off in test mode, **on whenever live is allowed** | `--read-only`, `--read-only=false`, `FLW_READ_ONLY` |
-| Confirmation for money-moving tools | On | `FLW_CONFIRM=false` works only in test mode; it is ignored when live is allowed |
+| Read-only mode | Off | `--read-only`, `--read-only=false`, `FLW_READ_ONLY` |
+| Confirmation for money-moving tools | On | `FLW_CONFIRM=false` (for automated sandbox tests) |
 | Amount cap | None | `FLW_MAX_AMOUNT`, `FLW_MAX_AMOUNT_<CURRENCY>` |
 | Transport | stdio only (no network listener) | Hosted mode is a design note only |
 
-**What `--allow-live` changes:** live keys are accepted, and read-only mode turns on unless the user also passes `--read-only=false`. Writes with live keys need both switches, and the server prints a warning. Confirmation stays on, and `FLW_CONFIRM=false` is ignored.
+**Live mode:** disabled. The `--allow-live` flag and `FLW_ALLOW_LIVE` were removed in #16. Live v3 keys and `FLW_ENVIRONMENT=production` stop start-up with a clear message. Turning live mode on again needs a code change after the security review.
 
 ## Threats and controls
 
@@ -27,7 +27,7 @@ PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. The
 |---|---|
 | **Threat** | A secret key, OAuth client secret, encryption key or webhook hash ends up in tool output, an error, a log, or a live key is used by mistake |
 | **Controls** | Test-only credentials by default. Redaction of every tool result, every thrown error and all console output. Removed: Flutterwave keys, bearer tokens, JWTs, exact values of secret env vars, secret JSON fields, Luhn-valid card numbers. The webhook tool never echoes the secret or the signature |
-| **Code** | `src/config/livePolicy.ts`, `src/cli.ts` (#2); `src/utils/redact.ts`, `src/logRedaction.ts`, `src/tools/policy.ts` (#15) |
+| **Code** | `src/config/livePolicy.ts`, `src/cli.ts` (#2, #16); `src/utils/redact.ts`, `src/logRedaction.ts`, `src/tools/policy.ts` (#15) |
 | **Tests** | `livePolicy.test.ts`; `redact.test.ts` (keys, tokens, env values, JSON fields, cards, tool errors, log output, start-up order); `webhook.test.ts` ("never echoes") |
 | **Remains** | Keys are still stored in plain text in the MCP client's config file, as with every local MCP server. See open question 2 |
 
@@ -36,7 +36,7 @@ PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. The
 | | |
 |---|---|
 | **Threat** | Text the AI reads (an email, a web page, a customer note) tells it to pay, refund or transfer |
-| **Controls** | Only listed tools register. Read-only mode is the default with live keys. Every tool carries `readOnlyHint`, `destructiveHint` and `idempotentHint`, so clients can warn or block. The 23 money-moving tools never run on the first call: with an elicitation-capable client the user confirms directly; otherwise the server returns a summary and a single-use, 5-minute HMAC token bound to the exact arguments. An optional amount cap applies before anything is sent |
+| **Controls** | Only listed tools register. Read-only mode is available with `--read-only`. Every tool carries `readOnlyHint`, `destructiveHint` and `idempotentHint`, so clients can warn or block. The 23 money-moving tools never run on the first call: with an elicitation-capable client the user confirms directly; otherwise the server returns a summary and a single-use, 5-minute HMAC token bound to the exact arguments. An optional amount cap applies before anything is sent |
 | **Code** | `src/tools/policy.ts` (#3); `src/config/toolSafety.ts` (#10); read-only in `src/cli.ts` and `policy.ts` (#11); `src/tools/confirm.ts` (#12) |
 | **Tests** | `toolPolicy.test.ts`; `annotations.test.ts` (every tool classified, all hints on the real registry); `livePolicy.test.ts` (read-only); `confirm.test.ts` (token reuse, changed arguments, expiry, elicitation accept and decline, cap) |
 | **Remains** | Without elicitation, the AI relays the user's "yes". The token proves the same arguments were shown first, but not that a person read them. Clients that support elicitation close this gap |
