@@ -86,10 +86,10 @@ PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. The
 | | |
 |---|---|
 | **Threat** | A vulnerable or unneeded package in the runtime |
-| **Controls** | Removed 4 unused packages (`flutterwave-node-v3`, `colors`, `ts-node`, `nodemon`). Moved the demo-app packages (`express`, `@anthropic-ai/sdk`) to dev. Updated the MCP SDK to 1.32.2. Same-major `overrides` for patched `fast-uri`, `ip-address`, `body-parser` and `hono`. CI runs on every PR: tests and build on Node 20, 22 and 24, plus `npm audit` (blocking on critical runtime advisories) |
-| **Code** | `package.json`, `package-lock.json`, `.github/workflows/ci.yml` (#15) |
+| **Controls** | Removed 4 unused packages (`flutterwave-node-v3`, `colors`, `ts-node`, `nodemon`). Moved the demo-app packages (`express`, `@anthropic-ai/sdk`) to dev. Updated the MCP SDK to 1.32.2. Upgraded `zod` to 4.x (#17), which fixes GHSA-mrhx-c7xc-m3w5; the SDK accepts zod 3 or 4. Same-major `overrides` for patched `fast-uri`, `ip-address`, `body-parser` and `hono`. CI runs on every PR: tests and build on Node 20, 22 and 24, plus `npm audit` (blocking on critical runtime advisories) |
+| **Code** | `package.json`, `package-lock.json`, `.github/workflows/ci.yml` (#15, #17) |
 | **Tests** | CI; `npm ci` works from the lock file (npm 11) |
-| **Remains** | One advisory: `zod` < 4.6.6 (high, memory use on oversized collections). The fix needs the zod 4 major upgrade, which touches every schema and the Orval generator. The input reaches it only from the local MCP client over stdio. 28 advisories were found at the start (12 Nov 2026) |
+| **Remains** | None. `npm audit --omit=dev` reports 0 vulnerabilities (12 Nov 2026, after #17). 28 advisories were found at the start (12 Nov 2026) |
 
 ## Other controls
 
