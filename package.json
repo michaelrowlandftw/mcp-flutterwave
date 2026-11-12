@@ -17,7 +17,7 @@
     "build:app": "tsc -p app/tsconfig.json && cp -r app/public build/app/public",
     "build:all": "npm run build && npm run build:app",
     "clean": "rm -rf build",
-    "build:types": "./bin/generate-openapi-typescript",
+    "build:types": "sh ./bin/generate-openapi-typescript",
     "generate:v4": "orval --config orval.config.ts",
     "start:app": "node build/app/index.js",
     "dev:app": "npm run build:all && npm run start:app",
