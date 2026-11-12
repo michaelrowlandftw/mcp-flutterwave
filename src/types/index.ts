@@ -2,6 +2,7 @@ export type Options = {
     tools?: string[];
     apiKey?: string;
     allowLive?: boolean;
+    rawCardTools?: boolean;
 };
 
 export type CheckoutPayload = {

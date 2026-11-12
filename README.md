@@ -111,6 +111,15 @@ The server refuses live credentials at start-up:
 
 To use live credentials on purpose, pass `--allow-live` or set `FLW_ALLOW_LIVE=true`. The server then prints a warning.
 
+### Raw card tools are off by default
+
+These tools take a full card number, CVV or PIN as input, so card data passes through the AI model. For most merchants that is a PCI DSS problem.
+
+- v3: `charge_card`
+- v4: `create_card_payment_method`, `create_orchestrator_charge`, `create_orchestrator_order`
+
+They are not registered, even with `--tools=all`, unless you pass `--enable-raw-card-tools` or set `FLW_ENABLE_RAW_CARD_TOOLS=true`. Naming one in `--tools` without the switch stops start-up with an error. Prefer hosted checkout (`create_checkout`, `create_order`) or saved payment methods.
+
 ---
 
 ## Available Tools
@@ -124,7 +133,7 @@ To use live credentials on purpose, pass `--allow-live` or set `FLW_ALLOW_LIVE=t
 ### Direct Charges
 | Tool | Description |
 |---|---|
-| `charge_card` | Directly charge a debit or credit card — handles PIN, AVS, 3DS, and OTP flows |
+| `charge_card` | Directly charge a debit or credit card — handles PIN, AVS, 3DS, and OTP flows. Off by default; see [Raw card tools](#raw-card-tools-are-off-by-default) |
 | `charge_bank_account` | Debit a bank account (NGN / GHS) |
 | `charge_mobile_money` | Mobile money — Ghana, Uganda, Rwanda, Zambia, Francophone Africa |
 | `charge_mpesa` | M-Pesa charge (KES) |

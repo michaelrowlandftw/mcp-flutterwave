@@ -47,3 +47,25 @@ describe('test keys only by default', () => {
     expect(() => parseArgs(['--tools=all'], {})).toThrow(/Secret key not provided/);
   });
 });
+
+describe('raw card tool switch', () => {
+  it('refuses a raw card tool named in --tools without the switch', () => {
+    expect(() => parseArgs(['--tools=charge_card,read_transaction'], v3Test)).toThrow(
+      /charge_card take raw card data.*--enable-raw-card-tools/,
+    );
+  });
+
+  it.each([
+    [['--tools=charge_card', '--enable-raw-card-tools'], {}],
+    [['--tools=charge_card'], { FLW_ENABLE_RAW_CARD_TOOLS: 'true' }],
+  ])('accepts it with the switch and warns (%j)', (args, extra) => {
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(parseArgs(args, { ...v3Test, ...extra }).rawCardTools).toBe(true);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/raw card tools are on/));
+    warn.mockRestore();
+  });
+
+  it('is off by default', () => {
+    expect(parseArgs(['--tools=all'], v3Test).rawCardTools).toBe(false);
+  });
+});

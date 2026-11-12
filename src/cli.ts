@@ -2,8 +2,13 @@ import { Options } from "./types/index.js";
 import { getApiVersion } from "./config/apiVersion.js";
 import { acceptedToolsFor } from "./config/acceptedTools.js";
 import { assertTestCredentials, liveAllowedByEnv } from "./config/livePolicy.js";
+import {
+    RAW_CARD_SWITCH_HINT,
+    RAW_CARD_TOOLS,
+    rawCardToolsAllowedByEnv,
+} from "./config/rawCardTools.js";
 
-const ACCEPTED_ARGS = ['tools', 'allow-live'];
+const ACCEPTED_ARGS = ['tools', 'allow-live', 'enable-raw-card-tools'];
 
 export function parseArgs(
     args: string[],
@@ -19,6 +24,8 @@ export function parseArgs(
                 options.tools = (value ?? '').split(',');
             } else if (key === 'allow-live') {
                 options.allowLive = true;
+            } else if (key === 'enable-raw-card-tools') {
+                options.rawCardTools = true;
             } else {
                 throw new Error(
                     `Invalid argument: ${key}. Accepted arguments are: ${ACCEPTED_ARGS.join(
@@ -52,6 +59,22 @@ export function parseArgs(
             );
         }
     });
+
+    options.rawCardTools =
+        options.rawCardTools === true || rawCardToolsAllowedByEnv(env);
+    const listedCardTools = options.tools
+        .map((tool) => tool.trim())
+        .filter((tool) => RAW_CARD_TOOLS.has(tool));
+    if (!options.rawCardTools && listedCardTools.length > 0) {
+        throw new Error(
+            `${listedCardTools.join(', ')} take raw card data (card number, CVV or PIN) through the AI model, which is a PCI DSS risk. ${RAW_CARD_SWITCH_HINT}`
+        );
+    }
+    if (options.rawCardTools) {
+        console.error(
+            'WARNING: raw card tools are on. Card numbers, CVVs and PINs will pass through the AI model. Use test cards only unless you are PCI DSS compliant.'
+        );
+    }
 
     options.allowLive = options.allowLive === true || liveAllowedByEnv(env);
     assertTestCredentials(apiVersion, options.allowLive, env);
