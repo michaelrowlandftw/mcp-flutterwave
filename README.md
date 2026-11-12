@@ -122,6 +122,14 @@ They are not registered, even with `--tools=all`, unless you pass `--enable-raw-
 
 ---
 
+## Docs guide
+
+The server gives the AI a guide to the Flutterwave docs, so it can help write integration code:
+
+- Resource `flutterwave://docs/guide`: links to [llms.txt](https://developer.flutterwave.com/llms.txt), the full docs in Markdown, the OpenAPI spec, key pages (testing, webhooks, idempotency) and the official SDKs on GitHub.
+- Prompt `flutterwave_integration_help`: loads the same guide into the chat.
+- Server instructions tell the AI where the guide is.
+
 ## Available Tools
 
 ### Checkout
