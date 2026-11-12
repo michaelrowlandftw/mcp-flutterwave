@@ -11,13 +11,13 @@ type Attempt =
 const DEFAULT_DELAYS_MS = [2_000, 5_000, 10_000, 20_000];
 
 /** Backoff between lookups. FLW_LOOKUP_DELAYS_MS="0,0" makes tests instant. */
-function lookupDelays(): number[] {
+export function lookupDelays(): number[] {
   const raw = process.env.FLW_LOOKUP_DELAYS_MS;
   if (!raw) return DEFAULT_DELAYS_MS;
   return raw.split(',').map((v) => Math.max(0, Number(v) || 0));
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function parse(raw: string): unknown {
   try {

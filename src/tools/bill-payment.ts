@@ -1,5 +1,6 @@
 import Flutterwave from "../client/index.js";
-import { uncertainV3, withReference } from '../utils/reference.js';
+import { withReference } from '../utils/reference.js';
+import { lookupV3Bill, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
     GetBillProvidersSchema,
@@ -130,8 +131,12 @@ export async function payBill(payload: {
             callback_url: payload.callback_url,
         } as any;
 
-        const response = await billClient.payBill(payload.biller_code, payload.item_code, body);
-        if (!response) return uncertainV3('pay bill', payload.reference, 'get_bill_status');
+        const sent = await sendV3Safely({
+            action: 'pay bill', reference: payload.reference, lookupTool: 'get_bill_status',
+            lookup: lookupV3Bill, send: () => billClient.payBill(payload.biller_code, payload.item_code, body),
+        });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         const d   = (response as any)?.data;
         const ref = d?.reference ?? d?.tx_ref ?? payload.reference ?? 'N/A';

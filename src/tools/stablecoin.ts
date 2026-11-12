@@ -1,5 +1,6 @@
 import Flutterwave from "../client/index.js";
-import { uncertainV3, withReference } from '../utils/reference.js';
+import { withReference } from '../utils/reference.js';
+import { lookupV3Transfer, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
     GetStablecoinFeeSchema,
@@ -113,7 +114,9 @@ export async function sendStablecoin(payload: {
     narration?: string;
 }) {
     try {
-        const response = await transferClient.create({
+        const sent = await sendV3Safely({
+            action: 'send stablecoin', reference: payload.reference, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transfer, send: () => transferClient.create({
             account_bank:    'POLYGON',
             account_number:  payload.wallet_address,
             amount:          String(payload.amount),
@@ -121,9 +124,10 @@ export async function sendStablecoin(payload: {
             debit_currency:  payload.debit_currency,
             reference:       payload.reference,
             narration:       payload.narration,
+        }),
         });
-
-        if (!response) return uncertainV3('send stablecoin', payload.reference, 'read_transaction_with_reference');
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
         return buildTransferResponse(response, 'wallet');
     } catch (error) {
         return createErrorResponse(`Error sending stablecoin: ${JSON.stringify(error)}`);
@@ -139,7 +143,9 @@ export async function convertToStablecoin(payload: {
     narration?: string;
 }) {
     try {
-        const response = await transferClient.create({
+        const sent = await sendV3Safely({
+            action: 'convert to stablecoin', reference: payload.reference, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transfer, send: () => transferClient.create({
             account_bank:   'flutterwave',
             account_number: payload.merchant_id,
             amount:         String(payload.amount),
@@ -147,9 +153,10 @@ export async function convertToStablecoin(payload: {
             debit_currency: payload.debit_currency,
             reference:      payload.reference,
             narration:      payload.narration,
+        }),
         });
-
-        if (!response) return uncertainV3('convert to stablecoin', payload.reference, 'read_transaction_with_reference');
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
         return buildTransferResponse(response, 'convert');
     } catch (error) {
         return createErrorResponse(`Error converting to stablecoin: ${JSON.stringify(error)}`);

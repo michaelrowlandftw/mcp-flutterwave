@@ -56,10 +56,10 @@ PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. The
 | | |
 |---|---|
 | **Threat** | A create times out or returns 503 but succeeds, and the AI retries. We saw this in the sandbox on 3 Nov 2026 |
-| **Controls** | Every create gets a unique reference. v4 sends it as `X-Idempotency-Key`. A timeout, a 5xx or a reply without an ID counts as uncertain. The server then looks the record up by reference with backoff, and retries once with the same key only when nothing exists. Creates with no lookup return `unknown` and never retry. v3 failures return `unknown` with the reference and the tool to check |
-| **Code** | `src/utils/reference.ts`, `src/tools/v4/safeCreate.ts`, `src/client/v4/http.ts` (#8) |
-| **Tests** | `safeCreate.test.ts`: per create tool, a fault with the record existing gives one record; a fault with no record gives one retry with the same key. Also the fault switch. `reference.test.ts`. A sandbox run with `FLW_FAULT=503_no_id` found the real record |
-| **Remains** | v3 has no automatic lookup, only guidance. Lookups for orders and transfers scan recent pages, because those list endpoints have no reference filter |
+| **Controls** | Every create gets a unique reference. v4 sends it as `X-Idempotency-Key`. A timeout, a 5xx or a reply without an ID counts as uncertain. The server then looks the record up by reference with backoff, and retries once with the same key only when nothing exists. Creates with no lookup return `unknown` and never retry. v3 does the same (#18) for charges (lookup: `/transactions/verify_by_reference?tx_ref=`), transfers and stablecoin sends (`/transfers?reference=`) and bill payments (`/bills/{reference}/status`). A v3 4xx is a clear failure: no lookup, no retry |
+| **Code** | `src/utils/reference.ts`, `src/tools/v4/safeCreate.ts`, `src/client/v4/http.ts` (#8); `src/tools/safeCreateV3.ts`, `src/client/lib/` (#18) |
+| **Tests** | `safeCreate.test.ts`: per create tool, a fault with the record existing gives one record; a fault with no record gives one retry with the same key. Also the fault switch. `reference.test.ts`. A sandbox run with `FLW_FAULT=503_no_id` found the real record. `safeCreateV3.test.ts`: the same cases for v3 transfers and charges, plus a 4xx with no retry |
+| **Remains** | v3 has no idempotency header, so the lookup is the only guard. Other v3 creates have no lookup by reference and still return `unknown` with guidance only. The v3 lookups have not yet been run against the live sandbox. Lookups for orders and transfers scan recent pages, because those list endpoints have no reference filter |
 
 ### 5. Forged or replayed webhooks
 

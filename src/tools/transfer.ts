@@ -1,5 +1,6 @@
 import z from "zod";
-import { uncertainV3, withReference } from '../utils/reference.js';
+import { withReference } from '../utils/reference.js';
+import { lookupV3Transfer, sendV3Safely } from './safeCreateV3.js';
 import Flutterwave from "../client/index.js";
 import { server } from "../server.js";
 import { CreateTransferPayloadSchema, CreateBeneficiaryPayloadSchema } from "../types/transfer/schema.js";
@@ -71,8 +72,12 @@ export async function createTransfer(payload: {
         reference: payload.reference, debit_currency: payload.debit_currency,
         destination_branch_code: payload.destination_branch_code, narration: payload.narration,
     };
-    const response = await transfersClient.create(requestPayload);
-    if (!response) return uncertainV3("create transfer", payload.reference, "read_transaction_with_reference or the dashboard");
+    const sent = await sendV3Safely({
+        action: "create transfer", reference: payload.reference, lookupTool: "read_transaction_with_reference or the dashboard",
+        lookup: lookupV3Transfer, send: () => transfersClient.create(requestPayload),
+    });
+    if ('result' in sent) return sent.result;
+    const response = sent.response;
     if (!isValidResponse(response.status, response.data)) return createErrorResponse("Failed to create transfer");
     const uiResource = createTransferUI({
         reference: payload.reference || (response.data as any).reference || `TRF-${Date.now()}`,
