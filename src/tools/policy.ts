@@ -5,6 +5,7 @@ import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
 import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
 import { guardMoneyTool } from './confirm.js';
 import { z } from 'zod';
+import { redactResult } from '../utils/redact.js';
 
 /** Tools that create payments or payouts, or resend webhooks: they all point to the verify tools. */
 const GIVES_VALUE_SIGNAL = /^(create_|charge_|pay_bill$|send_stablecoin$|convert_to_stablecoin$|initiate_fx_trade$|resend_(transaction_)?webhook$|retry_transfer$)/;
@@ -58,14 +59,20 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
         options.allowLive === true,
       );
     }
-    // Every result says which environment it came from.
+    // Every result says which environment it came from, and is redacted:
+    // no keys, tokens, secrets or full card numbers leave the server.
     const handler = tool.handler as (...args: unknown[]) => Promise<{ content?: unknown[] }>;
     (tool as { handler: unknown }).handler = async (...args: unknown[]) => {
-      const out = await handler(...args);
+      let out: { content?: unknown[]; isError?: boolean };
+      try {
+        out = await handler(...args);
+      } catch (error) {
+        out = { isError: true, content: [{ type: 'text', text: error instanceof Error ? error.message : String(error) }] };
+      }
       if (out && Array.isArray(out.content)) {
         out.content.push({ type: 'text', text: JSON.stringify({ flutterwave_environment: environment }) });
       }
-      return out;
+      return redactResult(out);
     };
   }
 

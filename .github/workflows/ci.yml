@@ -3,12 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
+  # Every pull request, whatever branch it targets (stacked PRs included).
   pull_request:
-    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    name: Test (Node ${{ matrix.node-version }})
+    name: Test and build (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
 
     strategy:
@@ -25,8 +28,33 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      # The lock file is written by npm 11; npm 10 disagrees about optional peers.
+      - name: Use npm 11
+        run: npm install -g npm@11.6.2
+
       - name: Install dependencies
         run: npm ci
 
       - name: Run tests
         run: npm test
+
+      - name: Build
+        run: npm run build
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+      - run: npm install -g npm@11.6.2
+      - run: npm ci
+      # Blocks on critical runtime advisories. The remaining known ones are listed
+      # and explained in docs/security.md; the full report is printed for review.
+      - name: Runtime dependencies (blocking on critical)
+        run: npm audit --omit=dev --audit-level=critical
+      - name: All dependencies (report only)
+        run: npm audit || true

@@ -632,6 +632,8 @@ npm install
 npm run build
 ```
 
+Use npm 11 or later to install from the lock file (`npx npm@11 ci`); npm 10 disagrees with the lock file about optional peer packages.
+
 ### Environment variables
 
 v3 (`FLW_API_VERSION=v3`):
@@ -819,7 +821,7 @@ All notable changes are documented in [GitHub Releases](https://github.com/bajos
 
 ## Security
 
-If you discover a security vulnerability, please **do not** open a public issue. Instead, email [olaobajua@gmail.com](mailto:olaobajua@gmail.com) directly. We will respond as quickly as possible.
+If you discover a security vulnerability, please **do not** open a public issue. Follow [SECURITY.md](SECURITY.md). How the server protects keys, card data and payments is described in [docs/security.md](docs/security.md).
 
 ---
 
