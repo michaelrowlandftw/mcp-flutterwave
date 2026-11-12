@@ -1,4 +1,5 @@
 import Flutterwave from "../client/index.js";
+import { uncertainV3, withReference } from '../utils/reference.js';
 import { server } from "../server.js";
 import {
     ChargeCardSchema,
@@ -195,12 +196,12 @@ export async function chargeCard(payload: {
         } as any);
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge card for ${payload.email}`);
+            return uncertainV3('charge card', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'card');
     } catch (error) {
-        return createErrorResponse(`Error charging card for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging card', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -221,12 +222,12 @@ export async function chargeBankAccount(payload: {
         });
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge bank account for ${payload.email}`);
+            return uncertainV3('charge bank account', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'account');
     } catch (error) {
-        return createErrorResponse(`Error charging bank account for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging bank account', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -248,12 +249,12 @@ export async function chargeMobileMoney(payload: {
         });
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge mobile money for ${payload.email}`);
+            return uncertainV3('charge mobile money', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, type);
     } catch (error) {
-        return createErrorResponse(`Error charging mobile money for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging mobile money', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -272,12 +273,12 @@ export async function chargeMpesa(payload: {
         });
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge M-Pesa for ${payload.email}`);
+            return uncertainV3('charge M-Pesa', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'mpesa');
     } catch (error) {
-        return createErrorResponse(`Error charging M-Pesa for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging M-Pesa', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -297,12 +298,12 @@ export async function chargeUssd(payload: {
         });
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to initiate USSD charge for ${payload.email}`);
+            return uncertainV3('initiate USSD charge', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'ussd');
     } catch (error) {
-        return createErrorResponse(`Error initiating USSD charge for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('initiating USSD charge', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -363,7 +364,7 @@ export function registerChargeTools() {
         ChargeCardSchema,
         async (args) => {
             try {
-                return await chargeCard(args);
+                return await chargeCard(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging card for ${args.email}`);
             }
@@ -376,7 +377,7 @@ export function registerChargeTools() {
         ChargeBankAccountSchema,
         async (args) => {
             try {
-                return await chargeBankAccount(args);
+                return await chargeBankAccount(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging bank account for ${args.email}`);
             }
@@ -389,7 +390,7 @@ export function registerChargeTools() {
         ChargeMobileMoneySchema,
         async (args) => {
             try {
-                return await chargeMobileMoney(args);
+                return await chargeMobileMoney(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging mobile money for ${args.email}`);
             }
@@ -402,7 +403,7 @@ export function registerChargeTools() {
         ChargeMpesaSchema,
         async (args) => {
             try {
-                return await chargeMpesa(args);
+                return await chargeMpesa(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging M-Pesa for ${args.email}`);
             }
@@ -415,7 +416,7 @@ export function registerChargeTools() {
         ChargeUssdSchema,
         async (args) => {
             try {
-                return await chargeUssd(args);
+                return await chargeUssd(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred initiating USSD charge for ${args.email}`);
             }

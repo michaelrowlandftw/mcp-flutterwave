@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { safeCreate } from './safeCreate.js';
 import { TransfersSendersCreateBody } from '../../client/generated/v4/transfer-senders.zod.js';
-import { v4JsonResult } from './httpResult.js';
 
 const loose = z.record(z.string(), z.unknown());
 
@@ -52,9 +51,10 @@ export async function createTransferSender(args: CreateTransferSenderArgs) {
     );
   }
 
-  const response = await flwV4Fetch('/transfers/senders', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/transfers/senders',
+    body: body.data,
+    label: 'create transfer sender',
+    lookupHint: 'Check with list_transfer_senders.',
   });
-  return v4JsonResult(response, 'create transfer sender');
 }

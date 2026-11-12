@@ -6,6 +6,9 @@ export const CreateTransferPayloadSchema = {
     amount: z.number().positive("Amount must be a positive number"),
     currency: z.string().min(1, "Currency is required"),
     callback_url: z.string().url().optional(),
+    reference: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
+    narration: z.string().optional(),
+    beneficiary_name: z.string().optional(),
 };
 
 export const GetTransfersFiltersSchema = {

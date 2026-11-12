@@ -1,4 +1,5 @@
 import Flutterwave from "../client/index.js";
+import { uncertainV3, withReference } from '../utils/reference.js';
 import { server } from "../server.js";
 import {
     GetStablecoinFeeSchema,
@@ -122,7 +123,7 @@ export async function sendStablecoin(payload: {
             narration:       payload.narration,
         });
 
-        if (!response) return createErrorResponse(`Failed to send ${payload.currency} to wallet ${payload.wallet_address}`);
+        if (!response) return uncertainV3('send stablecoin', payload.reference, 'read_transaction_with_reference');
         return buildTransferResponse(response, 'wallet');
     } catch (error) {
         return createErrorResponse(`Error sending stablecoin: ${JSON.stringify(error)}`);
@@ -148,7 +149,7 @@ export async function convertToStablecoin(payload: {
             narration:      payload.narration,
         });
 
-        if (!response) return createErrorResponse(`Failed to convert ${payload.debit_currency} to ${payload.currency}`);
+        if (!response) return uncertainV3('convert to stablecoin', payload.reference, 'read_transaction_with_reference');
         return buildTransferResponse(response, 'convert');
     } catch (error) {
         return createErrorResponse(`Error converting to stablecoin: ${JSON.stringify(error)}`);
@@ -188,7 +189,7 @@ export function registerStablecoinTools() {
         SendStablecoinSchema,
         async (args) => {
             try {
-                return await sendStablecoin(args as any);
+                return await sendStablecoin(withReference(args, 'reference') as any);
             } catch (error) {
                 return createErrorResponse('Error sending stablecoin');
             }
@@ -209,7 +210,7 @@ export function registerStablecoinTools() {
         ConvertToStablecoinSchema,
         async (args) => {
             try {
-                return await convertToStablecoin(args as any);
+                return await convertToStablecoin(withReference(args, 'reference') as any);
             } catch (error) {
                 return createErrorResponse('Error converting to stablecoin');
             }

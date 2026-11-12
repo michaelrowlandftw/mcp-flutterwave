@@ -1,4 +1,5 @@
 import Flutterwave from "../client/index.js";
+import { uncertainV3, withReference } from '../utils/reference.js';
 import { server } from "../server.js";
 import {
     GetBillProvidersSchema,
@@ -130,7 +131,7 @@ export async function payBill(payload: {
         } as any;
 
         const response = await billClient.payBill(payload.biller_code, payload.item_code, body);
-        if (!response) return createErrorResponse(`Bill payment failed for biller ${payload.biller_code}`);
+        if (!response) return uncertainV3('pay bill', payload.reference, 'get_bill_status');
 
         const d   = (response as any)?.data;
         const ref = d?.reference ?? d?.tx_ref ?? payload.reference ?? 'N/A';
@@ -288,7 +289,7 @@ export function registerBillPaymentTools() {
         PayBillSchema,
         async (args) => {
             try {
-                return await payBill(args);
+                return await payBill(withReference(args, 'reference'));
             } catch (error) {
                 return createErrorResponse(`Error paying bill for customer ${args.customer_id}`);
             }
