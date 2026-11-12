@@ -102,6 +102,15 @@ The `-i` flag keeps stdin open so Claude Desktop can communicate with the server
 
 **Requirements:** Node.js 20 or later (for npm/npx).
 
+### Test keys only by default
+
+The server refuses live credentials at start-up:
+
+- v3: `FLW_SECRET_KEY` must start with `FLWSECK_TEST`.
+- v4: `FLW_ENVIRONMENT=production` is refused.
+
+To use live credentials on purpose, pass `--allow-live` or set `FLW_ALLOW_LIVE=true`. The server then prints a warning.
+
 ---
 
 ## Available Tools
@@ -200,7 +209,7 @@ v4 signs in with OAuth client credentials and encrypts card fields with AES-256-
 | `FLW_CLIENT_ID` | Yes | OAuth client id from Dashboard → Settings → API Keys |
 | `FLW_CLIENT_SECRET` | Yes | OAuth client secret from that same view |
 | `FLW_ENCRYPTION_KEY_V4` | Yes | Base64 AES-256-GCM key. Decoded length is 32 bytes. |
-| `FLW_ENVIRONMENT` | No | `sandbox` (default) or `production` |
+| `FLW_ENVIRONMENT` | No | `sandbox` (default) or `production`. `production` also needs `--allow-live` or `FLW_ALLOW_LIVE=true` |
 
 `sandbox` uses `https://developersandbox-api.flutterwave.com`. `production` uses `https://f4bexperience.flutterwave.com`. `FLW_SECRET_KEY` and `FLW_ENCRYPTION_KEY` are the v3 credentials and are not used in this mode.
 

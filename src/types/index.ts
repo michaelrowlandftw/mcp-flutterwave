@@ -1,6 +1,7 @@
 export type Options = {
     tools?: string[];
     apiKey?: string;
+    allowLive?: boolean;
 };
 
 export type CheckoutPayload = {
