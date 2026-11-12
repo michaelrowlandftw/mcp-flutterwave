@@ -10,7 +10,7 @@ export const server = new McpServer({
     version: "1.4.1",
 });
 
-// One API version per process. v3 tools and prompts load only in v3 mode.
+// One API version per process (v4 by default). v3 tools and prompts load only in v3 mode.
 export async function startServer(options: Options = {}) {
     await registerTools();
     const active = applyToolPolicy(server, options);

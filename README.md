@@ -10,7 +10,7 @@
 
 An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that enables AI assistants to interact with the Flutterwave API — create payment links, charge customers directly, manage transfers, collect via virtual accounts, pay bills, and more.
 
-> **Note:** The server targets the Flutterwave v3 API by default. Set `FLW_API_VERSION=v4` to register the [v4 tool set](#flutterwave-v4) instead. A process registers one version at a time.
+> **Note:** The server targets the Flutterwave v4 API by default. Set `FLW_API_VERSION=v3` to register the v3 tool set instead. An existing install that sets only `FLW_SECRET_KEY` (no `FLW_CLIENT_ID`) stays on v3 and prints a warning. A process registers one version at a time.
 
 Also ships with a **built-in web app** that connects to the MCP server and lets you talk to a Claude-powered Flutterwave assistant directly in your browser.
 
@@ -98,7 +98,7 @@ The server communicates over stdio, so it must be launched by an MCP client — 
 }
 ```
 
-The `-i` flag keeps stdin open so Claude Desktop can communicate with the server over stdio. For v4, pass `FLW_API_VERSION`, `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, and `FLW_ENCRYPTION_KEY_V4` instead of the v3 secret and encryption key. See [Flutterwave v4](#flutterwave-v4).
+The `-i` flag keeps stdin open so Claude Desktop can communicate with the server over stdio. For v4 (the default), pass `FLW_CLIENT_ID` and `FLW_CLIENT_SECRET` instead of the v3 secret and encryption key. See [Flutterwave v4](#flutterwave-v4).
 
 **Requirements:** Node.js 20 or later (for npm/npx).
 
@@ -208,16 +208,18 @@ The tables above are the v3 tools. They are what the server registers unless you
 
 ## Flutterwave v4
 
-Set `FLW_API_VERSION=v4` to register the v4 tools and skip the v3 set. Existing installs stay on v3. Names that exist in both versions (`create_transfer`, `create_virtual_account`, `get_virtual_account`, `update_virtual_account`, `resolve_bank_account`) call the v4 API while that flag is set.
+v4 is the default. Set `FLW_API_VERSION=v3` to use the v3 tools instead. Installs that set only `FLW_SECRET_KEY` stay on v3. Names that exist in both versions (`create_transfer`, `create_virtual_account`, `get_virtual_account`, `update_virtual_account`, `resolve_bank_account`) call the v4 API in v4 mode.
+
+The v4 tools cover every callable v4 operation in the [developer docs](https://developer.flutterwave.com/llms.txt) (57 operations, checked 12 Nov 2026).
 
 v4 signs in with OAuth client credentials and encrypts card fields with AES-256-GCM. Card tools take plaintext card details and encrypt them before the request. The inbound `refund.completed` webhook is not a tool.
 
 | Variable | Required | Description |
 |---|---|---|
-| `FLW_API_VERSION` | Yes, set to `v4` | Selects the v4 tool set. Unset or `v3` keeps the default. |
+| `FLW_API_VERSION` | No | `v4` (default) or `v3` |
 | `FLW_CLIENT_ID` | Yes | OAuth client id from Dashboard → Settings → API Keys |
 | `FLW_CLIENT_SECRET` | Yes | OAuth client secret from that same view |
-| `FLW_ENCRYPTION_KEY_V4` | Yes | Base64 AES-256-GCM key. Decoded length is 32 bytes. |
+| `FLW_ENCRYPTION_KEY_V4` | Only for raw card tools | Base64 AES-256-GCM key. Decoded length is 32 bytes. |
 | `FLW_ENVIRONMENT` | No | `sandbox` (default) or `production`. `production` also needs `--allow-live` or `FLW_ALLOW_LIVE=true` |
 
 `sandbox` uses `https://developersandbox-api.flutterwave.com`. `production` uses `https://f4bexperience.flutterwave.com`. `FLW_SECRET_KEY` and `FLW_ENCRYPTION_KEY` are the v3 credentials and are not used in this mode.
@@ -610,14 +612,14 @@ npm run build
 
 ### Environment variables
 
-v3 (default):
+v3 (`FLW_API_VERSION=v3`):
 
 | Variable | Required | Description |
 |---|---|---|
 | `FLW_SECRET_KEY` | Yes | Your Flutterwave secret key |
 | `FLW_ENCRYPTION_KEY` | For card charges | Your Flutterwave encryption key (from Dashboard → Settings → API) |
 
-v4 replaces those with `FLW_API_VERSION=v4`, `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, `FLW_ENCRYPTION_KEY_V4`, and optional `FLW_ENVIRONMENT`. See [Flutterwave v4](#flutterwave-v4).
+v4 (default) uses `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, and optional `FLW_ENVIRONMENT` and `FLW_ENCRYPTION_KEY_V4`. See [Flutterwave v4](#flutterwave-v4).
 
 ---
 
@@ -672,7 +674,7 @@ Pass `--tools=all` to enable every tool, or supply a comma-separated list to res
 ]
 ```
 
-**v3 accepted tool names** (default; use `all` to enable everything in this list):
+**v3 accepted tool names** (`FLW_API_VERSION=v3`; use `all` to enable everything in this list):
 
 ```
 create_checkout            disable_checkout
@@ -693,7 +695,7 @@ resolve_bank_account       verify_card_bin
 get_stablecoin_fee         send_stablecoin               convert_to_stablecoin
 ```
 
-With `FLW_API_VERSION=v4`, `--tools=all` enables the [v4 accepted tool names](#flutterwave-v4) instead.
+In v4 mode (the default), `--tools=all` enables the [v4 accepted tool names](#flutterwave-v4) instead.
 
 ### Via npm (v4)
 

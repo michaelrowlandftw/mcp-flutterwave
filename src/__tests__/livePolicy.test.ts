@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { parseArgs } from '../cli.js';
 
-const v3Test = { FLW_SECRET_KEY: 'FLWSECK_TEST-abc-X' };
-const v3Live = { FLW_SECRET_KEY: 'FLWSECK-abc-X' };
+const v3Test = { FLW_API_VERSION: 'v3', FLW_SECRET_KEY: 'FLWSECK_TEST-abc-X' };
+const v3Live = { FLW_API_VERSION: 'v3', FLW_SECRET_KEY: 'FLWSECK-abc-X' };
 const v4Prod = { FLW_API_VERSION: 'v4', FLW_ENVIRONMENT: 'production' };
 
 describe('test keys only by default', () => {
@@ -44,7 +44,7 @@ describe('test keys only by default', () => {
   });
 
   it('still reports a missing v3 key as missing', () => {
-    expect(() => parseArgs(['--tools=all'], {})).toThrow(/Secret key not provided/);
+    expect(() => parseArgs(['--tools=all'], { FLW_API_VERSION: 'v3' })).toThrow(/Secret key not provided/);
   });
 });
 
