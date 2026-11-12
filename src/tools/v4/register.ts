@@ -822,7 +822,7 @@ export function registerV4Tools() {
       'Create a Flutterwave v4 customer (POST /customers).',
       'Email is required. Optional name, phone, and address improve later charge flows.',
       'Use the returned customer id with create_card_payment_method and create_charge.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateCustomerSchema,
     async (args) => handleCreateCustomer(args),
@@ -833,7 +833,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 card payment method (POST /payment-methods).',
       'Pass the plaintext card number, CVV, and expiry. The server encrypts each field with AES-256-GCM before the request.',
-      'Use the returned payment method id on a later charge. Available only when FLW_API_VERSION=v4.',
+      'Use the returned payment method id on a later charge. Available in v4 mode (the default).',
     ].join(' '),
     CreateCardPaymentMethodSchema,
     async (args) => handleCreateCardPaymentMethod(args),
@@ -844,7 +844,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 charge (POST /charges).',
       'Requires customer_id from create_customer and payment_method_id from create_card_payment_method.',
-      'Also pass amount, currency, and a unique reference. Available only when FLW_API_VERSION=v4.',
+      'Also pass amount, currency, and a unique reference. Available in v4 mode (the default).',
     ].join(' '),
     CreateChargeSchema,
     async (args) => handleCreateCharge(args),
@@ -854,7 +854,7 @@ export function registerV4Tools() {
     'get_charge',
     [
       'Retrieve a Flutterwave v4 charge by id (GET /charges/{id}).',
-      'Use after create_charge to poll status. Available only when FLW_API_VERSION=v4.',
+      'Use after create_charge to poll status. Available in v4 mode (the default).',
     ].join(' '),
     GetChargeSchema,
     async (args) => handleGetCharge(args),
@@ -866,7 +866,7 @@ export function registerV4Tools() {
       'Create a Flutterwave v4 refund (POST /refunds).',
       'Requires charge_id from create_charge, amount, and reason',
       '(duplicate | fraudulent | requested_by_customer | expired_uncaptured_charge).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateRefundSchema,
     async (args) => handleCreateRefund(args),
@@ -876,7 +876,7 @@ export function registerV4Tools() {
     'get_customer',
     [
       'Retrieve a Flutterwave v4 customer by id (GET /customers/{id}).',
-      'Use after create_customer. Available only when FLW_API_VERSION=v4.',
+      'Use after create_customer. Available in v4 mode (the default).',
     ].join(' '),
     GetCustomerSchema,
     async (args) => handleGetCustomer(args),
@@ -886,7 +886,7 @@ export function registerV4Tools() {
     'get_refund',
     [
       'Retrieve a Flutterwave v4 refund by id (GET /refunds/{id}).',
-      'Use after create_refund to poll status. Available only when FLW_API_VERSION=v4.',
+      'Use after create_refund to poll status. Available in v4 mode (the default).',
     ].join(' '),
     GetRefundSchema,
     async (args) => handleGetRefund(args),
@@ -896,7 +896,7 @@ export function registerV4Tools() {
     'get_payment_method',
     [
       'Retrieve a Flutterwave v4 payment method by id (GET /payment-methods/{id}).',
-      'Use after create_card_payment_method. Available only when FLW_API_VERSION=v4.',
+      'Use after create_card_payment_method. Available in v4 mode (the default).',
     ].join(' '),
     GetPaymentMethodSchema,
     async (args) => handleGetPaymentMethod(args),
@@ -906,7 +906,7 @@ export function registerV4Tools() {
     'list_customers',
     [
       'List Flutterwave v4 customers (GET /customers).',
-      'Page size must be 10 to 50. Available only when FLW_API_VERSION=v4.',
+      'Page size must be 10 to 50. Available in v4 mode (the default).',
     ].join(' '),
     ListCustomersSchema,
     async (args) => handleListCustomers(args),
@@ -916,7 +916,7 @@ export function registerV4Tools() {
     'search_customers',
     [
       'Search Flutterwave v4 customers by email (POST /customers/search).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     SearchCustomersSchema,
     async (args) => handleSearchCustomers(args),
@@ -927,7 +927,7 @@ export function registerV4Tools() {
     [
       'Update a Flutterwave v4 customer (PUT /customers/{id}).',
       'Pass at least one of name, phone, address, or meta.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     UpdateCustomerSchema,
     async (args) => handleUpdateCustomer(args),
@@ -938,7 +938,8 @@ export function registerV4Tools() {
     [
       'List Flutterwave v4 charges (GET /charges).',
       'Optional filters: status, reference, customer_id, payment_method_id, from, to.',
-      'Available only when FLW_API_VERSION=v4.',
+      'from and to are ISO 8601 date-times (time of day is used); to must not be later than now. Pages with page and size.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListChargesSchema,
     async (args) => handleListCharges(args),
@@ -949,7 +950,7 @@ export function registerV4Tools() {
     [
       'Update a Flutterwave v4 charge (PUT /charges/{id}).',
       'Pass meta and/or an authorization object (otp, pin, external_3ds, or avs).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     UpdateChargeSchema,
     async (args) => handleUpdateCharge(args),
@@ -959,7 +960,8 @@ export function registerV4Tools() {
     'list_refunds',
     [
       'List Flutterwave v4 refunds (GET /refunds).',
-      'Optional from/to range. Available only when FLW_API_VERSION=v4.',
+      'Optional from/to range: ISO 8601 date-times, but only the date is used. Pages with page and size.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListRefundsSchema,
     async (args) => handleListRefunds(args),
@@ -969,7 +971,7 @@ export function registerV4Tools() {
     'list_payment_methods',
     [
       'List Flutterwave v4 payment methods (GET /payment-methods).',
-      'Page size must be 10 to 50. Available only when FLW_API_VERSION=v4.',
+      'Page size must be 10 to 50. Available in v4 mode (the default).',
     ].join(' '),
     ListPaymentMethodsSchema,
     async (args) => handleListPaymentMethods(args),
@@ -980,7 +982,7 @@ export function registerV4Tools() {
     [
       'Retrieve Flutterwave v4 transaction fees (GET /fees).',
       'Requires amount, currency, and payment_method. Optional card6, country, and network.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetFeesSchema,
     async (args) => handleGetFees(args),
@@ -990,7 +992,7 @@ export function registerV4Tools() {
     'get_banks',
     [
       'List Flutterwave v4 banks for a country (GET /banks?country=).',
-      'Country is an ISO2 code such as NG. Available only when FLW_API_VERSION=v4.',
+      'Country is an ISO2 code such as NG. Available in v4 mode (the default).',
     ].join(' '),
     GetBanksSchema,
     async (args) => handleGetBanks(args),
@@ -1000,7 +1002,7 @@ export function registerV4Tools() {
     'get_mobile_networks',
     [
       'List Flutterwave v4 mobile networks for a country (GET /mobile-networks?country=).',
-      'Country is an ISO2 code such as GH. Available only when FLW_API_VERSION=v4.',
+      'Country is an ISO2 code such as GH. Available in v4 mode (the default).',
     ].join(' '),
     GetMobileNetworksSchema,
     async (args) => handleGetMobileNetworks(args),
@@ -1010,7 +1012,7 @@ export function registerV4Tools() {
     'get_wallet_balance',
     [
       'Fetch the Flutterwave v4 wallet balance for one currency (GET /wallets/balances/{currency}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetWalletBalanceSchema,
     async (args) => handleGetWalletBalance(args),
@@ -1020,7 +1022,7 @@ export function registerV4Tools() {
     'list_wallet_balances',
     [
       'Fetch Flutterwave v4 wallet balances for every currency (GET /wallets/balances).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListWalletBalancesSchema,
     async () => handleListWalletBalances({}),
@@ -1031,7 +1033,9 @@ export function registerV4Tools() {
     [
       'Retrieve a Flutterwave v4 wallet statement (GET /wallets/statement).',
       'Currency is required. Optional from, to, size, and cursors.',
-      'Available only when FLW_API_VERSION=v4.',
+      'from and to are date only (yyyy-MM-dd); ISO date-times are rejected. Pages with next and previous cursors.',
+      'No entries comes back as an empty data list.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetWalletStatementSchema,
     async (args) => handleGetWalletStatement(args),
@@ -1042,7 +1046,7 @@ export function registerV4Tools() {
     [
       'Resolve a Flutterwave v4 wallet account (POST /wallets/account-resolve).',
       'Provider is currently flutterwave. Pass the provider identifier.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ResolveWalletAccountSchema,
     async (args) => handleResolveWalletAccount(args),
@@ -1052,8 +1056,8 @@ export function registerV4Tools() {
     'list_settlements',
     [
       'List Flutterwave v4 settlements (GET /settlements).',
-      'Optional from/to range. Page size must be 10 to 50.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Optional from/to range: ISO 8601 date-times on transaction_datetime, but only the date is used. Pages with page and size (10 to 50).',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListSettlementsSchema,
     async (args) => handleListSettlements(args),
@@ -1064,7 +1068,7 @@ export function registerV4Tools() {
     [
       'Retrieve a Flutterwave v4 settlement by id (GET /settlements/{id}).',
       'Optional page and size select settlement lines.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetSettlementSchema,
     async (args) => handleGetSettlement(args),
@@ -1074,7 +1078,8 @@ export function registerV4Tools() {
     'list_chargebacks',
     [
       'List Flutterwave v4 chargebacks (GET /chargebacks).',
-      'Optional from/to range. Available only when FLW_API_VERSION=v4.',
+      'Optional from/to range: ISO 8601 date-times, but only the date is used. Pages with page and size.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListChargebacksSchema,
     async (args) => handleListChargebacks(args),
@@ -1084,7 +1089,7 @@ export function registerV4Tools() {
     'get_chargeback',
     [
       'Retrieve a Flutterwave v4 chargeback by id (GET /chargebacks/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetChargebackSchema,
     async (args) => handleGetChargeback(args),
@@ -1095,7 +1100,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 chargeback (POST /chargebacks).',
       'Requires charge_id, amount, type (local | international), and expiry in hours.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateChargebackSchema,
     async (args) => handleCreateChargeback(args),
@@ -1106,7 +1111,7 @@ export function registerV4Tools() {
     [
       'Update a Flutterwave v4 chargeback (PUT /chargebacks/{id}).',
       'Status is accepted, declined, or partially-accepted.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     UpdateChargebackSchema,
     async (args) => handleUpdateChargeback(args),
@@ -1117,7 +1122,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 order (POST /orders).',
       'Requires amount, currency, reference, customer_id, and payment_method_id.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateOrderSchema,
     async (args) => handleCreateOrder(args),
@@ -1127,7 +1132,7 @@ export function registerV4Tools() {
     'get_order',
     [
       'Retrieve a Flutterwave v4 order by id (GET /orders/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetOrderSchema,
     async (args) => handleGetOrder(args),
@@ -1138,7 +1143,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 virtual account (POST /virtual-accounts).',
       'Requires customer_id, reference, currency (NGN, GHS, EGP, KES, MAD, or ZAR), and account_type (static or dynamic).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateVirtualAccountSchema,
     async (args) => handleCreateVirtualAccount(args),
@@ -1148,7 +1153,7 @@ export function registerV4Tools() {
     'get_virtual_account',
     [
       'Retrieve a Flutterwave v4 virtual account by id (GET /virtual-accounts/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetVirtualAccountSchema,
     async (args) => handleGetVirtualAccount(args),
@@ -1159,7 +1164,7 @@ export function registerV4Tools() {
     [
       'Quote a Flutterwave v4 transfer rate (POST /transfers/rates).',
       'Requires source.currency and destination.currency plus destination.amount.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     QuoteTransferRateSchema,
     async (args) => handleQuoteTransferRate(args),
@@ -1169,7 +1174,7 @@ export function registerV4Tools() {
     'get_transfer_rate',
     [
       'Retrieve a Flutterwave v4 transfer rate by id (GET /transfers/rates/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetTransferRateSchema,
     async (args) => handleGetTransferRate(args),
@@ -1180,7 +1185,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 charge with inline customer and card details (POST /orchestration/direct-charges).',
       'Card fields are encrypted with FLW_ENCRYPTION_KEY_V4 before the request is sent.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateOrchestratorChargeSchema,
     async (args) => handleCreateOrchestratorCharge(args),
@@ -1191,7 +1196,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 order with inline customer and card details (POST /orchestration/direct-orders).',
       'Card fields are encrypted with FLW_ENCRYPTION_KEY_V4 before the request is sent.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateOrchestratorOrderSchema,
     async (args) => handleCreateOrchestratorOrder(args),
@@ -1202,7 +1207,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 transfer with inline recipient details (POST /direct-transfers).',
       'type is bank, mobile_money, wallet, cash_pickup, or crypto. action is instant, deferred, or scheduled.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateOrchestratorTransferSchema,
     async (args) => handleCreateOrchestratorTransfer(args),
@@ -1213,7 +1218,7 @@ export function registerV4Tools() {
     [
       'Resend a Flutterwave v4 webhook (POST /resend-webhook).',
       'type is charge.completed, transfer.disburse, transfer.reversal, or order.authorization.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ResendWebhookSchema,
     async (args) => handleResendWebhook(args),
@@ -1224,7 +1229,7 @@ export function registerV4Tools() {
     [
       'List Flutterwave v4 branches for a bank (GET /banks/{id}/branches).',
       'The id comes from get_banks.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetBankBranchesSchema,
     async (args) => handleGetBankBranches(args),
@@ -1235,7 +1240,7 @@ export function registerV4Tools() {
     [
       'Resolve a Flutterwave v4 bank account (POST /banks/account-resolve).',
       'Currency is NGN, GBP, USD, GHS, or UGX. NGN account requires code and number.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ResolveBankAccountSchema,
     async (args) => handleResolveBankAccount(args),
@@ -1246,7 +1251,7 @@ export function registerV4Tools() {
     [
       'List Flutterwave v4 orders (GET /orders).',
       'Optional filters: status, from, to, customer_id, and payment_method_id.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListOrdersSchema,
     async (args) => handleListOrders(args),
@@ -1257,7 +1262,7 @@ export function registerV4Tools() {
     [
       'Update a Flutterwave v4 order (PUT /orders/{id}).',
       'Provide meta, or action void or capture.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     UpdateOrderSchema,
     async (args) => handleUpdateOrder(args),
@@ -1268,7 +1273,7 @@ export function registerV4Tools() {
     [
       'List Flutterwave v4 virtual accounts (GET /virtual-accounts).',
       'Optional filters: from, to, and reference.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListVirtualAccountsSchema,
     async (args) => handleListVirtualAccounts(args),
@@ -1279,7 +1284,7 @@ export function registerV4Tools() {
     [
       'Update a Flutterwave v4 virtual account (PUT /virtual-accounts/{id}).',
       'action_type is update_bvn or update_status. update_status sets status to inactive.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     UpdateVirtualAccountSchema,
     async (args) => handleUpdateVirtualAccount(args),
@@ -1289,7 +1294,7 @@ export function registerV4Tools() {
     'list_transfer_recipients',
     [
       'List Flutterwave v4 transfer recipients (GET /transfers/recipients).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListTransferRecipientsSchema,
     async (args) => handleListTransferRecipients(args),
@@ -1300,7 +1305,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 transfer recipient (POST /transfers/recipients).',
       'type selects the rail, for example bank_ngn. NGN bank recipients require bank.account_number and bank.code.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateTransferRecipientSchema,
     async (args) => handleCreateTransferRecipient(args),
@@ -1310,7 +1315,7 @@ export function registerV4Tools() {
     'get_transfer_recipient',
     [
       'Retrieve a Flutterwave v4 transfer recipient (GET /transfers/recipients/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetTransferRecipientSchema,
     async (args) => handleGetTransferRecipient(args),
@@ -1320,7 +1325,7 @@ export function registerV4Tools() {
     'delete_transfer_recipient',
     [
       'Delete a Flutterwave v4 transfer recipient (DELETE /transfers/recipients/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     DeleteTransferRecipientSchema,
     async (args) => handleDeleteTransferRecipient(args),
@@ -1330,7 +1335,7 @@ export function registerV4Tools() {
     'list_transfer_senders',
     [
       'List Flutterwave v4 transfer senders (GET /transfers/senders).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListTransferSendersSchema,
     async (args) => handleListTransferSenders(args),
@@ -1341,7 +1346,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 transfer sender (POST /transfers/senders).',
       'type is generic_sender, bank_egp, bank_gbp, bank_eur, or mobile_money_egp. Every sender requires a first and last name.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateTransferSenderSchema,
     async (args) => handleCreateTransferSender(args),
@@ -1351,7 +1356,7 @@ export function registerV4Tools() {
     'get_transfer_sender',
     [
       'Retrieve a Flutterwave v4 transfer sender (GET /transfers/senders/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetTransferSenderSchema,
     async (args) => handleGetTransferSender(args),
@@ -1361,7 +1366,7 @@ export function registerV4Tools() {
     'delete_transfer_sender',
     [
       'Delete a Flutterwave v4 transfer sender (DELETE /transfers/senders/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     DeleteTransferSenderSchema,
     async (args) => handleDeleteTransferSender(args),
@@ -1372,7 +1377,7 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 transfer (POST /transfers).',
       'Requires action (instant, deferred, or scheduled), recipient_id, source_currency, and amount. sender_id is optional. Scheduled transfers also need disburse_option.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     CreateTransferSchema,
     async (args) => handleCreateTransfer(args),
@@ -1382,7 +1387,7 @@ export function registerV4Tools() {
     'get_transfer',
     [
       'Retrieve a Flutterwave v4 transfer (GET /transfers/{id}).',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     GetTransferSchema,
     async (args) => handleGetTransfer(args),
@@ -1392,7 +1397,8 @@ export function registerV4Tools() {
     'list_transfers',
     [
       'List Flutterwave v4 transfers (GET /transfers).',
-      'Available only when FLW_API_VERSION=v4.',
+      'from and to are date only (yyyy-MM-dd); ISO date-times are rejected. Pages with next and previous cursors and size; there is no page number.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     ListTransfersSchema,
     async (args) => handleListTransfers(args),
@@ -1403,7 +1409,7 @@ export function registerV4Tools() {
     [
       'Update a deferred or scheduled Flutterwave v4 transfer (PUT /transfers/{id}).',
       'Provide initiate, close, or disburse_option.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     UpdateTransferSchema,
     async (args) => handleUpdateTransfer(args),
@@ -1414,7 +1420,7 @@ export function registerV4Tools() {
     [
       'Retry or duplicate a Flutterwave v4 transfer (POST /transfers/{id}/retries).',
       'action is retry or duplicate.',
-      'Available only when FLW_API_VERSION=v4.',
+      'Available in v4 mode (the default).',
     ].join(' '),
     RetryTransferSchema,
     async (args) => handleRetryTransfer(args),

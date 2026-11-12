@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { flwV4Fetch } from '../../client/v4/http.js';
 import { ChargesListQueryParams } from '../../client/generated/v4/charges-list.zod.js';
 import { toQueryString, v4JsonResult } from './httpResult.js';
+import { isoDateTime, notInFuture } from './dateParams.js';
 
 export const ListChargesSchema = {
   status: z
@@ -21,14 +22,11 @@ export const ListChargesSchema = {
     .optional()
     .describe('Filter by virtual account id.'),
   order_id: z.string().min(1).optional().describe('Filter by order id.'),
-  from: z
-    .string()
-    .optional()
-    .describe('Range start, ISO 8601 date-time with offset.'),
-  to: z
-    .string()
-    .optional()
-    .describe('Range end, ISO 8601 date-time with offset.'),
+  from: isoDateTime('Start', 'The time of day is used, to the second (UTC).').optional(),
+  to: isoDateTime(
+    'End',
+    'The time of day is used. Must not be later than now: the API rejects a future value.',
+  ).optional(),
   page: z.number().int().min(1).optional().describe('Page to retrieve.'),
   size: z
     .number()
@@ -53,6 +51,7 @@ export type ListChargesArgs = {
 };
 
 export async function listCharges(args: ListChargesArgs) {
+  notInFuture(args.to);
   const parsed = ChargesListQueryParams.safeParse(args);
   if (!parsed.success) {
     throw new Error(
