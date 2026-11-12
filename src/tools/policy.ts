@@ -2,7 +2,9 @@ import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server
 import type { Options } from '../types/index.js';
 import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
-import { annotationsFor, isReadOnlyTool } from '../config/toolSafety.js';
+import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
+import { guardMoneyTool } from './confirm.js';
+import { z } from 'zod';
 
 /** Tools that create payments or payouts, or resend webhooks: they all point to the verify tools. */
 const GIVES_VALUE_SIGNAL = /^(create_|charge_|pay_bill$|send_stablecoin$|convert_to_stablecoin$|initiate_fx_trade$|resend_(transaction_)?webhook$|retry_transfer$)/;
@@ -38,6 +40,24 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
       tool.description = `${tool.description} ${VERIFY_HINT}`;
     }
     tool.annotations = { ...tool.annotations, ...annotationsFor(name) };
+    if (MONEY_MOVING.has(name)) {
+      const schema = tool.inputSchema as unknown as { extend?: (shape: object) => unknown } | undefined;
+      if (schema?.extend) {
+        (tool as { inputSchema: unknown }).inputSchema = schema.extend({
+          confirmation_token: z
+            .string()
+            .optional()
+            .describe('Leave empty on the first call. The server returns a token after the user confirms the summary.'),
+        });
+      }
+      tool.description = `${tool.description ?? ''} Moves money: the server asks for confirmation first, and refuses amounts above FLW_MAX_AMOUNT when set.`;
+      (tool as { handler: unknown }).handler = guardMoneyTool(
+        server,
+        name,
+        tool.handler as (args: Record<string, unknown>, extra: unknown) => Promise<unknown>,
+        options.allowLive === true,
+      );
+    }
     // Every result says which environment it came from.
     const handler = tool.handler as (...args: unknown[]) => Promise<{ content?: unknown[] }>;
     (tool as { handler: unknown }).handler = async (...args: unknown[]) => {

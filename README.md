@@ -115,6 +115,15 @@ To use live credentials on purpose, pass `--allow-live` or set `FLW_ALLOW_LIVE=t
 
 `--read-only` (or `FLW_READ_ONLY=true`) registers only tools that read data: `get_`, `list_`, `read_`, `resolve_` and `verify_` tools, and a few checks and quotes. Read-only mode is **on by default whenever live is allowed**. To allow writes with live credentials, pass `--read-only=false` or set `FLW_READ_ONLY=false`; the server then prints a warning. Naming a write tool in `--tools` while read-only mode is on stops start-up with an error.
 
+### Confirmation and amount cap on money-moving tools
+
+Tools that move money (charges, transfers, refunds, bills, FX, stablecoins, and updates that can void or cancel) never run on the first call.
+
+- If the MCP client supports elicitation, the server asks the user to confirm a summary directly.
+- Otherwise the first call returns the summary and a `confirmation_token`. The tool runs only when called again with exactly the same arguments plus that token. Tokens are bound to the tool and its arguments, work once, and expire after 5 minutes.
+- `FLW_MAX_AMOUNT` (any currency) and `FLW_MAX_AMOUNT_<CURRENCY>` (for example `FLW_MAX_AMOUNT_NGN=50000`) refuse larger amounts before anything is sent.
+- `FLW_CONFIRM=false` turns confirmation off for automated sandbox tests. It is ignored when live is allowed.
+
 ### Raw card tools are off by default
 
 These tools take a full card number, CVV or PIN as input, so card data passes through the AI model. For most merchants that is a PCI DSS problem.
