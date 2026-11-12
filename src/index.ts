@@ -6,7 +6,7 @@ import { parseArgs } from "./cli.js";
 
 async function main() {
     const options = parseArgs(process.argv.slice(2));
-    await startServer();
+    await startServer(options);
     const transport = new StdioServerTransport();
 
     // Handle process termination
