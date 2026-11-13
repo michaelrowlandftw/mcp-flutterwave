@@ -90,3 +90,14 @@ describe('v4 list date formats', () => {
     await expect(getWalletStatement({ currency: 'NGN' })).rejects.toThrow(/request failed: 404/);
   });
 });
+
+describe('charges clock margin', () => {
+  it('rejects a to within the last minute, accepts one older than a minute', async () => {
+    const { notInFuture } = await import('../../tools/v4/dateParams.js');
+    const now = Date.parse('2026-11-13T12:00:00Z');
+    expect(() => notInFuture('2026-11-13T12:00:00Z', now)).toThrow(/at least one minute in the past/);
+    expect(() => notInFuture('2026-11-13T11:59:30Z', now)).toThrow();
+    expect(() => notInFuture('2026-11-13T11:58:59Z', now)).not.toThrow();
+    expect(() => notInFuture(undefined, now)).not.toThrow();
+  });
+});

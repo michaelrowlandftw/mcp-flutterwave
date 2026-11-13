@@ -34,6 +34,13 @@ Fetch llms.txt first and follow the link for the topic. v4 pages sit under /v4/d
 - React: https://github.com/Flutterwave/React-v3
 - Other languages and plugins: https://github.com/Flutterwave
 
+## Webhooks
+
+- Use the default dashboard webhook settings, with every preference ticked. On v3, "Enable v3 webhooks" must be on; with it off, Flutterwave sends an older flat format.
+- Two settings may not be available: "payout subaccounts wallet funding hook" needs admin approval, and "service health insight" could not be enabled in testing.
+- Check the signature on every webhook: v3 sends the secret hash in \`verif-hash\`; v4 sends a base64 HMAC-SHA256 of the raw body in \`flutterwave-signature\`.
+- A webhook is a signal to check, not proof: fetch the record from the API before giving value (the verify_webhook tool does this). Webhooks can arrive about 10 minutes late.
+
 ## Rules for sample code
 
 - Use test keys and the sandbox in examples. Never put a secret key in browser or mobile code.
