@@ -6,6 +6,9 @@ import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafe
 import { guardMoneyTool } from './confirm.js';
 import { z } from 'zod';
 import { redactResult } from '../utils/redact.js';
+import { SCENARIO_TOOLS } from './sandbox.js';
+import { SCENARIO_KEY, withScenario } from '../client/v4/scenario.js';
+import { getApiVersion } from '../config/apiVersion.js';
 
 /** Tools that create payments or payouts, or resend webhooks: they all point to the verify tools. */
 const GIVES_VALUE_SIGNAL = /^(create_|charge_|pay_bill$|send_stablecoin$|convert_to_stablecoin$|initiate_fx_trade$|resend_(transaction_)?webhook$|retry_transfer$)/;
@@ -41,6 +44,24 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
       tool.description = `${tool.description} ${VERIFY_HINT}`;
     }
     tool.annotations = { ...tool.annotations, ...annotationsFor(name) };
+    if (SCENARIO_TOOLS.has(name) && getApiVersion() === 'v4') {
+      const shape = (tool.inputSchema as unknown as { shape?: z.ZodRawShape } | undefined)?.shape;
+      if (shape) {
+        (tool as { inputSchema: unknown }).inputSchema = z.object({
+          ...shape,
+          sandbox_scenario: z
+            .string()
+            .regex(SCENARIO_KEY, 'Use scenario:<value> or scenario:<value>&issuer:<value>')
+            .optional()
+            .describe('Sandbox only: force an outcome, for example scenario:successful or scenario:auth_pin&issuer:approved. See get_sandbox_scenarios.'),
+        });
+      }
+      const inner = tool.handler as (args: Record<string, unknown>, extra: unknown) => Promise<unknown>;
+      (tool as { handler: unknown }).handler = async (args: Record<string, unknown>, extra: unknown) => {
+        const { sandbox_scenario, ...rest } = args ?? {};
+        return withScenario(sandbox_scenario as string | undefined, () => inner(rest, extra));
+      };
+    }
     if (MONEY_MOVING.has(name)) {
       // The SDK stores a zod/mini object (no .extend), so rebuild it from its shape.
       const shape = (tool.inputSchema as unknown as { shape?: z.ZodRawShape } | undefined)?.shape;

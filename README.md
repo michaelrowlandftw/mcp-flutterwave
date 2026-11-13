@@ -275,6 +275,7 @@ delete_transfer_sender
 create_transfer                 get_transfer                    list_transfers
 update_transfer                 retry_transfer
 verify_payment                  verify_payout                   verify_webhook
+get_sandbox_scenarios
 ```
 
 ---
@@ -718,6 +719,7 @@ initiate_bvn_verification  get_bvn_details
 resolve_bank_account       verify_card_bin
 get_stablecoin_fee         send_stablecoin               convert_to_stablecoin
 verify_payment             verify_payout                 verify_webhook
+get_sandbox_scenarios
 ```
 
 In v4 mode (the default), `--tools=all` enables the [v4 accepted tool names](#flutterwave-v4) instead.
