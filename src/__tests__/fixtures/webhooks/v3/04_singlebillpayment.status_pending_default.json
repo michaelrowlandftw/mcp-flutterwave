@@ -1,0 +1,23 @@
+{
+  "captured_at_utc": "2026-11-12 12:51:42",
+  "headers": {
+    "content-type": "application/json",
+    "verif-hash": "<temporary test value>"
+  },
+  "body": {
+    "event": "singlebillpayment.status",
+    "event.type": "SingleBillPayment",
+    "data": {
+      "customer": "+2348031234567",
+      "amount": 100,
+      "network": "Airtime",
+      "tx_ref": "CF-FLYAPI-20261112125139070795798",
+      "flw_ref": "CF-FLY-AIR-PREF-20261112125139195757908",
+      "batch_reference": null,
+      "customer_reference": "<redacted>",
+      "status": "pending",
+      "message": "Bill Payment is currently being processed",
+      "reference": null
+    }
+  }
+}

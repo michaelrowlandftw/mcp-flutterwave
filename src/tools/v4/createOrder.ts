@@ -1,12 +1,14 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupOrder } from './safeCreate.js';
 import { OrdersPostBody } from '../../client/generated/v4/orders.zod.js';
-import { v4JsonResult } from './httpResult.js';
 
 export const CreateOrderSchema = {
   amount: OrdersPostBody.shape.amount,
   currency: OrdersPostBody.shape.currency,
-  reference: OrdersPostBody.shape.reference,
+  reference: OrdersPostBody.shape.reference.optional().describe(
+    `Unique reference for this create. ${RETRY_GUIDANCE}`,
+  ),
   customer_id: z.string().min(1).describe('ID of the customer (cus_…).'),
   payment_method_id: z
     .string()
@@ -20,7 +22,7 @@ export const CreateOrderSchema = {
 export type CreateOrderArgs = {
   amount: number;
   currency: string;
-  reference: string;
+  reference?: string;
   customer_id: string;
   payment_method_id: string;
   redirect_url?: string;
@@ -29,6 +31,7 @@ export type CreateOrderArgs = {
 };
 
 export async function createOrder(args: CreateOrderArgs) {
+  args = { ...args, reference: args.reference ?? newReference() };
   const strict = z.object(CreateOrderSchema).safeParse(args);
   if (!strict.success) {
     throw new Error(
@@ -43,9 +46,12 @@ export async function createOrder(args: CreateOrderArgs) {
     );
   }
 
-  const response = await flwV4Fetch('/orders', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/orders',
+    body: body.data,
+    label: 'create order',
+    reference: (body.data as { reference?: string }).reference,
+    lookup: lookupOrder,
+    lookupHint: 'Check with list_orders or get_order.',
   });
-  return v4JsonResult(response, 'create order');
 }

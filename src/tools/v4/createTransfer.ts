@@ -1,13 +1,15 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupTransfer } from './safeCreate.js';
 import { TransfersPostBody } from '../../client/generated/v4/transfers.zod.js';
-import { v4JsonResult } from './httpResult.js';
 
 const instruction = TransfersPostBody.shape.payment_instruction;
 
 export const CreateTransferSchema = {
   action: TransfersPostBody.shape.action,
-  reference: TransfersPostBody.shape.reference,
+  reference: TransfersPostBody.shape.reference.optional().describe(
+    `Unique reference for this create. ${RETRY_GUIDANCE}`,
+  ),
   narration: TransfersPostBody.shape.narration,
   disburse_option: TransfersPostBody.shape.disburse_option,
   callback_url: TransfersPostBody.shape.callback_url,
@@ -39,6 +41,7 @@ export type CreateTransferArgs = {
 };
 
 export async function createTransfer(args: CreateTransferArgs) {
+  args = { ...args, reference: args.reference ?? newReference() };
   const strict = z.object(CreateTransferSchema).safeParse(args);
   if (!strict.success) {
     throw new Error(
@@ -59,9 +62,12 @@ export async function createTransfer(args: CreateTransferArgs) {
     );
   }
 
-  const response = await flwV4Fetch('/transfers', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/transfers',
+    body: body.data,
+    label: 'create transfer',
+    reference: (body.data as { reference?: string }).reference,
+    lookup: lookupTransfer,
+    lookupHint: 'Check with list_transfers for today, matching the reference, or get_transfer.',
   });
-  return v4JsonResult(response, 'create transfer');
 }
