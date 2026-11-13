@@ -152,6 +152,73 @@ describe('tokens', () => {
 
   it('reject garbage', () => {
     expect(checkToken('create_transfer', ARGS, 'nope')).toMatch(/not valid/);
-    expect(checkToken('create_transfer', ARGS, '9999999999999.zz')).toMatch(/does not match/);
+    expect(checkToken('create_transfer', ARGS, '9999999999999.zz')).toMatch(/not valid/);
+  });
+
+  it('a used token cannot be replayed in another spelling (review H2)', () => {
+    const t = issueToken('create_transfer', ARGS);
+    expect(checkToken('create_transfer', ARGS, t)).toBeNull();
+    for (const variant of [t, `${t}.x`, t.toUpperCase(), `${t}zz`, ` ${t}`, `${t}\n`, t.replace('.', '..')]) {
+      expect(checkToken('create_transfer', ARGS, variant)).not.toBeNull();
+    }
+  });
+});
+
+describe('amount cap holes from the review (M1)', () => {
+  const NGN_CAP = { FLW_MAX_AMOUNT_NGN: '100000' };
+
+  it('refuses an amount it cannot read when a cap is set', () => {
+    expect(capError({ amount: '5,000,000', currency: 'NGN' }, NGN_CAP, 'charge_ussd')).toMatch(/not a plain number/);
+    expect(capError({ amount: '1e9', currency: 'NGN' }, NGN_CAP, 'charge_ussd')).toMatch(/not a plain number/);
+    expect(capError({ currency: 'NGN' }, NGN_CAP, 'create_refund')).toMatch(/no amount/);
+    expect(capError({ amount: '1500.50', currency: 'NGN' }, NGN_CAP, 'charge_ussd')).toBeNull();
+  });
+
+  it('checks the destination currency when the amount applies to it', () => {
+    const args = {
+      payment_instruction: { source_currency: 'NGN', destination_currency: 'USD', amount: { value: 50000, applies_to: 'destination_currency' } },
+    };
+    expect(capError(args, { FLW_MAX_AMOUNT_NGN: '100000', FLW_MAX_AMOUNT_USD: '1000' }, 'create_transfer')).toMatch(/50000 USD.*FLW_MAX_AMOUNT_USD/);
+    // Only an NGN cap, unknown destination currency on a destination-currency amount: refuse, don't guess.
+    const noDest = { payment_instruction: { source_currency: 'NGN', amount: { value: 50000, applies_to: 'destination_currency' } } };
+    expect(capError(noDest, { FLW_MAX_AMOUNT_NGN: '100000' }, 'create_transfer')).toMatch(/currency of this call can't be read/);
+  });
+
+  it('caps FX by the quote quantity, and bills in NGN', () => {
+    expect(capError({ quantity: 5000, base_currency: 'USD' }, { FLW_MAX_AMOUNT_USD: '1000' }, 'request_fx_quote')).toMatch(/5000 USD/);
+    expect(capError({ amount: 200000 }, NGN_CAP, 'pay_bill')).toMatch(/200000 NGN/);
+  });
+
+  it('tools with no amount of their own are not blocked', () => {
+    for (const tool of ['validate_charge', 'retry_transfer', 'initiate_fx_trade', 'update_order']) {
+      expect(capError({ id: 'x' }, NGN_CAP, tool)).toBeNull();
+    }
+  });
+
+  it('live mode requires a cap', () => {
+    const live = { FLW_API_VERSION: 'v4', FLW_ENVIRONMENT: 'production' };
+    expect(capError({ amount: 1, currency: 'NGN' }, live, 'create_charge')).toMatch(/Live mode needs an amount cap/);
+  });
+});
+
+describe('self-confirmation guard (H1)', () => {
+  afterEach(() => {
+    delete process.env.FLW_REQUIRE_ELICITATION;
+  });
+
+  it('FLW_REQUIRE_ELICITATION=true blocks money tools in clients that cannot ask the person', async () => {
+    process.env.FLW_REQUIRE_ELICITATION = 'true';
+    const { inner, call } = await setup();
+    const { out, body } = await call(ARGS);
+    expect(out.isError).toBe(true);
+    expect(body.reason).toMatch(/cannot ask you to confirm directly/);
+    expect(inner).not.toHaveBeenCalled();
+  });
+
+  it('still works when the client can ask the person', async () => {
+    process.env.FLW_REQUIRE_ELICITATION = 'true';
+    const { inner, call } = await setup({ elicit: 'accept' });
+    expect((await call(ARGS)).body).toBe('sent');
+    expect(inner).toHaveBeenCalledTimes(1);
   });
 });

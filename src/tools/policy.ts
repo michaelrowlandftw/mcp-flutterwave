@@ -3,7 +3,7 @@ import type { Options } from '../types/index.js';
 import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
 import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
-import { guardMoneyTool } from './confirm.js';
+import { capError, guardMoneyTool } from './confirm.js';
 import { z } from 'zod';
 import { redactResult } from '../utils/redact.js';
 import { SCENARIO_TOOLS } from './sandbox.js';
@@ -60,6 +60,14 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
       (tool as { handler: unknown }).handler = async (args: Record<string, unknown>, extra: unknown) => {
         const { sandbox_scenario, ...rest } = args ?? {};
         return withScenario(sandbox_scenario as string | undefined, () => inner(rest, extra));
+      };
+    }
+    // request_fx_quote sets the size of the FX trade, so it gets the amount cap too.
+    if (name === 'request_fx_quote') {
+      const inner = tool.handler as (args: Record<string, unknown>, extra: unknown) => Promise<unknown>;
+      (tool as { handler: unknown }).handler = async (args: Record<string, unknown>, extra: unknown) => {
+        const cap = capError(args ?? {}, process.env, name);
+        return cap ? { isError: true, content: [{ type: 'text', text: cap }] } : inner(args, extra);
       };
     }
     if (MONEY_MOVING.has(name)) {
