@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupOrder } from './safeCreate.js';
 import { encryptCardFields } from '../../client/v4/encryption.js';
 import { OrchestrationDirectOrderPostBody } from '../../client/generated/v4/orchestration-direct-order.zod.js';
 import { config } from '../../config/index.js';
-import { v4JsonResult } from './httpResult.js';
 
 const cardFields = {
   card_number: z
@@ -22,7 +22,9 @@ const cardFields = {
 export const CreateOrchestratorOrderSchema = {
   amount: OrchestrationDirectOrderPostBody.shape.amount,
   currency: OrchestrationDirectOrderPostBody.shape.currency,
-  reference: OrchestrationDirectOrderPostBody.shape.reference,
+  reference: OrchestrationDirectOrderPostBody.shape.reference.optional().describe(
+    `Unique reference for this create. ${RETRY_GUIDANCE}`,
+  ),
   customer: OrchestrationDirectOrderPostBody.shape.customer,
   ...cardFields,
   redirect_url: OrchestrationDirectOrderPostBody.shape.redirect_url,
@@ -34,7 +36,7 @@ export const CreateOrchestratorOrderSchema = {
 export type CreateOrchestratorOrderArgs = {
   amount: number;
   currency: string;
-  reference: string;
+  reference?: string;
   customer: {
     email: string;
     name?: { first?: string; middle?: string; last?: string };
@@ -68,6 +70,7 @@ function withoutUndefined<T extends Record<string, unknown>>(value: T): T {
 export async function createOrchestratorOrder(
   args: CreateOrchestratorOrderArgs,
 ) {
+  args = { ...args, reference: args.reference ?? newReference() };
   const strict = z.object(CreateOrchestratorOrderSchema).safeParse(args);
   if (!strict.success) {
     throw new Error(
@@ -120,9 +123,12 @@ export async function createOrchestratorOrder(
     );
   }
 
-  const response = await flwV4Fetch('/orchestration/direct-orders', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/orchestration/direct-orders',
+    body: body.data,
+    label: 'create orchestrator order',
+    reference: (body.data as { reference?: string }).reference,
+    lookup: lookupOrder,
+    lookupHint: 'Check with list_orders.',
   });
-  return v4JsonResult(response, 'create orchestrator order');
 }

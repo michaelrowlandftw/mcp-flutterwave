@@ -1,0 +1,53 @@
+{
+  "captured_at_utc": "2026-11-12 12:56:06",
+  "headers": {
+    "content-type": "application/json",
+    "verif-hash": "<temporary test value>"
+  },
+  "body": {
+    "id": 10598477,
+    "txRef": "REF_BT_1794050786",
+    "flwRef": "4647385147661794050789116",
+    "orderRef": "URF_1794050788443_2648735",
+    "paymentPlan": null,
+    "paymentPage": null,
+    "createdAt": "2026-11-07T11:26:39.000Z",
+    "amount": 1500,
+    "charged_amount": 1521,
+    "status": "successful",
+    "IP": "<redacted>",
+    "currency": "NGN",
+    "appfee": 21,
+    "merchantfee": 0,
+    "merchantbearsfee": 0,
+    "acctvalrespcode": "00",
+    "redirectUrl": "N/A",
+    "charge_type": "normal",
+    "customer": {
+      "id": 0,
+      "phone": "<redacted>",
+      "fullName": "<redacted>",
+      "customertoken": null,
+      "email": "<redacted>",
+      "createdAt": "2024-05-08T12:04:56.000Z",
+      "updatedAt": "2024-05-08T12:04:56.000Z",
+      "deletedAt": null,
+      "AccountId": "<redacted>"
+    },
+    "entity": {
+      "account_number": "<redacted>",
+      "first_name": "<redacted>",
+      "last_name": "<redacted>",
+      "createdAt": "2026-11-07T11:26:38.000Z"
+    },
+    "meta_data": {
+      "virtualaccountnumber": "<redacted>",
+      "originatoraccountnumber": "<redacted>",
+      "originatorname": "<redacted>",
+      "bankname": "Access Bank",
+      "bankcode": "044",
+      "originatoramount": "N/A"
+    },
+    "event.type": "BANK_TRANSFER_TRANSACTION"
+  }
+}

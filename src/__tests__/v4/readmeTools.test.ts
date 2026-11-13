@@ -22,10 +22,10 @@ function acceptedNames(heading: string): string[] {
 }
 
 describe('README tool lists', () => {
-  it('documents v4 as opt-in and keeps the v3 default', () => {
+  it('documents v4 as the default and v3 as opt-in', () => {
     expect(readme).not.toMatch(/coming soon/i);
-    expect(readme).toContain('FLW_API_VERSION=v4');
-    expect(readme).toContain('targets the Flutterwave v3 API by default');
+    expect(readme).toContain('FLW_API_VERSION=v3');
+    expect(readme).toContain('targets the Flutterwave v4 API by default');
   });
 
   it('lists the v3 allowlist', () => {
