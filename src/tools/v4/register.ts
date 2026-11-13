@@ -940,7 +940,7 @@ export function registerV4Tools() {
     [
       'List Flutterwave v4 charges (GET /charges).',
       'Optional filters: status, reference, customer_id, payment_method_id, from, to.',
-      'from and to are ISO 8601 date-times (time of day is used); to must not be later than now. Pages with page and size.',
+      'from and to are ISO 8601 date-times (time of day is used); to must be at least one minute before now. Pages with page and size.',
       'Available in v4 mode (the default).',
     ].join(' '),
     ListChargesSchema,
