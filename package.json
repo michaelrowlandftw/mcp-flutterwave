@@ -21,7 +21,8 @@
     "generate:v4": "orval --config orval.config.ts",
     "start:app": "node build/app/index.js",
     "dev:app": "npm run build:all && npm run start:app",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:contract": "vitest run src/__tests__/contract"
   },
   "files": [
     "build"
@@ -40,7 +41,7 @@
     "@mcp-ui/server": "^5.16.3",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "openapi-fetch": "^0.15.0",
-    "zod": "^3.24.2"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.104.2",
