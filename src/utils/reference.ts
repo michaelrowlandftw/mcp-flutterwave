@@ -23,6 +23,16 @@ export function withReference<T extends object, K extends string>(
     Record<K, string>;
 }
 
+/** A v3 4xx (or a local check that fails): Flutterwave did not create anything. */
+export class V3Rejected extends Error {}
+
+/** In a v3 client call: throw on a 4xx, so callers can tell "refused" from "unclear". */
+export function throwIfRejected(response: Response, error: unknown): void {
+  if (response.status >= 400 && response.status < 500) {
+    throw new V3Rejected(`Flutterwave refused the request (HTTP ${response.status}): ${JSON.stringify(error)}`);
+  }
+}
+
 /**
  * v3 client calls return nothing on any failure, so the server cannot tell
  * "not created" from "created, but the reply was lost". Treat both as unknown.
