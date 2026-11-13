@@ -1,7 +1,7 @@
 import { Options } from "./types/index.js";
 import { getApiVersion } from "./config/apiVersion.js";
 import { acceptedToolsFor } from "./config/acceptedTools.js";
-import { assertTestCredentials, liveAllowedByEnv } from "./config/livePolicy.js";
+import { assertTestCredentials } from "./config/livePolicy.js";
 import {
     RAW_CARD_SWITCH_HINT,
     RAW_CARD_TOOLS,
@@ -9,7 +9,7 @@ import {
 } from "./config/rawCardTools.js";
 import { isReadOnlyTool } from "./config/toolSafety.js";
 
-const ACCEPTED_ARGS = ['tools', 'allow-live', 'enable-raw-card-tools', 'read-only'];
+const ACCEPTED_ARGS = ['tools', 'enable-raw-card-tools', 'read-only'];
 
 export function parseArgs(
     args: string[],
@@ -23,8 +23,6 @@ export function parseArgs(
 
             if (key === 'tools') {
                 options.tools = (value ?? '').split(',');
-            } else if (key === 'allow-live') {
-                options.allowLive = true;
             } else if (key === 'read-only') {
                 if (value !== undefined && value !== 'true' && value !== 'false') {
                     throw new Error('--read-only takes no value, or =true or =false.');
@@ -82,17 +80,11 @@ export function parseArgs(
         );
     }
 
-    options.allowLive = options.allowLive === true || liveAllowedByEnv(env);
-    assertTestCredentials(apiVersion, options.allowLive, env);
-    if (options.allowLive) {
-        console.error('WARNING: live mode is on. Tools can move real money.');
-    }
+    assertTestCredentials(apiVersion, env);
 
-    // Read-only: explicit flag, then FLW_READ_ONLY, then on whenever live is allowed.
+    // Read-only: explicit flag, then FLW_READ_ONLY. Off by default.
     if (options.readOnly === undefined) {
-        const fromEnv = env.FLW_READ_ONLY;
-        options.readOnly =
-            fromEnv === 'true' ? true : fromEnv === 'false' ? false : options.allowLive;
+        options.readOnly = env.FLW_READ_ONLY === 'true';
     }
     if (options.readOnly) {
         const writes = options.tools
@@ -100,12 +92,10 @@ export function parseArgs(
             .filter((tool) => tool !== 'all' && !isReadOnlyTool(tool));
         if (writes.length > 0) {
             throw new Error(
-                `Read-only mode is on${options.allowLive ? ' (the default with --allow-live)' : ''}, so these tools cannot be registered: ${writes.join(', ')}. Pass --read-only=false or set FLW_READ_ONLY=false to allow writes.`
+                `Read-only mode is on, so these tools cannot be registered: ${writes.join(', ')}. Pass --read-only=false or set FLW_READ_ONLY=false to allow writes.`
             );
         }
         console.error('Read-only mode: only tools that read data are registered.');
-    } else if (options.allowLive) {
-        console.error('WARNING: live mode with writes on. Tools can create charges and move real money.');
     }
 
     if (apiVersion === 'v3') {
