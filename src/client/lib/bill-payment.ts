@@ -1,3 +1,4 @@
+import { throwIfRejected } from "../../utils/reference.js";
 import { billPaymentClient as client } from "../http/index.js";
 import type { paths } from "../types/v3/bill-payment.js";
 
@@ -46,11 +47,12 @@ async function payBill(
     item_code: string,
     body: PayBillBody,
 ): Promise<PayResp | undefined> {
-    const { data, error } = await client.POST("/billers/{biller_code}/items/{item_code}/payment", {
+    const { data, error, response } = await client.POST("/billers/{biller_code}/items/{item_code}/payment", {
         params: { path: { biller_code, item_code } },
         body,
     });
-    if (error) { console.error(error); return; }
+    if (error) {
+        throwIfRejected(response, error); console.error(error); return; }
     return data;
 }
 

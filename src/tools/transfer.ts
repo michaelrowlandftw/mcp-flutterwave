@@ -1,5 +1,6 @@
 import z from "zod";
 import { uncertainV3, withReference } from '../utils/reference.js';
+import { lookupV3Transfer, sendV3Safely } from './safeCreateV3.js';
 import Flutterwave from "../client/index.js";
 import { server } from "../server.js";
 import { CreateTransferPayloadSchema, CreateBeneficiaryPayloadSchema } from "../types/transfer/schema.js";
@@ -71,8 +72,12 @@ export async function createTransfer(payload: {
         reference: payload.reference, debit_currency: payload.debit_currency,
         destination_branch_code: payload.destination_branch_code, narration: payload.narration,
     };
-    const response = await transfersClient.create(requestPayload);
-    if (!response) return uncertainV3("create transfer", payload.reference, "read_transaction_with_reference or the dashboard");
+    const sent = await sendV3Safely({
+        action: "create transfer", reference: payload.reference, lookupTool: "read_transaction_with_reference or the dashboard",
+        lookup: lookupV3Transfer, send: () => transfersClient.create(requestPayload),
+    });
+    if ('result' in sent) return sent.result;
+    const response = sent.response;
     if (!isValidResponse(response.status, response.data)) return createErrorResponse("Failed to create transfer");
     const uiResource = createTransferUI({
         reference: payload.reference || (response.data as any).reference || `TRF-${Date.now()}`,
@@ -85,7 +90,7 @@ export async function createTransfer(payload: {
 
 export function registerTransferTools() {
     server.tool("create_transfer", "Create a transfer with Flutterwave.", CreateTransferPayloadSchema,
-        async (args) => { try { return await createTransfer(withReference(args, 'reference')); } catch (error) { return { content: [{ type: "text" as const, text: `Error occurred on creating transfer` }] }; } });
+        async (args) => { const a = withReference(args, 'reference'); try { return await createTransfer(a); } catch (error) { return uncertainV3("create transfer", a.reference, "read_transaction_with_reference or the dashboard", error instanceof Error ? error.message : undefined); } });
     server.tool("list_beneficiaries", "List all beneficiaries with Flutterwave.",
         async () => { try { return await listBeneficiaries(); } catch (error) { return { content: [{ type: "text" as const, text: `Error occurred on listing beneficiaries` }] }; } });
     server.tool("create_beneficiary", "Create a new beneficiary with Flutterwave.", CreateBeneficiaryPayloadSchema,

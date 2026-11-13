@@ -11,13 +11,13 @@ type Attempt =
 const DEFAULT_DELAYS_MS = [2_000, 5_000, 10_000, 20_000];
 
 /** Backoff between lookups. FLW_LOOKUP_DELAYS_MS="0,0" makes tests instant. */
-function lookupDelays(): number[] {
+export function lookupDelays(): number[] {
   const raw = process.env.FLW_LOOKUP_DELAYS_MS;
   if (!raw) return DEFAULT_DELAYS_MS;
   return raw.split(',').map((v) => Math.max(0, Number(v) || 0));
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function parse(raw: string): unknown {
   try {
@@ -97,9 +97,20 @@ export async function safeCreate(opts: {
     return unknown(first.reason);
   }
 
+  // A lookup that errors or can't finish (429, 5xx, page limit) has not checked anything.
+  // Retry only when at least one lookup really ran and found nothing.
+  let checked = 0;
+  let lastLookupError = '';
   for (const delay of lookupDelays()) {
     await sleep(delay);
-    const found = await opts.lookup(opts.reference).catch(() => null);
+    let found: unknown = null;
+    try {
+      found = await opts.lookup(opts.reference);
+      checked++;
+    } catch (error) {
+      lastLookupError = error instanceof Error ? error.message : String(error);
+      continue;
+    }
     if (found) {
       return text({
         status: 'found_after_uncertain_create',
@@ -111,7 +122,25 @@ export async function safeCreate(opts: {
     }
   }
 
-  const second = await attempt(opts.path, opts.body, key, opts.label);
+  if (checked === 0) {
+    return unknown(first.reason, {
+      lookup_failed: lastLookupError,
+      note: 'The server could not check whether the record exists, so it did not retry.',
+    });
+  }
+
+  let second: Attempt;
+  try {
+    second = await attempt(opts.path, opts.body, key, opts.label);
+  } catch (error) {
+    // A 4xx here (for example "duplicate reference") can mean the first call did succeed.
+    // Report unknown, never "failed", so the AI does not create it again under a new reference.
+    return unknown(first.reason, {
+      retried_once: true,
+      retry_refused: error instanceof Error ? error.message : String(error),
+      note: 'The retry was refused. The first call may have succeeded: check by reference.',
+    });
+  }
   if (second.kind === 'ok') {
     return text({
       status: second.status,
@@ -148,9 +177,9 @@ export const lookupOrder: Lookup = async (reference) => {
     const body = await getJson(`/orders${toQueryString({ page, size: 50 })}`);
     const hit = match(body?.data, reference);
     if (hit) return hit;
-    if (!Array.isArray(body?.data) || body.data.length < 50) break;
+    if (!Array.isArray(body?.data) || body.data.length < 50) return null;
   }
-  return null;
+  throw new Error('order lookup stopped at the page limit with more orders left');
 };
 
 /** Transfers have no reference filter: scan today's and yesterday's transfers (UTC, date only). */
@@ -164,7 +193,7 @@ export const lookupTransfer: Lookup = async (reference) => {
     const hit = match(rows, reference);
     if (hit) return hit;
     next = data?.cursor?.has_more_items ? data.cursor.next : undefined;
-    if (!next) break;
+    if (!next) return null;
   }
-  return null;
+  throw new Error('transfer lookup stopped at the page limit with more transfers left');
 };
