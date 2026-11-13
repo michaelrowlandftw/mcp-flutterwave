@@ -1,4 +1,6 @@
 import Flutterwave from "../client/index.js";
+import { uncertainV3, withReference } from '../utils/reference.js';
+import { lookupV3Transfer, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
     GetStablecoinFeeSchema,
@@ -42,7 +44,7 @@ function buildTransferResponse(response: any, transferType: 'wallet' | 'convert'
                     transferType === 'wallet'
                         ? `Recipient wallet: ${d.account_number}`
                         : `Converted to ${d.currency} wallet.`,
-                    `Use read_transaction_with_reference with reference "${d.reference}" to check settlement status.`,
+                    `Check the transfer by reference "${d.reference}" in the Flutterwave dashboard (Transfers) to see its status.`,
                 ].join('\n'),
             },
             { type: "resource" as const, resource: ui },
@@ -112,7 +114,9 @@ export async function sendStablecoin(payload: {
     narration?: string;
 }) {
     try {
-        const response = await transferClient.create({
+        const sent = await sendV3Safely({
+            action: 'send stablecoin', reference: payload.reference, lookupTool: 'the Flutterwave dashboard (Transfers, search by reference)',
+            lookup: lookupV3Transfer, send: () => transferClient.create({
             account_bank:    'POLYGON',
             account_number:  payload.wallet_address,
             amount:          String(payload.amount),
@@ -120,12 +124,13 @@ export async function sendStablecoin(payload: {
             debit_currency:  payload.debit_currency,
             reference:       payload.reference,
             narration:       payload.narration,
+        }),
         });
-
-        if (!response) return createErrorResponse(`Failed to send ${payload.currency} to wallet ${payload.wallet_address}`);
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
         return buildTransferResponse(response, 'wallet');
     } catch (error) {
-        return createErrorResponse(`Error sending stablecoin: ${JSON.stringify(error)}`);
+        return uncertainV3('send stablecoin', payload.reference, 'the Flutterwave dashboard (Transfers, search by reference)', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -138,7 +143,9 @@ export async function convertToStablecoin(payload: {
     narration?: string;
 }) {
     try {
-        const response = await transferClient.create({
+        const sent = await sendV3Safely({
+            action: 'convert to stablecoin', reference: payload.reference, lookupTool: 'the Flutterwave dashboard (Transfers, search by reference)',
+            lookup: lookupV3Transfer, send: () => transferClient.create({
             account_bank:   'flutterwave',
             account_number: payload.merchant_id,
             amount:         String(payload.amount),
@@ -146,12 +153,13 @@ export async function convertToStablecoin(payload: {
             debit_currency: payload.debit_currency,
             reference:      payload.reference,
             narration:      payload.narration,
+        }),
         });
-
-        if (!response) return createErrorResponse(`Failed to convert ${payload.debit_currency} to ${payload.currency}`);
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
         return buildTransferResponse(response, 'convert');
     } catch (error) {
-        return createErrorResponse(`Error converting to stablecoin: ${JSON.stringify(error)}`);
+        return uncertainV3('convert to stablecoin', payload.reference, 'the Flutterwave dashboard (Transfers, search by reference)', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -187,10 +195,11 @@ export function registerStablecoinTools() {
         ].join(' '),
         SendStablecoinSchema,
         async (args) => {
+            const a = withReference(args, 'reference');
             try {
-                return await sendStablecoin(args as any);
+                return await sendStablecoin(a as any);
             } catch (error) {
-                return createErrorResponse('Error sending stablecoin');
+                return uncertainV3('send stablecoin', a.reference, 'the Flutterwave dashboard (Transfers, search by reference)', error instanceof Error ? error.message : 'request error');
             }
         }
     );
@@ -208,10 +217,11 @@ export function registerStablecoinTools() {
         ].join(' '),
         ConvertToStablecoinSchema,
         async (args) => {
+            const a = withReference(args, 'reference');
             try {
-                return await convertToStablecoin(args as any);
+                return await convertToStablecoin(a as any);
             } catch (error) {
-                return createErrorResponse('Error converting to stablecoin');
+                return uncertainV3('convert to stablecoin', a.reference, 'the Flutterwave dashboard (Transfers, search by reference)', error instanceof Error ? error.message : 'request error');
             }
         }
     );

@@ -1,3 +1,4 @@
+import { throwIfRejected, V3Rejected } from "../../utils/reference.js";
 import { encrypt } from "../../utils/encrypt.js";
 import { chargeClient as client } from "../http/index.js";
 import type { paths } from "../types/v3/charge.js";
@@ -18,8 +19,7 @@ type ValidateChargePayload = paths["/validate-charge"]["post"]["requestBody"]["c
 async function chargeCard(payload: ChargePayload): Promise<ChargeResponse | undefined> {
     const key = process.env.FLW_ENCRYPTION_KEY;
     if (!key) {
-        console.error("FLW_ENCRYPTION_KEY is not set in the environment.");
-        return;
+        throw new V3Rejected("FLW_ENCRYPTION_KEY is not set in the environment.");
     }
 
     // Encrypt card data before sending to Flutterwave.
@@ -42,7 +42,7 @@ async function chargeCard(payload: ChargePayload): Promise<ChargeResponse | unde
         ...(payload.authorization ? { authorization: payload.authorization } : {}),
     }));
 
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type: "card" } },
         body: {
             client: encryptedCardData,
@@ -50,6 +50,7 @@ async function chargeCard(payload: ChargePayload): Promise<ChargeResponse | unde
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -67,20 +68,20 @@ async function chargeBankAccount(payload: ChargePayload): Promise<ChargeResponse
     let type: ChargeType = 'mono';
 
     if (payload.currency && !supportedCurrencies.includes(payload.currency)) {
-        console.error(`Currency ${payload.currency} is not supported for bank account charges. Supported currencies: ${supportedCurrencies.join(", ")}`);
-        return;
+        throw new V3Rejected(`Currency ${payload.currency} is not supported for bank account charges. Supported currencies: ${supportedCurrencies.join(", ")}`);
     }
 
     if (payload.currency && UKEURSupportedCurrencies.includes(payload.currency)) {
         type = 'debit_uk_account';
     }
 
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type } },
         body: payload,
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -93,12 +94,13 @@ async function chargeBankAccount(payload: ChargePayload): Promise<ChargeResponse
  * https://developer.flutterwave.com/reference/mobile-money-ghana
  */
 async function chargeMobileMoney(type: ChargeType, payload: ChargePayload): Promise<ChargeResponse | undefined> {
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type } },
         body: payload,
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -111,12 +113,13 @@ async function chargeMobileMoney(type: ChargeType, payload: ChargePayload): Prom
  * https://developer.flutterwave.com/reference/mpesa
  */
 async function chargeMpesa(payload: ChargePayload): Promise<ChargeResponse | undefined> {
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type: "mpesa" } },
         body: payload,
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -129,12 +132,13 @@ async function chargeMpesa(payload: ChargePayload): Promise<ChargeResponse | und
  * https://developer.flutterwave.com/reference/ussd
  */
 async function chargeUssd(payload: ChargePayload): Promise<ChargeResponse | undefined> {
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type: "ussd" } },
         body: payload,
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -147,12 +151,13 @@ async function chargeUssd(payload: ChargePayload): Promise<ChargeResponse | unde
  * https://developer.flutterwave.com/v3.0.0/reference/charge-via-fawrypay
  */
 async function chargeFawry(payload: ChargePayload): Promise<ChargeResponse | undefined> {
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type: "fawry_pay" } },
         body: payload,
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -165,12 +170,13 @@ async function chargeFawry(payload: ChargePayload): Promise<ChargeResponse | und
  * https://developer.flutterwave.com/v3.0.0/reference/charge-via-capitec
  */
 async function chargeCapitec(payload: ChargePayload): Promise<ChargeResponse | undefined> {
-    const { data, error } = await client.POST("/charges", {
+    const { data, error, response } = await client.POST("/charges", {
         params: { query: { type: "capitec" } },
         body: payload,
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }

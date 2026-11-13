@@ -1,11 +1,13 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupVirtualAccount } from './safeCreate.js';
 import { VirtualAccountsPostBody } from '../../client/generated/v4/virtual-accounts.zod.js';
-import { v4JsonResult } from './httpResult.js';
 
 export const CreateVirtualAccountSchema = {
   customer_id: z.string().min(1).describe('ID of the customer (cus_…).'),
-  reference: VirtualAccountsPostBody.shape.reference,
+  reference: VirtualAccountsPostBody.shape.reference.optional().describe(
+    `Unique reference for this create. ${RETRY_GUIDANCE}`,
+  ),
   currency: VirtualAccountsPostBody.shape.currency,
   account_type: VirtualAccountsPostBody.shape.account_type,
   amount: VirtualAccountsPostBody.shape.amount,
@@ -21,7 +23,7 @@ export const CreateVirtualAccountSchema = {
 
 export type CreateVirtualAccountArgs = {
   customer_id: string;
-  reference: string;
+  reference?: string;
   currency: 'NGN' | 'GHS' | 'EGP' | 'KES' | 'MAD' | 'ZAR';
   account_type: 'static' | 'dynamic';
   amount?: number;
@@ -36,6 +38,7 @@ export type CreateVirtualAccountArgs = {
 };
 
 export async function createVirtualAccount(args: CreateVirtualAccountArgs) {
+  args = { ...args, reference: args.reference ?? newReference() };
   const strict = z.object(CreateVirtualAccountSchema).safeParse(args);
   if (!strict.success) {
     throw new Error(
@@ -50,9 +53,12 @@ export async function createVirtualAccount(args: CreateVirtualAccountArgs) {
     );
   }
 
-  const response = await flwV4Fetch('/virtual-accounts', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/virtual-accounts',
+    body: body.data,
+    label: 'create virtual account',
+    reference: (body.data as { reference?: string }).reference,
+    lookup: lookupVirtualAccount,
+    lookupHint: 'Check with list_virtual_accounts (filter reference).',
   });
-  return v4JsonResult(response, 'create virtual account');
 }
