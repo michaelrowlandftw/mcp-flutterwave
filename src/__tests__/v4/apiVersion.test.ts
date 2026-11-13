@@ -85,6 +85,7 @@ describe('v4 api version selection', () => {
       'verify_payment',
       'verify_payout',
       'verify_webhook',
+      'get_sandbox_scenarios',
     ]);
   });
 

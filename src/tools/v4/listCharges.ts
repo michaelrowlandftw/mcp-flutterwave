@@ -25,7 +25,7 @@ export const ListChargesSchema = {
   from: isoDateTime('Start', 'The time of day is used, to the second (UTC).').optional(),
   to: isoDateTime(
     'End',
-    'The time of day is used. Must not be later than now: the API rejects a future value.',
+    'The time of day is used. Must be at least one minute before now: the API rejects a future value.',
   ).optional(),
   page: z.number().int().min(1).optional().describe('Page to retrieve.'),
   size: z

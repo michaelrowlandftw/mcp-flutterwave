@@ -152,6 +152,101 @@ describe('tokens', () => {
 
   it('reject garbage', () => {
     expect(checkToken('create_transfer', ARGS, 'nope')).toMatch(/not valid/);
-    expect(checkToken('create_transfer', ARGS, '9999999999999.zz')).toMatch(/does not match/);
+    expect(checkToken('create_transfer', ARGS, '9999999999999.zz')).toMatch(/not valid/);
+  });
+
+  it('leading zeros do not make a used token new again (review N1)', () => {
+    const args = { ...ARGS, amount: 1501 };
+    const t = issueToken('create_transfer', args);
+    expect(checkToken('create_transfer', args, t)).toBeNull();
+    for (const variant of [`0${t}`, `00${t}`]) {
+      expect(checkToken('create_transfer', args, variant)).not.toBeNull();
+    }
+  });
+
+  it('a used token cannot be replayed in another spelling (review H2)', () => {
+    const t = issueToken('create_transfer', ARGS);
+    expect(checkToken('create_transfer', ARGS, t)).toBeNull();
+    for (const variant of [t, `${t}.x`, t.toUpperCase(), `${t}zz`, ` ${t}`, `${t}\n`, t.replace('.', '..')]) {
+      expect(checkToken('create_transfer', ARGS, variant)).not.toBeNull();
+    }
+  });
+});
+
+describe('amount cap holes from the review (M1)', () => {
+  const NGN_CAP = { FLW_MAX_AMOUNT_NGN: '100000' };
+
+  it('refuses an amount it cannot read when a cap is set', () => {
+    expect(capError({ amount: '5,000,000', currency: 'NGN' }, NGN_CAP, 'charge_ussd')).toMatch(/not a plain number/);
+    expect(capError({ amount: '1e9', currency: 'NGN' }, NGN_CAP, 'charge_ussd')).toMatch(/not a plain number/);
+    expect(capError({ currency: 'NGN' }, NGN_CAP, 'create_refund')).toMatch(/no amount/);
+    expect(capError({ amount: '1500.50', currency: 'NGN' }, NGN_CAP, 'charge_ussd')).toBeNull();
+  });
+
+  it('checks the destination currency when the amount applies to it', () => {
+    const args = {
+      payment_instruction: { source_currency: 'NGN', destination_currency: 'USD', amount: { value: 50000, applies_to: 'destination_currency' } },
+    };
+    expect(capError(args, { FLW_MAX_AMOUNT_NGN: '100000', FLW_MAX_AMOUNT_USD: '1000' }, 'create_transfer')).toMatch(/50000 USD.*FLW_MAX_AMOUNT_USD/);
+    // Only an NGN cap, unknown destination currency on a destination-currency amount: refuse, don't guess.
+    const noDest = { payment_instruction: { source_currency: 'NGN', amount: { value: 50000, applies_to: 'destination_currency' } } };
+    expect(capError(noDest, { FLW_MAX_AMOUNT_NGN: '100000' }, 'create_transfer')).toMatch(/currency of this call can't be read/);
+  });
+
+  it('caps FX by the quote quantity, and bills in NGN', () => {
+    expect(capError({ quantity: 5000, base_currency: 'USD' }, { FLW_MAX_AMOUNT_USD: '1000' }, 'request_fx_quote')).toMatch(/5000 USD/);
+    expect(capError({ amount: 200000 }, NGN_CAP, 'pay_bill')).toMatch(/200000 NGN/);
+  });
+
+  it('incoming no-amount tools are not blocked; outgoing ones are refused under a cap (review N2)', () => {
+    for (const tool of ['validate_charge', 'update_order', 'update_charge']) {
+      expect(capError({ id: 'x' }, NGN_CAP, tool)).toBeNull();
+    }
+    for (const tool of ['retry_transfer', 'update_transfer', 'initiate_fx_trade']) {
+      expect(capError({ id: 'x' }, NGN_CAP, tool)).toMatch(/no amount the server can check/);
+      expect(capError({ id: 'x' }, {}, tool)).toBeNull(); // no cap, test mode
+    }
+    // update_chargeback has no currency: an amount is checked against the general cap only,
+    // and a call without an amount (for example declined) passes (third review, issue 4).
+    expect(capError({ amount: 200000 }, { FLW_MAX_AMOUNT: '100000' }, 'update_chargeback')).toMatch(/above the cap/);
+    expect(capError({ status: 'declined' }, NGN_CAP, 'update_chargeback')).toBeNull();
+    expect(capError({ amount: 200000 }, NGN_CAP, 'update_chargeback')).toBeNull();
+  });
+
+  it('live mode refuses a currency without its own cap (review N3)', () => {
+    const live = { FLW_API_VERSION: 'v4', FLW_ENVIRONMENT: 'production', FLW_MAX_AMOUNT_NGN: '100000' };
+    expect(capError({ amount: 1e9, currency: 'USD' }, live, 'create_charge')).toMatch(/no cap for USD/);
+    expect(capError({ amount: 1e9, currency: 'USD' }, NGN_CAP, 'create_charge')).toBeNull(); // test mode
+  });
+
+  it('pay_bill outside Nigeria has no currency, so a cap refuses it (review N5)', () => {
+    expect(capError({ amount: 10, country: 'GH' }, NGN_CAP, 'pay_bill')).toMatch(/currency of this call can't be read/);
+  });
+
+  it('live mode requires a cap', () => {
+    const live = { FLW_API_VERSION: 'v4', FLW_ENVIRONMENT: 'production' };
+    expect(capError({ amount: 1, currency: 'NGN' }, live, 'create_charge')).toMatch(/Live mode needs an amount cap/);
+  });
+});
+
+describe('self-confirmation guard (H1)', () => {
+  afterEach(() => {
+    delete process.env.FLW_REQUIRE_ELICITATION;
+  });
+
+  it('FLW_REQUIRE_ELICITATION=true blocks money tools in clients that cannot ask the person', async () => {
+    process.env.FLW_REQUIRE_ELICITATION = 'true';
+    const { inner, call } = await setup();
+    const { out, body } = await call(ARGS);
+    expect(out.isError).toBe(true);
+    expect(body.reason).toMatch(/cannot ask you to confirm directly/);
+    expect(inner).not.toHaveBeenCalled();
+  });
+
+  it('still works when the client can ask the person', async () => {
+    process.env.FLW_REQUIRE_ELICITATION = 'true';
+    const { inner, call } = await setup({ elicit: 'accept' });
+    expect((await call(ARGS)).body).toBe('sent');
+    expect(inner).toHaveBeenCalledTimes(1);
   });
 });
