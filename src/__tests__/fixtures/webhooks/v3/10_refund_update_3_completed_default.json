@@ -1,0 +1,33 @@
+{
+  "captured_at_utc": "2026-11-12 13:06:26",
+  "headers": {
+    "user-agent": "axios/1.21.0",
+    "verif-hash": "<temporary test value>",
+    "content-type": "application/json"
+  },
+  "body": {
+    "id": 111359,
+    "AmountRefunded": 100,
+    "status": "completed-bank-transfer",
+    "FlwRef": "4647385147661794050789116",
+    "destination": "bank-transfer",
+    "comments": null,
+    "settlement_id": "NEW",
+    "meta": {
+      "source": "ledgerbalance",
+      "isPartialRefund": true,
+      "callbackStatus": "success",
+      "disburse_ref": "CC-REFD-4647385147661794050789116-111359_PMCKDU_5",
+      "disburse_status": "successful",
+      "linking_ref": "FLWRVCNF2251565",
+      "disburse_message": "Successful",
+      "disburse_proof": "m0ck1794488225588"
+    },
+    "createdAt": "2026-11-12T12:51:37.000Z",
+    "updatedAt": "2026-11-12T12:52:05.000Z",
+    "deletedAt": null,
+    "walletId": "<redacted>",
+    "AccountId": "<redacted>",
+    "TransactionId": 9841785
+  }
+}

@@ -39,6 +39,7 @@ describe('v4 getAccessToken', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': expect.stringMatching(/^mcp-flutterwave\/\d+\.\d+\.\d+$/),
       },
       body: new URLSearchParams({
         client_id: 'test-client-id',

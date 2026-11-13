@@ -1,4 +1,6 @@
 import Flutterwave from "../client/index.js";
+import { uncertainV3, withReference } from '../utils/reference.js';
+import { lookupV3Transaction, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
     ChargeCardSchema,
@@ -178,7 +180,9 @@ export async function chargeCard(payload: {
     authorization?: CardAuthorizationInput;
 }) {
     try {
-        const response = await chargeClient.chargeCard({
+        const sent = await sendV3Safely({
+            action: 'charge card', reference: payload.tx_ref, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transaction, send: () => chargeClient.chargeCard({
             tx_ref:           payload.tx_ref,
             amount:           payload.amount,
             currency:         payload.currency,
@@ -192,15 +196,18 @@ export async function chargeCard(payload: {
             redirect_url:     payload.redirect_url,
             card_holder_name: payload.card_holder_name,
             authorization:    payload.authorization,
-        } as any);
+        } as any),
+        });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge card for ${payload.email}`);
+            return uncertainV3('charge card', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'card');
     } catch (error) {
-        return createErrorResponse(`Error charging card for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging card', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -209,7 +216,9 @@ export async function chargeBankAccount(payload: {
     account_bank: string; account_number: string; fullname?: string; phone_number?: string;
 }) {
     try {
-        const response = await chargeClient.chargeBankAccount({
+        const sent = await sendV3Safely({
+            action: 'charge bank account', reference: payload.tx_ref, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transaction, send: () => chargeClient.chargeBankAccount({
             tx_ref:         payload.tx_ref,
             amount:         payload.amount,
             currency:       payload.currency,
@@ -218,15 +227,18 @@ export async function chargeBankAccount(payload: {
             account_number: payload.account_number,
             fullname:       payload.fullname,
             phone_number:   payload.phone_number,
+        }),
         });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge bank account for ${payload.email}`);
+            return uncertainV3('charge bank account', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'account');
     } catch (error) {
-        return createErrorResponse(`Error charging bank account for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging bank account', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -237,7 +249,9 @@ export async function chargeMobileMoney(payload: {
 }) {
     try {
         const { type, ...rest } = payload;
-        const response = await chargeClient.chargeMobileMoney(type, {
+        const sent = await sendV3Safely({
+            action: 'charge mobile money', reference: rest.tx_ref, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transaction, send: () => chargeClient.chargeMobileMoney(type, {
             tx_ref:       rest.tx_ref,
             amount:       rest.amount,
             currency:     rest.currency,
@@ -245,15 +259,18 @@ export async function chargeMobileMoney(payload: {
             phone_number: rest.phone_number,
             network:      rest.network,
             fullname:     rest.fullname,
+        }),
         });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge mobile money for ${payload.email}`);
+            return uncertainV3('charge mobile money', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, type);
     } catch (error) {
-        return createErrorResponse(`Error charging mobile money for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging mobile money', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -262,22 +279,27 @@ export async function chargeMpesa(payload: {
     phone_number: string; fullname?: string;
 }) {
     try {
-        const response = await chargeClient.chargeMpesa({
+        const sent = await sendV3Safely({
+            action: 'charge M-Pesa', reference: payload.tx_ref, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transaction, send: () => chargeClient.chargeMpesa({
             tx_ref:       payload.tx_ref,
             amount:       payload.amount,
             currency:     payload.currency,
             email:        payload.email,
             phone_number: payload.phone_number,
             fullname:     payload.fullname,
+        }),
         });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to charge M-Pesa for ${payload.email}`);
+            return uncertainV3('charge M-Pesa', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'mpesa');
     } catch (error) {
-        return createErrorResponse(`Error charging M-Pesa for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('charging M-Pesa', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -286,7 +308,9 @@ export async function chargeUssd(payload: {
     account_bank: string; phone_number: string; fullname?: string;
 }) {
     try {
-        const response = await chargeClient.chargeUssd({
+        const sent = await sendV3Safely({
+            action: 'initiate USSD charge', reference: payload.tx_ref, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transaction, send: () => chargeClient.chargeUssd({
             tx_ref:       payload.tx_ref,
             amount:       payload.amount,
             currency:     payload.currency,
@@ -294,15 +318,18 @@ export async function chargeUssd(payload: {
             account_bank: payload.account_bank,
             phone_number: payload.phone_number,
             fullname:     payload.fullname,
+        }),
         });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         if (!response || !isValidResponse(null, response)) {
-            return createErrorResponse(`Unable to initiate USSD charge for ${payload.email}`);
+            return uncertainV3('initiate USSD charge', payload.tx_ref, 'read_transaction_with_reference');
         }
 
         return buildChargeResponse(response, payload.tx_ref, 'ussd');
     } catch (error) {
-        return createErrorResponse(`Error initiating USSD charge for ${payload.email}: ${JSON.stringify(error)}`);
+        return uncertainV3('initiating USSD charge', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -363,7 +390,7 @@ export function registerChargeTools() {
         ChargeCardSchema,
         async (args) => {
             try {
-                return await chargeCard(args);
+                return await chargeCard(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging card for ${args.email}`);
             }
@@ -376,7 +403,7 @@ export function registerChargeTools() {
         ChargeBankAccountSchema,
         async (args) => {
             try {
-                return await chargeBankAccount(args);
+                return await chargeBankAccount(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging bank account for ${args.email}`);
             }
@@ -389,7 +416,7 @@ export function registerChargeTools() {
         ChargeMobileMoneySchema,
         async (args) => {
             try {
-                return await chargeMobileMoney(args);
+                return await chargeMobileMoney(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging mobile money for ${args.email}`);
             }
@@ -402,7 +429,7 @@ export function registerChargeTools() {
         ChargeMpesaSchema,
         async (args) => {
             try {
-                return await chargeMpesa(args);
+                return await chargeMpesa(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred charging M-Pesa for ${args.email}`);
             }
@@ -415,7 +442,7 @@ export function registerChargeTools() {
         ChargeUssdSchema,
         async (args) => {
             try {
-                return await chargeUssd(args);
+                return await chargeUssd(withReference(args, 'tx_ref'));
             } catch (error) {
                 return createErrorResponse(`Error occurred initiating USSD charge for ${args.email}`);
             }

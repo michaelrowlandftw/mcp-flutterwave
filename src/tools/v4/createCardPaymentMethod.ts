@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { safeCreate } from './safeCreate.js';
 import { encryptCardFields } from '../../client/v4/encryption.js';
 import { PaymentMethodsPostBody } from '../../client/generated/v4/payment-methods.zod.js';
 import { config } from '../../config/index.js';
@@ -93,35 +93,10 @@ export async function createCardPaymentMethod(
     );
   }
 
-  const response = await flwV4Fetch('/payment-methods', {
-    method: 'POST',
-    body: JSON.stringify(parsed.data),
+  return safeCreate({
+    path: '/payment-methods',
+    body: parsed.data,
+    label: 'payment method',
+    lookupHint: 'Check with list_payment_methods.',
   });
-
-  const raw = await response.text();
-  if (!response.ok) {
-    throw new Error(
-      `Flutterwave v4 payment method request failed: ${response.status} ${raw}`,
-    );
-  }
-
-  let payload: unknown = raw;
-  try {
-    payload = raw === '' ? null : JSON.parse(raw);
-  } catch {
-    payload = raw;
-  }
-
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(
-          { status: response.status, body: payload },
-          null,
-          2,
-        ),
-      },
-    ],
-  };
 }
