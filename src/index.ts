@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import "./logRedaction.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import server, { startServer } from "./server.js";
 import "./config/index.js";

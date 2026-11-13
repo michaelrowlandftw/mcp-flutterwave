@@ -1,0 +1,45 @@
+{
+  "captured_at_utc": "2026-11-12 12:57:20",
+  "headers": {
+    "content-type": "application/json",
+    "verif-hash": "<temporary test value>"
+  },
+  "body": {
+    "event": "charge.completed",
+    "data": {
+      "id": 10598477,
+      "tx_ref": "REF_BT_1794050786",
+      "flw_ref": "4647385147661794050789116",
+      "device_fingerprint": "<redacted>",
+      "amount": 1500,
+      "currency": "NGN",
+      "charged_amount": 1521,
+      "app_fee": 21,
+      "merchant_fee": 0,
+      "processor_response": "success",
+      "auth_model": "AUTH",
+      "ip": "<redacted>",
+      "narration": "<redacted>",
+      "status": "successful",
+      "payment_type": "bank_transfer",
+      "created_at": "2026-11-07T11:26:39.000Z",
+      "account_id": "<redacted>",
+      "customer": {
+        "id": 0,
+        "name": "<redacted>",
+        "phone_number": "<redacted>",
+        "email": "<redacted>",
+        "created_at": "2024-05-08T12:04:56.000Z"
+      }
+    },
+    "meta_data": {
+      "virtualaccountnumber": "<redacted>",
+      "originatoraccountnumber": "<redacted>",
+      "originatorname": "<redacted>",
+      "bankname": "Access Bank",
+      "bankcode": "044",
+      "originatoramount": "N/A"
+    },
+    "event.type": "BANK_TRANSFER_TRANSACTION"
+  }
+}

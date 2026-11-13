@@ -9,7 +9,7 @@ const MOBILE_MONEY_TYPES = [
 ] as const;
 
 export const ChargeCardSchema = {
-    tx_ref: z.string().min(1, 'Transaction reference is required'),
+    tx_ref: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
     amount: z.string().min(1, 'Amount is required'),
     currency: z.string().min(1, 'Currency is required'),
     email: z.string().email('Invalid email address'),
@@ -23,7 +23,7 @@ export const ChargeCardSchema = {
     card_holder_name: z.string().optional(),
     authorization: z.object({
         mode: z.enum(['pin', 'avs_noauth'] as const, {
-            errorMap: () => ({ message: 'Authorization mode must be "pin" or "avs_noauth"' }),
+            error: 'Authorization mode must be "pin" or "avs_noauth"',
         }),
         pin: z.string().optional(),
         city: z.string().optional(),
@@ -35,7 +35,7 @@ export const ChargeCardSchema = {
 };
 
 export const ChargeBankAccountSchema = {
-    tx_ref: z.string().min(1, 'Transaction reference is required'),
+    tx_ref: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
     amount: z.string().min(1, 'Amount is required'),
     currency: z.string().min(1, 'Currency is required'),
     email: z.string().email('Invalid email address'),
@@ -47,9 +47,9 @@ export const ChargeBankAccountSchema = {
 
 export const ChargeMobileMoneySchema = {
     type: z.enum(MOBILE_MONEY_TYPES, {
-        errorMap: () => ({ message: `Type must be one of: ${MOBILE_MONEY_TYPES.join(', ')}` }),
+        error: `Type must be one of: ${MOBILE_MONEY_TYPES.join(', ')}`,
     }),
-    tx_ref: z.string().min(1, 'Transaction reference is required'),
+    tx_ref: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
     amount: z.string().min(1, 'Amount is required'),
     currency: z.string().min(1, 'Currency is required'),
     email: z.string().email('Invalid email address'),
@@ -59,18 +59,18 @@ export const ChargeMobileMoneySchema = {
 };
 
 export const ChargeMpesaSchema = {
-    tx_ref: z.string().min(1, 'Transaction reference is required'),
+    tx_ref: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
     amount: z.string().min(1, 'Amount is required'),
-    currency: z.literal('KES', { errorMap: () => ({ message: 'Currency must be KES for M-Pesa' }) }),
+    currency: z.literal('KES', { error: 'Currency must be KES for M-Pesa' }),
     email: z.string().email('Invalid email address'),
     phone_number: z.string().min(1, 'Phone number is required for M-Pesa'),
     fullname: z.string().optional(),
 };
 
 export const ChargeUssdSchema = {
-    tx_ref: z.string().min(1, 'Transaction reference is required'),
+    tx_ref: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
     amount: z.string().min(1, 'Amount is required'),
-    currency: z.literal('NGN', { errorMap: () => ({ message: 'Currency must be NGN for USSD' }) }),
+    currency: z.literal('NGN', { error: 'Currency must be NGN for USSD' }),
     email: z.string().email('Invalid email address'),
     account_bank: z.string().min(1, 'Account bank code is required for USSD'),
     phone_number: z.string().min(1, 'Phone number is required for USSD'),

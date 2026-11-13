@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupTransfer } from './safeCreate.js';
 import { DirectTransfersPostBody } from '../../client/generated/v4/direct-transfers.zod.js';
-import { v4JsonResult } from './httpResult.js';
 
 export const CreateOrchestratorTransferSchema = {
   type: z
@@ -16,7 +16,8 @@ export const CreateOrchestratorTransferSchema = {
     .max(42)
     .regex(/^[a-zA-Z0-9-]+$/)
     .optional()
-    .describe('Unique transfer reference.'),
+    .optional()
+    .describe(`Unique reference for this create. ${RETRY_GUIDANCE}`),
   narration: z.string().min(1).max(180).optional(),
   callback_url: z.string().optional(),
   meta: z.record(z.string(), z.string()).optional(),
@@ -48,6 +49,7 @@ export type CreateOrchestratorTransferArgs = {
 export async function createOrchestratorTransfer(
   args: CreateOrchestratorTransferArgs,
 ) {
+  args = { ...args, reference: args.reference ?? newReference() };
   const strict = z.object(CreateOrchestratorTransferSchema).safeParse(args);
   if (!strict.success) {
     throw new Error(
@@ -62,9 +64,12 @@ export async function createOrchestratorTransfer(
     );
   }
 
-  const response = await flwV4Fetch('/direct-transfers', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/direct-transfers',
+    body: body.data,
+    label: 'create orchestrator transfer',
+    reference: (body.data as { reference?: string }).reference,
+    lookup: lookupTransfer,
+    lookupHint: 'Check with list_transfers for today, matching the reference.',
   });
-  return v4JsonResult(response, 'create orchestrator transfer');
 }
