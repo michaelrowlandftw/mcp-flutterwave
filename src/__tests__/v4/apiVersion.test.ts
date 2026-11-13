@@ -84,6 +84,8 @@ describe('v4 api version selection', () => {
       'retry_transfer',
       'verify_payment',
       'verify_payout',
+      'verify_webhook',
+      'get_sandbox_scenarios',
     ]);
   });
 

@@ -157,3 +157,55 @@ describe('safe creates (v4)', () => {
     });
   });
 });
+
+describe('uncertain creates: review H4', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    calls = [];
+    store = [];
+    process.env.FLW_LOOKUP_DELAYS_MS = '0,0';
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete process.env.FLW_LOOKUP_DELAYS_MS;
+  });
+
+  /** POST: first call 503 (after creating), then 409 duplicate. GET: as given. */
+  function api(get: (url: string) => Response) {
+    return vi.fn(async (url: string, init: RequestInit) => {
+      const method = (init.method ?? 'GET').toUpperCase();
+      calls.push({ url, method, headers: new Headers(init.headers), body: init.body as string | undefined });
+      if (method === 'POST') {
+        return calls.filter((c) => c.method === 'POST').length === 1
+          ? new Response('', { status: 503 })
+          : new Response('{"status":"failed","error":{"message":"duplicate reference"}}', { status: 409 });
+      }
+      return get(url);
+    });
+  }
+
+  it('lookup errors mean "not checked": unknown, and no retry', async () => {
+    vi.stubGlobal('fetch', api(() => new Response('busy', { status: 429 })));
+    const out = await run(...TOOLS[0]);
+    expect(out.status).toBe('unknown');
+    expect(out.note).toMatch(/could not check/);
+    expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1);
+  });
+
+  it('a 4xx on the retry is unknown, never failed', async () => {
+    vi.stubGlobal('fetch', api(() => json({ status: 'success', data: [] })));
+    const out = await run(...TOOLS[0]);
+    expect(out.status).toBe('unknown');
+    expect(out.retry_refused).toMatch(/409/);
+    expect(out.next_step).toMatch(/Do not call this create tool again/);
+  });
+
+  it('a transfer lookup that stops at the page limit is not "not found"', async () => {
+    const page = { status: 'success', data: { transfers: Array.from({ length: 50 }, (_, i) => ({ reference: `other-${i}` })), cursor: { has_more_items: true, next: 'n' } } };
+    vi.stubGlobal('fetch', api(() => json(page)));
+    const out = await run(...TOOLS[3]);
+    expect(out.status).toBe('unknown');
+    expect(out.lookup_failed).toMatch(/page limit/);
+    expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1);
+  });
+});

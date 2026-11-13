@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { getAccessToken, invalidateAccessTokenCache } from './auth.js';
 import { getV4BaseUrl } from './environment.js';
+import { setUsageHeaders } from '../../config/userAgent.js';
+import { currentScenario } from './scenario.js';
+import { assertSafePath } from '../../utils/safePath.js';
+
+export { assertSafePath };
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
@@ -44,6 +49,9 @@ async function performFetch(
 
   headers.set('Authorization', `Bearer ${token}`);
   headers.set('Content-Type', 'application/json');
+  setUsageHeaders(headers);
+  const scenario = currentScenario();
+  if (scenario && baseUrl.includes('developersandbox')) headers.set('X-Scenario-Key', scenario);
   // Every POST carries an idempotency key, so a resend is processed once.
   if (method === 'POST' && !headers.has('X-Idempotency-Key')) {
     headers.set('X-Idempotency-Key', `mcp-idem-${randomUUID()}`);
@@ -79,6 +87,7 @@ export async function flwV4Fetch(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
+  assertSafePath(path);
   const token = await getAccessToken();
   const response = await performFetch(path, init, token);
 
