@@ -5,6 +5,7 @@ import { assertSafePath, flwV4Fetch } from '../client/v4/http.js';
 import { lookupTransfer } from './v4/safeCreate.js';
 import { normaliseStatus, type StatusObject } from '../verify/statusMaps.js';
 import { describeEnvironment } from '../verify/environment.js';
+import { followUp } from '../verify/followUp.js';
 import { setUsageHeaders } from '../config/userAgent.js';
 
 type Record_ = Record<string, unknown>;
@@ -95,6 +96,7 @@ export async function verifyPayment(
     currency,
     reference,
     id: record.id ?? args.id,
+    follow_up: followUp(record, status.normalised !== 'pending' && status.normalised !== 'unknown'),
     ...describeEnvironment({ ...process.env, FLW_API_VERSION: version }),
   });
 }
@@ -144,6 +146,7 @@ export async function verifyPayout(
     raw_status: status.raw,
     id: record.id ?? args.id,
     reference: record.reference ?? args.reference,
+    follow_up: followUp(record, final),
     ...describeEnvironment({ ...process.env, FLW_API_VERSION: version }),
   });
 }
@@ -171,7 +174,8 @@ export function registerVerifyTools() {
     [
       'Check a transfer (payout) before treating it as paid.',
       'safe_to_give_value is true only on a final SUCCESSFUL status with no reversal. NEW, PENDING and INITIATED are not final: poll again later, never resend.',
-      'Sandbox transfers can stay NEW for about 2 minutes.',
+      'Sandbox transfers can stay NEW for about 2 minutes. Cash pickup payouts stay pending until collected (up to 30 days).',
+      'follow_up says when to check again (backoff with jitter) and when to escalate to Flutterwave (48 hours; 30 days for cash pickup).',
     ].join(' '),
     VerifyPayoutSchema,
     async (args) => wrap(() => verifyPayout(args)),

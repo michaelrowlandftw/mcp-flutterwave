@@ -164,3 +164,15 @@ describe('every tool result states its environment', () => {
     expect(JSON.parse(out.content[1].text).flutterwave_environment.environment).toBeDefined();
   });
 });
+
+describe('verify results carry follow-up hints', () => {
+  it('a pending payout says when to check again', async () => {
+    const out = await payout('v4', { id: 7, status: 'PENDING', created_datetime: new Date().toISOString() });
+    expect(out.follow_up).toMatchObject({ final: false, escalate: false });
+    expect(out.follow_up.next_check_after_seconds).toBeGreaterThanOrEqual(24);
+  });
+
+  it('a final payment needs no follow-up', async () => {
+    expect((await payment('v4', V4_OK)).follow_up).toMatchObject({ final: true });
+  });
+});
