@@ -1,5 +1,6 @@
 import Flutterwave from "../client/index.js";
 import { uncertainV3, withReference } from '../utils/reference.js';
+import { lookupV3Bill, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
     GetBillProvidersSchema,
@@ -130,8 +131,12 @@ export async function payBill(payload: {
             callback_url: payload.callback_url,
         } as any;
 
-        const response = await billClient.payBill(payload.biller_code, payload.item_code, body);
-        if (!response) return uncertainV3('pay bill', payload.reference, 'get_bill_status');
+        const sent = await sendV3Safely({
+            action: 'pay bill', reference: payload.reference, lookupTool: 'get_bill_status',
+            lookup: lookupV3Bill, send: () => billClient.payBill(payload.biller_code, payload.item_code, body),
+        });
+        if ('result' in sent) return sent.result;
+        const response = sent.response;
 
         const d   = (response as any)?.data;
         const ref = d?.reference ?? d?.tx_ref ?? payload.reference ?? 'N/A';
@@ -159,7 +164,7 @@ export async function payBill(payload: {
             ],
         };
     } catch (error) {
-        return createErrorResponse(`Error paying bill: ${JSON.stringify(error)}`);
+        return uncertainV3('pay bill', payload.reference, 'get_bill_status', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -288,10 +293,11 @@ export function registerBillPaymentTools() {
         ].join(' '),
         PayBillSchema,
         async (args) => {
+            const a = withReference(args, 'reference');
             try {
-                return await payBill(withReference(args, 'reference'));
+                return await payBill(a);
             } catch (error) {
-                return createErrorResponse(`Error paying bill for customer ${args.customer_id}`);
+                return uncertainV3('pay bill', a.reference, 'get_bill_status', error instanceof Error ? error.message : 'request error');
             }
         }
     );

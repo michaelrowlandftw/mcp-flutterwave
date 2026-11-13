@@ -3,13 +3,14 @@ import { registerTools } from "./tools/index.js";
 import { getApiVersion } from "./config/apiVersion.js";
 import { applyToolPolicy } from "./tools/policy.js";
 import type { Options } from "./types/index.js";
+import { SERVER_VERSION } from "./config/userAgent.js";
 import { registerDocsGuide, SERVER_INSTRUCTIONS } from "./resources/docsGuide.js";
 
 // Create server instance.
 export const server = new McpServer(
     {
         name: "flutterwave",
-        version: "1.4.1",
+        version: SERVER_VERSION,
     },
     { instructions: SERVER_INSTRUCTIONS },
 );
