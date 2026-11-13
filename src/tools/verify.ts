@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { server } from '../server.js';
 import { getApiVersion, type ApiVersion } from '../config/apiVersion.js';
-import { flwV4Fetch } from '../client/v4/http.js';
+import { assertSafePath, flwV4Fetch } from '../client/v4/http.js';
 import { lookupTransfer } from './v4/safeCreate.js';
 import { normaliseStatus, type StatusObject } from '../verify/statusMaps.js';
 import { describeEnvironment } from '../verify/environment.js';
@@ -14,6 +14,7 @@ const V3_BASE = 'https://api.flutterwave.com/v3';
 
 /** GET a v3 record. Returns data, or null on 404. */
 const v3Get: Fetcher = async (path) => {
+  assertSafePath(path);
   const response = await fetch(`${V3_BASE}${path}`, {
     headers: setUsageHeaders(new Headers({ Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` })),
     signal: AbortSignal.timeout(60_000),

@@ -95,6 +95,15 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
     (tool as { handler: unknown }).handler = async (...args: unknown[]) => {
       let out: { content?: unknown[]; isError?: boolean };
       try {
+        // Callback and redirect URLs must be https, so payment webhooks and customers
+        // can't be sent to plain-http or script URLs (review L5).
+        const input = (args[0] ?? {}) as Record<string, unknown>;
+        for (const key of ['callback_url', 'redirect_url']) {
+          const value = input[key];
+          if (value !== undefined && !(typeof value === 'string' && /^https:\/\/[^\s]+$/i.test(value))) {
+            throw new Error(`${key} must be an https URL.`);
+          }
+        }
         out = await handler(...args);
       } catch (error) {
         out = { isError: true, content: [{ type: 'text', text: error instanceof Error ? error.message : String(error) }] };

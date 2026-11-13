@@ -162,3 +162,15 @@ describe('verify_webhook', () => {
     expect(out).not.toContain('forged-value');
   });
 });
+
+describe('reversal webhooks (review M2)', () => {
+  it('a signed transfer.reversal is never safe, even when the API still shows SUCCESSFUL', async () => {
+    const body = JSON.stringify({ type: 'transfer.reversal', data: { id: 'trf_rev_1', status: 'REVERSED', reference: 'r' }, id: 'wbk_rev_1' });
+    const sig = createHmac('sha256', 's3cret').update(body).digest('base64');
+    const payout = vi.fn(async () => ({ content: [{ type: 'text' as const, text: JSON.stringify({ safe_to_give_value: true, final: true, raw_status: 'SUCCESSFUL' }) }] }));
+    const out = parse(await verifyWebhook({ raw_body: body, headers: { 'flutterwave-signature': sig } }, { secret: 's3cret', version: 'v4', payout }));
+    expect(payout).toHaveBeenCalled();
+    expect(out.safe_to_give_value).toBe(false);
+    expect(out.flags.join(' ')).toMatch(/Reversal webhook/);
+  });
+});

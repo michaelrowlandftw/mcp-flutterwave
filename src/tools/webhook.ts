@@ -143,6 +143,14 @@ export function parseWebhook(body: Json, version: ApiVersion): ParsedWebhook {
 
 /** Bodies seen in this process, to flag a replayed webhook. */
 const seen = new Set<string>();
+const SEEN_LIMIT = 10_000;
+
+function remember(digest: string): void {
+  remember(digest);
+  // Keep memory bounded (review L7): drop the oldest entries first.
+  // ponytail: per-process and capped; use a shared store with expiry for several server instances.
+  if (seen.size > SEEN_LIMIT) seen.delete(seen.values().next().value as string);
+}
 
 export const VerifyWebhookSchema = {
   raw_body: z.string().min(2).describe('The exact raw request body, as received. Re-serialised JSON breaks the v4 signature.'),
@@ -222,7 +230,14 @@ export async function verifyWebhook(
       serverVersion,
     );
     const record = JSON.parse(check.content[0].text);
-    return out({ ...base, api_check: record, safe_to_give_value: record.safe_to_give_value === true && !replay });
+    const reversal = parsed.event === 'transfer.reversal' || parsed.webhook_status_normalised === 'reversed';
+    if (reversal) parsed.flags.push('Reversal webhook: the money came back. Never give value on it, whatever the API record shows.');
+    return out({
+      ...base,
+      flags: parsed.flags,
+      api_check: record,
+      safe_to_give_value: record.safe_to_give_value === true && !replay && !reversal,
+    });
   }
 
   return out({
