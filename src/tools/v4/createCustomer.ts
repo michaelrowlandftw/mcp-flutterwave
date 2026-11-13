@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { safeCreate } from './safeCreate.js';
 import { CustomersCreateBody } from '../../client/generated/v4/customers.zod.js';
 
 export const CreateCustomerSchema = {
@@ -81,35 +81,10 @@ export async function createCustomer(
     );
   }
 
-  const response = await flwV4Fetch('/customers', {
-    method: 'POST',
-    body: JSON.stringify(parsed.data),
+  return safeCreate({
+    path: '/customers',
+    body: parsed.data,
+    label: 'customer',
+    lookupHint: 'Check with search_customers (by email) before creating another customer.',
   });
-
-  const raw = await response.text();
-  if (!response.ok) {
-    throw new Error(
-      `Flutterwave v4 customer request failed: ${response.status} ${raw}`,
-    );
-  }
-
-  let payload: unknown = raw;
-  try {
-    payload = raw === '' ? null : JSON.parse(raw);
-  } catch {
-    payload = raw;
-  }
-
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(
-          { status: response.status, body: payload },
-          null,
-          2,
-        ),
-      },
-    ],
-  };
 }

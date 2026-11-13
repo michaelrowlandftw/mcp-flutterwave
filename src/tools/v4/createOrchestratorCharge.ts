@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupCharge } from './safeCreate.js';
 import { encryptCardFields } from '../../client/v4/encryption.js';
 import { OrchestrationDirectChargePostBody } from '../../client/generated/v4/orchestration-direct-charge.zod.js';
 import { config } from '../../config/index.js';
-import { v4JsonResult } from './httpResult.js';
 
 const cardFields = {
   card_number: z
@@ -22,7 +22,9 @@ const cardFields = {
 export const CreateOrchestratorChargeSchema = {
   amount: OrchestrationDirectChargePostBody.shape.amount,
   currency: OrchestrationDirectChargePostBody.shape.currency,
-  reference: OrchestrationDirectChargePostBody.shape.reference,
+  reference: OrchestrationDirectChargePostBody.shape.reference.optional().describe(
+    `Unique reference for this create. ${RETRY_GUIDANCE}`,
+  ),
   customer: OrchestrationDirectChargePostBody.shape.customer,
   ...cardFields,
   redirect_url: OrchestrationDirectChargePostBody.shape.redirect_url,
@@ -34,7 +36,7 @@ export const CreateOrchestratorChargeSchema = {
 export type CreateOrchestratorChargeArgs = {
   amount: number;
   currency: string;
-  reference: string;
+  reference?: string;
   customer: {
     email: string;
     name?: { first?: string; middle?: string; last?: string };
@@ -68,6 +70,7 @@ function withoutUndefined<T extends Record<string, unknown>>(value: T): T {
 export async function createOrchestratorCharge(
   args: CreateOrchestratorChargeArgs,
 ) {
+  args = { ...args, reference: args.reference ?? newReference() };
   const strict = z.object(CreateOrchestratorChargeSchema).safeParse(args);
   if (!strict.success) {
     throw new Error(
@@ -120,9 +123,12 @@ export async function createOrchestratorCharge(
     );
   }
 
-  const response = await flwV4Fetch('/orchestration/direct-charges', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/orchestration/direct-charges',
+    body: body.data,
+    label: 'create orchestrator charge',
+    reference: (body.data as { reference?: string }).reference,
+    lookup: lookupCharge,
+    lookupHint: 'Check with list_charges (filter reference).',
   });
-  return v4JsonResult(response, 'create orchestrator charge');
 }

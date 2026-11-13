@@ -1,11 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { acceptedToolsFor } from '../../config/acceptedTools.js';
 import { getApiVersion } from '../../config/apiVersion.js';
 import { parseFlutterwaveEnv } from '../../config/env.js';
 
 describe('v4 api version selection', () => {
-  it('defaults to v3 when FLW_API_VERSION is unset', () => {
-    expect(getApiVersion({})).toBe('v3');
+  it('defaults to v4 when FLW_API_VERSION is unset', () => {
+    expect(getApiVersion({})).toBe('v4');
+    expect(getApiVersion({ FLW_API_VERSION: '' })).toBe('v4');
+  });
+
+  it('keeps v3 when asked, or when only a v3 secret key is set', () => {
+    expect(getApiVersion({ FLW_API_VERSION: 'v3' })).toBe('v3');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(getApiVersion({ FLW_SECRET_KEY: 'FLWSECK_TEST-x' })).toBe('v3');
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/Set FLW_API_VERSION=v3/));
+    warn.mockRestore();
+    expect(
+      getApiVersion({ FLW_SECRET_KEY: 'FLWSECK_TEST-x', FLW_CLIENT_ID: 'c' }),
+    ).toBe('v4');
     expect(acceptedToolsFor('v3')).toContain('charge_card');
     expect(acceptedToolsFor('v3')).not.toContain('create_card_payment_method');
   });
@@ -70,16 +82,22 @@ describe('v4 api version selection', () => {
       'list_transfers',
       'update_transfer',
       'retry_transfer',
+      'verify_payment',
+      'verify_payout',
+      'verify_webhook',
+      'get_sandbox_scenarios',
     ]);
   });
 
-  it('falls back to v3 for an unrecognized version', () => {
-    expect(getApiVersion({ FLW_API_VERSION: 'v5' })).toBe('v3');
+  it('falls back to v4 for an unrecognized version', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(getApiVersion({ FLW_API_VERSION: 'v5' })).toBe('v4');
+    warn.mockRestore();
   });
 
   it('requires the v3 secret key and not v4 credentials', () => {
-    expect(() => parseFlutterwaveEnv({})).toThrow('Invalid environment variables');
-    const config = parseFlutterwaveEnv({ FLW_SECRET_KEY: 'sk_test' });
+    expect(() => parseFlutterwaveEnv({ FLW_API_VERSION: 'v3' })).toThrow('Invalid environment variables');
+    const config = parseFlutterwaveEnv({ FLW_API_VERSION: 'v3', FLW_SECRET_KEY: 'sk_test' });
     expect(config.apiVersion).toBe('v3');
     expect(config.flutterwave.secretKey).toBe('sk_test');
   });
@@ -98,5 +116,11 @@ describe('v4 api version selection', () => {
     expect(config.apiVersion).toBe('v4');
     expect(config.flutterwave.clientId).toBe('client');
     expect(config.flutterwave.encryptionKeyV4).toBe('key');
+  });
+
+  it('does not need the v4 encryption key (raw card tools are off by default)', () => {
+    const config = parseFlutterwaveEnv({ FLW_CLIENT_ID: 'c', FLW_CLIENT_SECRET: 's' });
+    expect(config.apiVersion).toBe('v4');
+    expect(config.flutterwave.encryptionKeyV4).toBe('');
   });
 });

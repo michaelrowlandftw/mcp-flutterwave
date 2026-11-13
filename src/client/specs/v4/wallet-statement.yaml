@@ -10,6 +10,8 @@
 # Note (2026-10-15): stripped ReadMe-only `_id` / `x-readme` keys and webhook
 # blocks so Orval's OpenAPI validator accepts the fragment.
 # Operation: GET wallet statement.
+# Note (2026-11-12): from/to changed to date only (format: date). The API rejects
+# ISO date-times here (tested 30 Oct and 12 Nov 2026, sandbox and production).
 openapi: 3.1.0
 info:
   version: "1.0"
@@ -110,15 +112,17 @@ components:
       name: from
       schema:
         type: string
-      description: The start date and time for a period. This parameter is used in conjunction with the 'to' parameter to define a time range. The value should be in ISO 8601 format.
-      example: 2025-04-21T10:55:16Z
+        format: date
+      description: Start date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.
+      example: '2026-10-21'
     to_date:
       in: query
       name: to
       schema:
         type: string
-      description: The end date and time for a period. This parameter is used in conjunction with the 'from' parameter to define a time range. The value should be in **ISO 8601 format**.
-      example: 2025-05-21T10:48:18Z
+        format: date
+      description: End date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.
+      example: '2026-10-21'
     query_currency:
       in: query
       name: currency
