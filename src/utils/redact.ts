@@ -1,26 +1,37 @@
 /**
- * Redaction for everything the server returns or logs: tool results, error
- * messages and console output. It removes Flutterwave keys, bearer tokens,
- * JWTs, the values of secret fields (CVV, PIN, card number, passwords,
- * secrets) and card numbers that pass the Luhn check (last 4 digits kept).
+ * Redaction for everything the server returns or logs: tool results (text and
+ * resource items), error messages and console output. It removes Flutterwave
+ * keys, bearer tokens, JWTs, exact and base64 copies of secret env values, the
+ * values of secret fields (in JSON, escaped JSON inside strings, and key=value or
+ * key: value text) and card numbers (a known card brand prefix and length, plus
+ * the Luhn check; last 4 digits kept).
  */
 
 const MASK = '[REDACTED]';
 
-/** Environment variables whose exact values must never appear in output. */
+/** Environment variables whose values must never appear in output. */
 const SECRET_ENV = ['FLW_SECRET_KEY', 'FLW_CLIENT_SECRET', 'FLW_ENCRYPTION_KEY', 'FLW_ENCRYPTION_KEY_V4', 'FLW_SECRET_HASH', 'FLW_LIVE_KEY', 'FLW_PROD_SECRET'];
 
-/** Field names whose values are always secret, in JSON or key=value text. */
+/** Field names whose values are always secret. */
 const SECRET_FIELDS = [
   'cvv', 'cvv2', 'cvc', 'pin', 'otp', 'card_number', 'cardnumber', 'pan', 'expiry_month', 'expiry_year',
   'password', 'secret', 'secret_key', 'secret_hash', 'client_secret', 'access_token', 'refresh_token',
   'encryption_key', 'authorization', 'encrypted_card_number', 'encrypted_cvv', 'encrypted_expiry_month',
-  'encrypted_expiry_year', 'nonce', 'client',
+  'encrypted_expiry_year', 'encrypted_pin',
 ];
+const FIELDS = SECRET_FIELDS.join('|');
+
+/**
+ * JSON fields, also when the JSON sits escaped inside a string (\"pin\":\"3310\").
+ * Group 2 is the quote prefix of the key (none or backslashes), group 3 of the value.
+ */
 const FIELD_RE = new RegExp(
-  `("(?:${SECRET_FIELDS.join('|')})"\\s*:\\s*)("(?:[^"\\\\]|\\\\.)*"|-?\\d+(?:\\.\\d+)?)`,
-  'gi',
+  `((\\\\*)"(?:${FIELDS})\\2"\\s*:\\s*)(?:(\\\\*)"(?:(?!\\3").)*?\\3"|-?\\d+(?:\\.\\d+)?)`,
+  'gis',
 );
+
+/** key=value and key: value text, with or without quotes around the value. */
+const KV_RE = new RegExp(`\\b(${FIELDS})(\\s*[:=]\\s*)(['"]?)([^\\s'",;&}]+)\\3`, 'gi');
 
 const PATTERNS: Array<[RegExp, string]> = [
   [/FLW(?:SECK|PUBK)(?:_TEST)?-[A-Za-z0-9]+(?:-X)?/g, MASK], // Flutterwave keys
@@ -42,11 +53,28 @@ function luhn(digits: string): boolean {
   return sum % 10 === 0;
 }
 
-/** Mask 13 to 19 digit card numbers (spaces or dashes allowed) that pass Luhn. */
+/**
+ * A card number by brand prefix and length. This keeps phone numbers (234...,
+ * 13 digits) and millisecond timestamps (1...) from being masked.
+ */
+function looksLikeCard(d: string): boolean {
+  const n = d.length;
+  const p2 = Number(d.slice(0, 2));
+  const p4 = Number(d.slice(0, 4));
+  const p6 = Number(d.slice(0, 6));
+  if (d[0] === '4') return n === 13 || n === 16 || n === 19; // Visa
+  if ((p2 >= 51 && p2 <= 55) || (p4 >= 2221 && p4 <= 2720)) return n === 16; // Mastercard
+  if (p2 === 34 || p2 === 37) return n === 15; // Amex
+  if ((p6 >= 506099 && p6 <= 506198) || (p6 >= 650002 && p6 <= 650027)) return n >= 16 && n <= 19; // Verve
+  if (d.startsWith('6011') || p2 === 65 || (p6 >= 622126 && p6 <= 622925)) return n >= 16 && n <= 19; // Discover/UnionPay
+  if (p4 >= 5018 && p4 <= 6999) return n >= 16 && n <= 19; // Maestro and other 5/6 ranges
+  return false;
+}
+
 function maskCards(text: string): string {
   return text.replace(/(?<![\d.])(?:\d[ -]?){12,18}\d(?![\d.])/g, (match) => {
     const digits = match.replace(/[ -]/g, '');
-    return digits.length >= 13 && digits.length <= 19 && luhn(digits) ? `[CARD ****${digits.slice(-4)}]` : match;
+    return looksLikeCard(digits) && luhn(digits) ? `[CARD ****${digits.slice(-4)}]` : match;
   });
 }
 
@@ -54,19 +82,30 @@ export function redactText(text: string, env: NodeJS.ProcessEnv = process.env): 
   let out = text;
   for (const name of SECRET_ENV) {
     const value = env[name];
-    if (value && value.length >= 8) out = out.split(value).join(MASK);
+    if (!value || value.length < 8) continue;
+    for (const form of [value, Buffer.from(value).toString('base64'), Buffer.from(value).toString('base64url')]) {
+      out = out.split(form).join(MASK);
+    }
   }
-  out = out.replace(FIELD_RE, `$1"${MASK}"`);
+  out = out.replace(FIELD_RE, (_m, key: string, keyQuote: string, valueQuote?: string) => {
+    const q = valueQuote ?? keyQuote;
+    return `${key}${q}"${MASK}${q}"`;
+  });
   for (const [re, replacement] of PATTERNS) out = out.replace(re, replacement);
+  out = out.replace(KV_RE, (_m, key: string, sep: string, quote: string) => `${key}${sep}${quote}${MASK}${quote}`);
   return maskCards(out);
 }
 
-/** Redact a tool result in place: every text item is cleaned. */
+/** Redact a tool result in place: every text item and every resource text is cleaned. */
 export function redactResult<T>(result: T): T {
-  const content = (result as { content?: Array<{ type?: string; text?: unknown }> } | null)?.content;
+  const content = (result as { content?: Array<{ type?: string; text?: unknown; resource?: { text?: unknown } }> } | null)?.content;
   if (Array.isArray(content)) {
     for (const item of content) {
-      if (item && item.type === 'text' && typeof item.text === 'string') item.text = redactText(item.text);
+      if (!item) continue;
+      if (item.type === 'text' && typeof item.text === 'string') item.text = redactText(item.text);
+      if (item.type === 'resource' && item.resource && typeof item.resource.text === 'string') {
+        item.resource.text = redactText(item.resource.text);
+      }
     }
   }
   return result;
