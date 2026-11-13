@@ -206,8 +206,11 @@ describe('amount cap holes from the review (M1)', () => {
       expect(capError({ id: 'x' }, NGN_CAP, tool)).toMatch(/no amount the server can check/);
       expect(capError({ id: 'x' }, {}, tool)).toBeNull(); // no cap, test mode
     }
-    // update_chargeback carries an amount, so the cap applies.
-    expect(capError({ amount: 200000, currency: 'NGN' }, NGN_CAP, 'update_chargeback')).toMatch(/above the cap/);
+    // update_chargeback has no currency: an amount is checked against the general cap only,
+    // and a call without an amount (for example declined) passes (third review, issue 4).
+    expect(capError({ amount: 200000 }, { FLW_MAX_AMOUNT: '100000' }, 'update_chargeback')).toMatch(/above the cap/);
+    expect(capError({ status: 'declined' }, NGN_CAP, 'update_chargeback')).toBeNull();
+    expect(capError({ amount: 200000 }, NGN_CAP, 'update_chargeback')).toBeNull();
   });
 
   it('live mode refuses a currency without its own cap (review N3)', () => {

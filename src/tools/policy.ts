@@ -3,7 +3,7 @@ import type { Options } from '../types/index.js';
 import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
 import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
-import { capError, guardMoneyTool, isLive } from './confirm.js';
+import { capConfigured, capError, guardMoneyTool, isLive, OUTGOING_NO_AMOUNT_TOOLS } from './confirm.js';
 import { z } from 'zod';
 import { redactResult } from '../utils/redact.js';
 import { SCENARIO_TOOLS } from './sandbox.js';
@@ -49,6 +49,11 @@ function checkUrl(key: string, value: unknown): void {
   } catch {
     throw new Error(`${key} must be an https URL.`);
   }
+  // Backslashes, '@' (user info) and control characters are read differently by
+  // different URL parsers, so the checked host may not be the host used (third review, issue 2).
+  if (typeof value === 'string' && /[\\@\u0000-\u001f\u007f]/.test(value)) {
+    throw new Error(`${key} must be a plain https URL (no backslashes, "@" or control characters).`);
+  }
   const local = url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
   if (typeof value !== 'string' || /\s/.test(value) || !(url.protocol === 'https:' || (local && !isLive()))) {
     throw new Error(`${key} must be an https URL.`);
@@ -73,7 +78,10 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
   for (const [name, tool] of Object.entries(registeredTools(server))) {
     const cardBlocked = RAW_CARD_TOOLS.has(name) && options.rawCardTools !== true;
     const writeBlocked = options.readOnly === true && !isReadOnlyTool(name);
-    if (cardBlocked || writeBlocked || (!keepAll && !wanted.has(name))) {
+    // Under an amount cap (always with live credentials) these would be refused on every
+    // call, so they are not offered at all (third review, issue 1).
+    const capBlocked = OUTGOING_NO_AMOUNT_TOOLS.has(name) && (capConfigured() || isLive());
+    if (cardBlocked || writeBlocked || capBlocked || (!keepAll && !wanted.has(name))) {
       tool.remove();
     }
   }

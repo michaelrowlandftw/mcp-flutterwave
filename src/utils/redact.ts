@@ -91,25 +91,23 @@ function maskEncodedSecrets(text: string, secrets: string[]): string {
   const holds = (decoded: string) => secrets.some((secret) => decoded.includes(secret));
   return text
     .replace(/[A-Za-z0-9+/_-]{16,}={0,2}/g, (run) => {
-      // Other base64-like characters can sit in front of the encoded secret
-      // ("Basic x...", "id_..."), so try every 4-character alignment.
-      for (let offset = 0; offset < 4; offset++) {
-        try {
-          if (holds(Buffer.from(run.slice(offset), 'base64').toString('utf8'))) return MASK;
-        } catch {
-          /* not base64 at this offset */
-        }
-      }
-      return run;
+      // Also try each piece between slashes, and each start offset of a 4-character
+      // block, so base64 inside a path is found (third review, issue 3).
+      const candidates = [run, ...run.split('/'), run.slice(1), run.slice(2), run.slice(3)];
+      return candidates.some((c) => c.length >= 12 && holds(Buffer.from(c, 'base64').toString('utf8'))) ? MASK : run;
     })
-    .replace(/\b(?:[0-9a-fA-F]{2}){8,}\b/g, (run) => (holds(Buffer.from(run, 'hex').toString('utf8')) ? MASK : run));
+    .replace(/(?:0x)?[0-9a-fA-F]{16,}/g, (run) => {
+      const hex = run.startsWith('0x') ? run.slice(2) : run;
+      const even = hex.length % 2 === 0 ? [hex] : [hex.slice(0, -1), hex.slice(1)];
+      return even.some((h) => holds(Buffer.from(h, 'hex').toString('utf8'))) ? MASK : run;
+    });
 }
 
 export function redactText(text: string, env: NodeJS.ProcessEnv = process.env): string {
   let out = text;
   const secrets = SECRET_ENV.map((name) => env[name]).filter((v): v is string => !!v && v.length >= 8);
   for (const value of secrets) {
-    for (const form of [value, Buffer.from(value).toString('base64'), Buffer.from(value).toString('base64url')]) {
+    for (const form of [value, encodeURIComponent(value), Buffer.from(value).toString('base64'), Buffer.from(value).toString('base64url')]) {
       out = out.split(form).join(MASK);
     }
   }
