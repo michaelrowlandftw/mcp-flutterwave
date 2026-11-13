@@ -1,4 +1,4 @@
-import Flutterwave from '../client/index.js';
+import { setUsageHeaders } from '../config/userAgent.js';
 import { uncertainV3, V3Rejected } from '../utils/reference.js';
 import { lookupDelays, sleep } from './v4/safeCreate.js';
 
@@ -57,9 +57,17 @@ export async function sendV3Safely<T>(opts: {
     return { result: uncertainV3(opts.action, opts.reference, opts.lookupTool, first.reason) };
   }
 
+  // A lookup that errors has not checked anything; retry only after one really ran.
+  let checked = 0;
   for (const delay of lookupDelays()) {
     await sleep(delay);
-    const found = await opts.lookup(opts.reference).catch(() => null);
+    let found: unknown = null;
+    try {
+      found = await opts.lookup(opts.reference);
+      checked++;
+    } catch {
+      continue;
+    }
     if (found) {
       return {
         result: text({
@@ -71,6 +79,10 @@ export async function sendV3Safely<T>(opts: {
         }),
       };
     }
+  }
+
+  if (checked === 0) {
+    return { result: uncertainV3(opts.action, opts.reference, opts.lookupTool, `${first.reason}; the lookup failed, so the server did not retry`) };
   }
 
   let second;
@@ -87,24 +99,50 @@ export async function sendV3Safely<T>(opts: {
 }
 
 // ─── Lookups by reference ────────────────────────────────────────────────────
+// Direct GETs, so "not found" can be told apart from "could not check": any
+// other error throws, and the caller then does not retry.
 
-const dataOf = (body: unknown) => {
-  const b = body as { status?: string; data?: unknown } | undefined;
-  return b?.status === 'success' && b.data ? b.data : null;
-};
+type V3Reply = { status: number; body: { status?: string; message?: string; data?: any } | null };
+
+async function v3Get(path: string): Promise<V3Reply> {
+  const response = await fetch(`https://api.flutterwave.com/v3${path}`, {
+    headers: setUsageHeaders(new Headers({ Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` })),
+    signal: AbortSignal.timeout(60_000),
+  });
+  let body: V3Reply['body'] = null;
+  try {
+    body = (await response.json()) as V3Reply['body'];
+  } catch {
+    body = null;
+  }
+  return { status: response.status, body };
+}
+
+const isNotFound = (r: V3Reply) =>
+  r.status === 404 || (r.status === 400 && /no transaction|not found/i.test(String(r.body?.message ?? '')));
+
+function failed(r: V3Reply): never {
+  throw new Error(`lookup failed: HTTP ${r.status}`);
+}
 
 /** Charges: GET /transactions/verify_by_reference?tx_ref=... */
 export const lookupV3Transaction: V3Lookup = async (txRef) => {
-  const data = dataOf(await Flutterwave.transactions().get_with_reference(txRef)) as { tx_ref?: string } | null;
-  return data?.tx_ref === txRef ? data : null;
+  const r = await v3Get(`/transactions/verify_by_reference?tx_ref=${encodeURIComponent(txRef)}`);
+  if (r.status === 200) return r.body?.data?.tx_ref === txRef ? r.body.data : null;
+  return isNotFound(r) ? null : failed(r);
 };
 
 /** Transfers (bank and stablecoin): GET /transfers?reference=... */
 export const lookupV3Transfer: V3Lookup = async (reference) => {
-  const rows = dataOf(await Flutterwave.transfers().getByReference(reference));
+  const r = await v3Get(`/transfers?reference=${encodeURIComponent(reference)}`);
+  if (r.status !== 200) return isNotFound(r) ? null : failed(r);
+  const rows = r.body?.data;
   return Array.isArray(rows) ? rows.find((row) => row?.reference === reference) ?? null : null;
 };
 
 /** Bills: GET /bills/{reference}/status */
-export const lookupV3Bill: V3Lookup = async (reference) =>
-  dataOf(await Flutterwave.billPayments().getBillStatus(reference));
+export const lookupV3Bill: V3Lookup = async (reference) => {
+  const r = await v3Get(`/bills/${encodeURIComponent(reference)}/status`);
+  if (r.status === 200) return r.body?.status === 'success' && r.body.data ? r.body.data : null;
+  return isNotFound(r) ? null : failed(r);
+};
