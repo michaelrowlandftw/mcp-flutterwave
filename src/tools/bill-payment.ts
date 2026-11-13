@@ -1,5 +1,5 @@
 import Flutterwave from "../client/index.js";
-import { withReference } from '../utils/reference.js';
+import { uncertainV3, withReference } from '../utils/reference.js';
 import { lookupV3Bill, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
@@ -164,7 +164,7 @@ export async function payBill(payload: {
             ],
         };
     } catch (error) {
-        return createErrorResponse(`Error paying bill: ${JSON.stringify(error)}`);
+        return uncertainV3('pay bill', payload.reference, 'get_bill_status', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -293,10 +293,11 @@ export function registerBillPaymentTools() {
         ].join(' '),
         PayBillSchema,
         async (args) => {
+            const a = withReference(args, 'reference');
             try {
-                return await payBill(withReference(args, 'reference'));
+                return await payBill(a);
             } catch (error) {
-                return createErrorResponse(`Error paying bill for customer ${args.customer_id}`);
+                return uncertainV3('pay bill', a.reference, 'get_bill_status', error instanceof Error ? error.message : 'request error');
             }
         }
     );

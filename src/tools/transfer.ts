@@ -1,5 +1,5 @@
 import z from "zod";
-import { withReference } from '../utils/reference.js';
+import { uncertainV3, withReference } from '../utils/reference.js';
 import { lookupV3Transfer, sendV3Safely } from './safeCreateV3.js';
 import Flutterwave from "../client/index.js";
 import { server } from "../server.js";
@@ -90,7 +90,7 @@ export async function createTransfer(payload: {
 
 export function registerTransferTools() {
     server.tool("create_transfer", "Create a transfer with Flutterwave.", CreateTransferPayloadSchema,
-        async (args) => { try { return await createTransfer(withReference(args, 'reference')); } catch (error) { return { content: [{ type: "text" as const, text: `Error occurred on creating transfer` }] }; } });
+        async (args) => { const a = withReference(args, 'reference'); try { return await createTransfer(a); } catch (error) { return uncertainV3("create transfer", a.reference, "read_transaction_with_reference or the dashboard", error instanceof Error ? error.message : undefined); } });
     server.tool("list_beneficiaries", "List all beneficiaries with Flutterwave.",
         async () => { try { return await listBeneficiaries(); } catch (error) { return { content: [{ type: "text" as const, text: `Error occurred on listing beneficiaries` }] }; } });
     server.tool("create_beneficiary", "Create a new beneficiary with Flutterwave.", CreateBeneficiaryPayloadSchema,

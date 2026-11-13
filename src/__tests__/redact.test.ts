@@ -43,7 +43,8 @@ describe('redactText', () => {
 
   it('masks Luhn-valid card numbers anywhere, keeping the last 4', () => {
     expect(redactText('card 4242 4242 4242 4242 declined', {})).toBe('card [CARD ****4242] declined');
-    expect(redactText('pan=5531-8866-5214-2950', {})).toBe('pan=[CARD ****2950]');
+    expect(redactText('card on file 5531-8866-5214-2950', {})).toBe('card on file [CARD ****2950]');
+    expect(redactText('pan=5531-8866-5214-2950', {})).toBe('pan=[REDACTED]');
   });
 
   it('leaves references, IDs and amounts alone', () => {
@@ -116,5 +117,61 @@ describe('start-up', () => {
     const src = readFileSync(new URL('../index.ts', import.meta.url), 'utf8');
     expect(src.split(/\r?\n/)[1]).toBe('import "./logRedaction.js";');
     vi.restoreAllMocks();
+  });
+});
+
+describe('review findings M3, M5, H3', () => {
+  it('M3: masks secrets inside escaped JSON and key=value text', () => {
+    const inner = JSON.stringify({ meta: JSON.stringify({ pin: '3310', cvv: '564', note: 'ok' }) });
+    const outer = JSON.stringify({ error: inner }); // double-escaped, as in v3 error paths
+    for (const text of [inner, outer]) {
+      const out = redactText(text, {});
+      expect(out).not.toMatch(/3310|564/);
+      expect(out).toContain('ok');
+    }
+    expect(JSON.parse(redactText(inner, {}))).toBeTruthy(); // still valid JSON
+    for (const text of ['cvv=564', 'pin: 3310', "PIN='3310'", 'otp = 12345']) {
+      expect(redactText(text, {})).not.toMatch(/564|3310|12345/);
+    }
+    expect(redactText('PIN authorization required for REF-1', {})).toBe('PIN authorization required for REF-1');
+  });
+
+  it('M3: masks base64 copies of secret env values', () => {
+    const env = { FLW_CLIENT_SECRET: 'v4-client-secret-value' };
+    const b64 = Buffer.from(env.FLW_CLIENT_SECRET).toString('base64');
+    expect(redactText(`basic ${b64}`, env)).not.toContain(b64);
+  });
+
+  it('M5: leaves phone numbers, timestamps, nonces and client fields alone', () => {
+    for (const keep of ['2348031234567', '1735116884019', '+234 803 123 4567']) {
+      expect(redactText(`value ${keep}`, {})).toBe(`value ${keep}`);
+    }
+    const json = JSON.stringify({ nonce: 'WQC6lrkhRM5B', client: 'abc' });
+    expect(redactText(json, {})).toBe(json);
+  });
+
+  it('H3: redacts resource items too', () => {
+    const r = { content: [{ type: 'resource', resource: { uri: 'ui://x', text: `<p>${'FLW' + 'SECK'}-${'0f'.repeat(16)}-X 4242424242424242</p>` } }] };
+    redactResult(r);
+    expect(r.content[0].resource.text).toBe('<p>[REDACTED] [CARD ****4242]</p>');
+  });
+});
+
+describe('review N4', () => {
+  it('masks a card number at the end of a sentence, and JCB and Diners numbers', () => {
+    expect(redactText('card 4111111111111111.', {})).toBe('card [CARD ****1111].');
+    expect(redactText('jcb 3530111333300000', {})).toBe('jcb [CARD ****0000]');
+    expect(redactText('diners 36227206271667', {})).toBe('diners [CARD ****1667]');
+    expect(redactText('amount 1234567890123.45', {})).toBe('amount 1234567890123.45');
+  });
+
+  it('masks base64 and hex text that contains a secret', () => {
+    const env = { FLW_SECRET_HASH: 'my-webhook-hash-value' };
+    const basic = Buffer.from(`user:${env.FLW_SECRET_HASH}`).toString('base64');
+    const hex = Buffer.from(`x${env.FLW_SECRET_HASH}y`).toString('hex');
+    expect(redactText(`Authorization: Basic ${basic}`, env)).not.toContain(basic);
+    expect(redactText(`blob ${hex}`, env)).toBe('blob [REDACTED]');
+    const harmless = Buffer.from('nothing secret here at all').toString('base64');
+    expect(redactText(`data ${harmless}`, env)).toBe(`data ${harmless}`);
   });
 });

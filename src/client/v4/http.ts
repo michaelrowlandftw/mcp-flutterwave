@@ -3,6 +3,9 @@ import { getAccessToken, invalidateAccessTokenCache } from './auth.js';
 import { getV4BaseUrl } from './environment.js';
 import { setUsageHeaders } from '../../config/userAgent.js';
 import { currentScenario } from './scenario.js';
+import { assertSafePath } from '../../utils/safePath.js';
+
+export { assertSafePath };
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
@@ -84,6 +87,7 @@ export async function flwV4Fetch(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
+  assertSafePath(path);
   const token = await getAccessToken();
   const response = await performFetch(path, init, token);
 
