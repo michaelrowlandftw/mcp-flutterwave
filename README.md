@@ -635,6 +635,16 @@ npm run build
 
 Use npm 11 or later to install from the lock file (`npx npm@11 ci`); npm 10 disagrees with the lock file about optional peer packages.
 
+### Contract tests (sandbox)
+
+`npm run test:contract` runs the cases from our API test findings against the real sandboxes: date formats per endpoint, clear errors before bad calls, one record after a retried create, and sandbox transfer scenarios. They are skipped unless these are set (separate names, because the unit-test config sets dummy values for the normal ones):
+
+- `FLW_SANDBOX_CLIENT_ID`, `FLW_SANDBOX_CLIENT_SECRET`: v4 sandbox
+- `FLW_SANDBOX_SECRET_KEY`: v3 test key (`FLWSECK_TEST...`); a live key skips the v3 suite
+- `FLW_SANDBOX_RECIPIENT_ID` (optional): a sandbox transfer recipient, for the transfer cases
+
+They create sandbox records (a customer, a virtual account, small test transfers). They never run against live.
+
 ### Environment variables
 
 v3 (`FLW_API_VERSION=v3`):

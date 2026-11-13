@@ -22,11 +22,17 @@ export function dateOnly(edge: 'Start' | 'End') {
     );
 }
 
-/** Charges rejects a `to` later than now ("Query param 'to' can not be after current date"). */
+/**
+ * Charges rejects a `to` later than now ("Query param 'to' can not be after current date").
+ * The API clock can run slightly behind ours: a `to` of exactly now was rejected in the
+ * sandbox (13 Nov 2026). So `to` must be at least one minute in the past.
+ */
+export const CLOCK_MARGIN_MS = 60_000;
+
 export function notInFuture(value: string | undefined, now = Date.now()): void {
-  if (value !== undefined && Date.parse(value) > now) {
+  if (value !== undefined && Date.parse(value) > now - CLOCK_MARGIN_MS) {
     throw new Error(
-      `'to' (${value}) is later than the current time. GET /charges rejects a future 'to'; use the current time or earlier.`,
+      `'to' (${value}) is later than the current time minus one minute. GET /charges rejects a future 'to', and its clock can run slightly behind; use a time at least one minute in the past.`,
     );
   }
 }

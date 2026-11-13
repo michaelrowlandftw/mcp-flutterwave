@@ -21,7 +21,8 @@
     "generate:v4": "orval --config orval.config.ts",
     "start:app": "node build/app/index.js",
     "dev:app": "npm run build:all && npm run start:app",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:contract": "vitest run src/__tests__/contract"
   },
   "files": [
     "build"
