@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 /** Keep in step with package.json (a test checks this). */
-export const SERVER_VERSION = '1.4.1';
+export const SERVER_VERSION = '2.0.0';
 
 /** Sent on every API call, so Flutterwave logs can count MCP use. */
 export const USER_AGENT = `mcp-flutterwave/${SERVER_VERSION}`;
