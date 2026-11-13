@@ -41,6 +41,17 @@ Fetch llms.txt first and follow the link for the topic. v4 pages sit under /v4/d
 - Check the signature on every webhook: v3 sends the secret hash in \`verif-hash\`; v4 sends a base64 HMAC-SHA256 of the raw body in \`flutterwave-signature\`.
 - A webhook is a signal to check, not proof: fetch the record from the API before giving value (the verify_webhook tool does this). Webhooks can arrive about 10 minutes late.
 
+## Asynchronous statuses: polling, timeouts and recovery
+
+Many payments and payouts are not final when the API first answers. Build for it:
+
+- **Never treat a timeout or a 5xx as a failure.** The request may have gone through. Look the record up by your reference before you retry, and retry with the same reference only when nothing exists.
+- **Don't rely on webhooks alone.** Webhooks can arrive late (about 10 minutes in testing), arrive twice, or not arrive. Run a background job that polls pending records.
+- **Poll with exponential backoff and jitter.** Start at about 30 seconds and double the wait each time, up to about 1 hour, adding random jitter so many records are not polled at the same moment. The verify tools return follow_up.next_check_after_seconds as a guide.
+- **Stop at a limit and escalate.** If a status is still pending or unknown after 48 hours, escalate to Flutterwave support with the reference and ID. Don't resend the payment.
+- **Cash pickup is the exception.** A cash pickup payout is final only when the recipient collects the cash, which can take up to 30 days. Keep polling at the 1-hour cap and escalate after 30 days.
+- **Only final statuses give value:** a successful payment that passes verification (amount, currency, reference), or a final SUCCESSFUL payout. Watch for reversals afterwards.
+
 ## Rules for sample code
 
 - Use test keys and the sandbox in examples. Never put a secret key in browser or mobile code.

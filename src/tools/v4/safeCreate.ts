@@ -11,9 +11,10 @@ type Attempt =
 const DEFAULT_DELAYS_MS = [2_000, 5_000, 10_000, 20_000];
 
 /** Backoff between lookups. FLW_LOOKUP_DELAYS_MS="0,0" makes tests instant. */
-export function lookupDelays(): number[] {
+export function lookupDelays(random = Math.random): number[] {
   const raw = process.env.FLW_LOOKUP_DELAYS_MS;
-  if (!raw) return DEFAULT_DELAYS_MS;
+  // Default delays get +/-20% jitter, so many clients don't retry in step.
+  if (!raw) return DEFAULT_DELAYS_MS.map((d) => Math.round(d * (0.8 + 0.4 * random())));
   return raw.split(',').map((v) => Math.max(0, Number(v) || 0));
 }
 

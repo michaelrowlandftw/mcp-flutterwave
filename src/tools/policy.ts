@@ -34,7 +34,8 @@ export function registeredTools(server: McpServer): Record<string, RegisteredToo
 const URL_FIELDS = new Set(['callback_url', 'redirect_url']);
 
 function checkUrls(value: unknown, depth = 0): void {
-  if (!value || typeof value !== 'object' || depth > 8) return;
+  if (!value || typeof value !== 'object') return;
+  if (depth > 8) throw new Error('Arguments are nested too deeply to check callback and redirect URLs.');
   for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
     if (URL_FIELDS.has(key) && inner !== undefined) checkUrl(key, inner);
     else checkUrls(inner, depth + 1);
@@ -53,7 +54,7 @@ function checkUrl(key: string, value: unknown): void {
   if (typeof value === 'string' && /[\\@\u0000-\u001f\u007f]/.test(value)) {
     throw new Error(`${key} must be a plain https URL (no backslashes, "@" or control characters).`);
   }
-  const local = url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  const local = url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
   if (typeof value !== 'string' || /\s/.test(value) || !(url.protocol === 'https:' || (local && !isLive()))) {
     throw new Error(`${key} must be an https URL.`);
   }

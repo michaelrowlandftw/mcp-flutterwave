@@ -175,3 +175,17 @@ describe('review N4', () => {
     expect(redactText(`data ${harmless}`, env)).toBe(`data ${harmless}`);
   });
 });
+
+describe('third review: H1, M1', () => {
+  it('masks a base64 secret behind other base64 characters', () => {
+    const env = { FLW_SECRET_HASH: 'my-webhook-hash-value' };
+    for (const prefix of ['x', 'id_', 'ab']) {
+      const run = prefix + Buffer.from(`user:${env.FLW_SECRET_HASH}`).toString('base64');
+      expect(redactText(`Basic ${run}`, env)).toBe('Basic [REDACTED]');
+    }
+  });
+
+  it('masks a card number right after a dot', () => {
+    expect(redactText('card.4111111111111111', {})).toBe('card.[CARD ****1111]');
+  });
+});

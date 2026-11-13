@@ -76,7 +76,7 @@ function looksLikeCard(d: string): boolean {
 }
 
 function maskCards(text: string): string {
-  return text.replace(/(?<![\d.])(?:\d[ -]?){12,18}\d(?!\d|\.\d)/g, (match) => {
+  return text.replace(/(?<!\d|\d\.)(?:\d[ -]?){12,18}\d(?!\d|\.\d)/g, (match) => {
     const digits = match.replace(/[ -]/g, '');
     return looksLikeCard(digits) && luhn(digits) ? `[CARD ****${digits.slice(-4)}]` : match;
   });
