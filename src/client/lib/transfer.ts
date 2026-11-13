@@ -1,3 +1,4 @@
+import { throwIfRejected } from "../../utils/reference.js";
 import { transferClient as client } from "../http/index.js";
 
 type TransferPayload = {
@@ -87,7 +88,7 @@ async function create(payload:TransferPayload): Promise<{ data: {
     data: any; link: string 
 }, status: number } | undefined>{
 
-    const { data, error } = await client.POST("/transfers", {
+    const { data, error, response } = await client.POST("/transfers", {
         body: {
             ...payload,
             amount: Number(payload.amount)
@@ -95,6 +96,7 @@ async function create(payload:TransferPayload): Promise<{ data: {
     });
 
     if (error) {
+        throwIfRejected(response, error);
         console.error(error);
         return;
     }
@@ -174,8 +176,26 @@ async function getTransferFee(params: {
     return data;
 }
 
+/**
+ * Find transfers by reference. GET /transfers is missing from the generated types.
+ * https://developer.flutterwave.com/v3.0.0/reference/get-all-transfers
+ */
+async function getByReference(reference: string): Promise<{ status?: string; data?: unknown } | undefined> {
+    const { data, error } = await (client as any).GET("/transfers", {
+        params: { query: { reference } },
+    });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    return data;
+}
+
 export default {
     create,
+    getByReference,
     get,
     retry,
     bulk,

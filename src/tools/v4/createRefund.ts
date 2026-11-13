@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { safeCreate } from './safeCreate.js';
 import { RefundsPostBody } from '../../client/generated/v4/refunds.zod.js';
 
 const REFUND_REASONS = [
@@ -51,35 +51,10 @@ export async function createRefund(
     );
   }
 
-  const response = await flwV4Fetch('/refunds', {
-    method: 'POST',
-    body: JSON.stringify(parsed.data),
+  return safeCreate({
+    path: '/refunds',
+    body: parsed.data,
+    label: 'refund',
+    lookupHint: 'Check with get_charge or list_refunds before creating another refund.',
   });
-
-  const raw = await response.text();
-  if (!response.ok) {
-    throw new Error(
-      `Flutterwave v4 refund request failed: ${response.status} ${raw}`,
-    );
-  }
-
-  let payload: unknown = raw;
-  try {
-    payload = raw === '' ? null : JSON.parse(raw);
-  } catch {
-    payload = raw;
-  }
-
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(
-          { status: response.status, body: payload },
-          null,
-          2,
-        ),
-      },
-    ],
-  };
 }

@@ -53,3 +53,10 @@ describe('raw card tools', () => {
     ]);
   });
 });
+
+describe('read-only mode in the policy step', () => {
+  it('keeps only read tools', () => {
+    const server = serverWith('get_banks', 'create_transfer', 'verify_payment', 'delete_transfer_sender', 'resend_webhook');
+    expect(applyToolPolicy(server, { tools: ['all'], readOnly: true })).toEqual(['get_banks', 'verify_payment']);
+  });
+});

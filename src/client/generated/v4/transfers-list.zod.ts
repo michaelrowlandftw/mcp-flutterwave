@@ -28,8 +28,8 @@ export const TransfersListQueryParams = zod.object({
   "action": zod.enum(['instant', 'deferred', 'scheduled', 'retry']).optional().describe('Action of the transfer'),
   "type": zod.enum(['bank', 'mobile_money', 'wallet', 'cash_pickup']).optional().describe('type of transfer'),
   "status": zod.enum(['new', 'pending', 'failed', 'successful', 'cancelled']).optional().describe('The status of transfer'),
-  "from": zod.string().optional().describe('The start date and time for a period. This parameter is used in conjunction with the \'to\' parameter to define a time range. The value should be in ISO 8601 format.'),
-  "to": zod.string().optional().describe('The end date and time for a period. This parameter is used in conjunction with the \'from\' parameter to define a time range. The value should be in **ISO 8601 format**.')
+  "from": zod.string().date().optional().describe('Start date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
+  "to": zod.string().date().optional().describe('End date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.')
 })
 
 export const transfersListHeaderXTraceIdMin = 12;

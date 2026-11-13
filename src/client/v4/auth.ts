@@ -1,3 +1,4 @@
+import { USER_AGENT } from '../../config/userAgent.js';
 const TOKEN_URL =
   'https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token';
 const REFRESH_THRESHOLD_SECONDS = 60;
@@ -39,6 +40,7 @@ async function fetchAccessToken(): Promise<string> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': USER_AGENT,
       },
       body: new URLSearchParams({
         client_id: clientId,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { newReference, RETRY_GUIDANCE } from '../../utils/reference.js';
+import { safeCreate, lookupCharge } from './safeCreate.js';
 import { ChargesPostBody } from '../../client/generated/v4/charge.zod.js';
 
 export const CreateChargeSchema = {
@@ -19,7 +20,8 @@ export const CreateChargeSchema = {
       /^[a-zA-Z0-9-]+$/,
       'Reference must be 6-42 alphanumeric characters or hyphens',
     )
-    .describe('A unique custom identifier for this charge.'),
+    .optional()
+    .describe(`Unique reference for this create. ${RETRY_GUIDANCE}`),
   customer_id: z.string().min(1).describe('ID of the customer (cus_…).'),
   payment_method_id: z
     .string()
@@ -32,7 +34,7 @@ export const CreateChargeSchema = {
 export type CreateChargeArgs = {
   amount: number;
   currency: string;
-  reference: string;
+  reference?: string;
   customer_id: string;
   payment_method_id: string;
   redirect_url?: string;
@@ -48,6 +50,7 @@ function withoutUndefined<T extends Record<string, unknown>>(value: T): T {
 export async function createCharge(
   args: CreateChargeArgs,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  args = { ...args, reference: args.reference ?? newReference() };
   const body = withoutUndefined({
     amount: args.amount,
     currency: args.currency,
@@ -65,35 +68,12 @@ export async function createCharge(
     );
   }
 
-  const response = await flwV4Fetch('/charges', {
-    method: 'POST',
-    body: JSON.stringify(parsed.data),
+  return safeCreate({
+    path: '/charges',
+    body: parsed.data,
+    label: 'charge',
+    reference: (parsed.data as { reference?: string }).reference,
+    lookup: lookupCharge,
+    lookupHint: 'Check with list_charges (filter reference) or get_charge.',
   });
-
-  const raw = await response.text();
-  if (!response.ok) {
-    throw new Error(
-      `Flutterwave v4 charge request failed: ${response.status} ${raw}`,
-    );
-  }
-
-  let payload: unknown = raw;
-  try {
-    payload = raw === '' ? null : JSON.parse(raw);
-  } catch {
-    payload = raw;
-  }
-
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(
-          { status: response.status, body: payload },
-          null,
-          2,
-        ),
-      },
-    ],
-  };
 }
