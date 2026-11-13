@@ -1,6 +1,8 @@
 export type Options = {
     tools?: string[];
     apiKey?: string;
+    rawCardTools?: boolean;
+    readOnly?: boolean;
 };
 
 export type CheckoutPayload = {

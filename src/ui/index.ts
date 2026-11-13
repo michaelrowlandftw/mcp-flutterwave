@@ -33,6 +33,35 @@ const CARD = {
 const escapeHtml = (value: unknown): string =>
     String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 
+/**
+ * Everything shown in a card comes from the API or the AI (security review H3).
+ * The redesigned cards (transaction, checkout, transfer) escape each value with
+ * escapeHtml. The other cards escape their data once, at the top, with safeData:
+ * HTML special characters in every string (keys too), and link or url fields
+ * that are not http(s) become '#'.
+ */
+const URL_KEY = /(^|_)(url|link|href)$/i;
+
+export function safeUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '#';
+  } catch {
+    return '#';
+  }
+}
+
+export function safeData<T>(value: T, key = ''): T {
+  if (typeof value === 'string') return escapeHtml(URL_KEY.test(key) ? safeUrl(value) : value) as T;
+  if (Array.isArray(value)) return value.map((v) => safeData(v, key)) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [escapeHtml(k), safeData(v, k)]),
+    ) as T;
+  }
+  return value;
+}
+
 const ICONS = {
     card: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
     link: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
@@ -149,8 +178,8 @@ export function createTransactionUI(data: TransactionUIData) {
 }
 
 export function createCheckoutUI(data: CheckoutUIData) {
-    const link = escapeHtml(data.link);
-    const shortLink = escapeHtml(data.link.replace(/^https?:\/\//, ''));
+    const link = escapeHtml(safeUrl(data.link));
+    const shortLink = escapeHtml(safeUrl(data.link).replace(/^https?:\/\//, ''));
     const html = `${cardHead('Payment link created')}<body><main class="card">${cardTop(ICONS.link, 'Payment link created', 'Share it with your customer', '<span class="status active"><span class="dot"></span>Active</span>')}<section class="hero"><span class="eyebrow">Amount requested</span>${formatAmount(data.amount, data.currency)}</section><div class="person"><span class="avatar">${initials(data.customer.name)}</span><div style="min-width:0"><div class="person-name">${escapeHtml(data.customer.name)}</div><div class="person-sub">${escapeHtml(data.customer.email)}</div></div></div><div class="field"><label for="paylink">Checkout link</label><div class="input"><input id="paylink" readonly value="${shortLink}"><button type="button" class="btn-ghost" data-copy="${link}" aria-label="Copy checkout link">${ICONS.copy}Copy</button></div></div><div class="actions"><a class="btn" href="${link}" target="_blank" rel="noopener noreferrer">Open checkout ${ICONS.arrow}</a></div>${cardFoot()}</main>${copyScript}</body></html>`;
     return createUIResource({ uri: `ui://checkout/${Date.now()}` as URI, content: { type: 'rawHtml', htmlString: html }, encoding: 'text' }).resource;
 }
@@ -172,6 +201,7 @@ export function createTransferUI(data: TransferUIData) {
 }
 
 export function createChargeUI(data: ChargeUIData) {
+    data = safeData(data);
     const statusClass = data.status.toLowerCase() === 'successful' ? 'success' : data.status.toLowerCase() === 'pending' ? 'pending' : 'failed';
     const chargeLabel = data.charge_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Charge Details</title>${baseStyles}</head><body><div class="container"><div class="header"><h1>Charge Details</h1><p>${chargeLabel}</p></div><div class="content"><div style="text-align:center;margin-bottom:24px"><div class="status ${statusClass}">${data.status}</div></div><div class="amount" style="text-align:center">${data.currency} ${data.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="info-grid"><div class="info-item"><div class="info-label">Transaction Reference</div><div class="info-value">${data.tx_ref}</div></div>${data.flw_ref?`<div class="info-item"><div class="info-label">Flutterwave Reference</div><div class="info-value">${data.flw_ref}</div></div>`:''}<div class="info-item"><div class="info-label">Customer Email</div><div class="info-value">${data.email}</div></div>${data.fullname?`<div class="info-item"><div class="info-label">Customer Name</div><div class="info-value">${data.fullname}</div></div>`:''} ${data.auth_mode?`<div class="info-item"><div class="info-label">Auth Mode</div><div class="info-value">${data.auth_mode}</div></div>`:''} ${data.processor_response?`<div class="info-item"><div class="info-label">Processor Response</div><div class="info-value">${data.processor_response}</div></div>`:''}</div></div><div class="footer">Powered by Flutterwave</div></div></body></html>`;
@@ -179,6 +209,7 @@ export function createChargeUI(data: ChargeUIData) {
 }
 
 export function createVirtualAccountUI(data: VirtualAccountUIData) {
+    data = safeData(data);
     const accountType   = data.is_permanent ? 'Static Account' : 'Dynamic Account';
     const statusClass   = data.account_status === 'active' ? 'success' : data.account_status === 'inactive' ? 'failed' : 'pending';
     const statusLabel   = data.account_status ?? 'active';
@@ -188,12 +219,14 @@ export function createVirtualAccountUI(data: VirtualAccountUIData) {
 }
 
 export function createPinAuthUI(data: PinAuthUIData) {
+    data = safeData(data);
     const chargeLabel = data.charge_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>PIN Required</title>${baseStyles}<style>.action-header{background:linear-gradient(135deg,#FF8C00 0%,${COLORS.primary} 100%);color:white;padding:28px 24px;text-align:center}.action-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.action-header p{font-size:13px;opacity:0.95}.steps{list-style:none;counter-reset:step;margin-top:16px}.steps li{counter-increment:step;padding:12px 14px 12px 44px;position:relative;border-left:3px solid ${COLORS.primary};margin-bottom:10px;background:#FFFDF7;border-radius:0 8px 8px 0;font-size:14px;color:${COLORS.text}}.steps li::before{content:counter(step);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;background:${COLORS.primary};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:22px;text-align:center}.badge-action{display:inline-block;padding:8px 18px;border-radius:24px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;background:#FF8C00;color:white}</style></head><body><div class="container"><div class="action-header"><h1>PIN Required</h1><p>${chargeLabel} · Step 2 of 3</p></div><div class="content"><div style="text-align:center;margin-bottom:24px"><div class="badge-action">Action Required</div></div><div class="info-grid"><div class="info-item"><div class="info-label">Transaction Reference</div><div class="info-value">${data.tx_ref}</div></div><div class="info-item"><div class="info-label">Next Step</div><div class="info-value">Ask the customer for their 4-digit card PIN</div></div></div><ol class="steps" style="margin-top:20px"><li>Ask the customer: "Please enter your card PIN"</li><li>Call <strong>charge_card</strong> again with the same card details</li><li>Add <code style="background:#f1f1f1;padding:2px 6px;border-radius:4px">authorization: { mode: "pin", pin: "&lt;PIN&gt;" }</code></li></ol></div><div class="footer">Powered by Flutterwave · No charge made yet</div></div></body></html>`;
     return createUIResource({ uri: `ui://charge-auth/pin/${data.tx_ref}` as URI, content: { type: 'rawHtml', htmlString: html }, encoding: 'text' }).resource;
 }
 
 export function createAvsAuthUI(data: AvsAuthUIData) {
+    data = safeData(data);
     const chargeLabel = data.charge_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const fieldChips  = data.fields.map(f => `<span style="display:inline-block;background:#fff3e0;color:#FF8C00;border:1px solid #FFD599;border-radius:16px;padding:4px 12px;font-size:12px;font-weight:600;margin:4px">${f}</span>`).join('');
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Address Verification Required</title>${baseStyles}<style>.action-header{background:linear-gradient(135deg,#FF8C00 0%,${COLORS.primary} 100%);color:white;padding:28px 24px;text-align:center}.action-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.action-header p{font-size:13px;opacity:0.95}.badge-action{display:inline-block;padding:8px 18px;border-radius:24px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;background:#FF8C00;color:white}.steps{list-style:none;counter-reset:step;margin-top:16px}.steps li{counter-increment:step;padding:12px 14px 12px 44px;position:relative;border-left:3px solid ${COLORS.primary};margin-bottom:10px;background:#FFFDF7;border-radius:0 8px 8px 0;font-size:14px;color:${COLORS.text}}.steps li::before{content:counter(step);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;background:${COLORS.primary};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:22px;text-align:center}</style></head><body><div class="container"><div class="action-header"><h1>Address Verification</h1><p>${chargeLabel} · AVS Authentication</p></div><div class="content"><div style="text-align:center;margin-bottom:24px"><div class="badge-action">Action Required</div></div><div class="info-grid"><div class="info-item"><div class="info-label">Transaction Reference</div><div class="info-value">${data.tx_ref}</div></div><div class="info-item"><div class="info-label">Fields Required</div><div class="info-value" style="margin-top:6px">${fieldChips}</div></div></div><ol class="steps" style="margin-top:20px"><li>Collect the customer's billing address details (${data.fields.join(', ')})</li><li>Call <strong>charge_card</strong> again with the same card details</li><li>Add <code style="background:#f1f1f1;padding:2px 6px;border-radius:4px">authorization: { mode: "avs_noauth", ${data.fields.map(f => `${f}: "..."}`).join(', ')} }</code></li></ol></div><div class="footer">Powered by Flutterwave · No charge made yet</div></div></body></html>`;
@@ -201,6 +234,7 @@ export function createAvsAuthUI(data: AvsAuthUIData) {
 }
 
 export function create3dsRedirectUI(data: ThreeDsRedirectUIData) {
+    data = safeData(data);
     const chargeLabel = data.charge_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const amountStr   = data.amount && data.currency ? `${data.currency} ${data.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>3D Secure Authentication</title>${baseStyles}<style>.secure-header{background:linear-gradient(135deg,#006AFF 0%,#0044BB 100%);color:white;padding:28px 24px;text-align:center}.secure-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.secure-header p{font-size:13px;opacity:0.95}.badge-secure{display:inline-block;padding:8px 18px;border-radius:24px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;background:#006AFF;color:white}.redirect-box{background:#EEF5FF;border:1px solid #BDD5FF;border-radius:10px;padding:16px 18px;margin:16px 0;word-break:break-all;font-family:monospace;font-size:13px;color:#003A8C;line-height:1.6}.cta-btn{display:block;width:100%;padding:14px 24px;background:#006AFF;color:white;text-decoration:none;border-radius:10px;font-weight:700;text-align:center;font-size:14px;margin-top:16px}.notice{background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:12px 16px;font-size:13px;color:#5D4037;margin-top:16px}</style></head><body><div class="container"><div class="secure-header"><h1>3D Secure Authentication</h1><p>${chargeLabel} · Bank Verification Required</p></div><div class="content"><div style="text-align:center;margin-bottom:24px"><div class="badge-secure">Redirect Required</div></div>${amountStr?`<div class="amount" style="text-align:center">${amountStr}</div>`:''}<div class="info-grid">${data.tx_ref?`<div class="info-item"><div class="info-label">Transaction Reference</div><div class="info-value">${data.tx_ref}</div></div>`:''} ${data.flw_ref?`<div class="info-item"><div class="info-label">Flutterwave Reference</div><div class="info-value">${data.flw_ref}</div></div>`:''}<div class="info-item"><div class="info-label">Authentication URL</div><div class="redirect-box">${data.redirect_url}</div></div></div><a href="${data.redirect_url}" target="_blank" class="cta-btn">Complete Authentication at Bank →</a><div class="notice">⚠ After the customer completes authentication, use <strong>read_transaction</strong> to verify the payment outcome.</div></div><div class="footer">Powered by Flutterwave · Secured by 3D Secure</div></div></body></html>`;
@@ -208,6 +242,7 @@ export function create3dsRedirectUI(data: ThreeDsRedirectUIData) {
 }
 
 export function createOtpPromptUI(data: OtpPromptUIData) {
+    data = safeData(data);
     const chargeLabel = data.charge_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const amountStr   = data.amount && data.currency ? `${data.currency} ${data.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OTP Required</title>${baseStyles}<style>.action-header{background:linear-gradient(135deg,${COLORS.primary} 0%,${COLORS.primaryDark} 100%);color:white;padding:28px 24px;text-align:center}.action-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.action-header p{font-size:13px;opacity:0.95}.badge-otp{display:inline-block;padding:8px 18px;border-radius:24px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;background:${COLORS.warning};color:white}.bank-msg{background:#FFFDE7;border:1px solid #FFE082;border-radius:10px;padding:16px 18px;margin:16px 0;font-size:15px;color:#4E342E;font-weight:500;text-align:center}.ref-box{background:#F5F5F5;border:1px solid ${COLORS.border};border-radius:8px;padding:12px 16px;font-family:monospace;font-size:14px;color:${COLORS.dark};word-break:break-all}.steps{margin-top:16px;padding-left:20px}.steps li{font-size:14px;color:${COLORS.text};margin-bottom:8px;line-height:1.5}</style></head><body><div class="container"><div class="action-header"><h1>OTP Validation Required</h1><p>${chargeLabel} · Step 3 of 3</p></div><div class="content"><div style="text-align:center;margin-bottom:20px"><div class="badge-otp">OTP Sent</div></div>${amountStr?`<div class="amount" style="text-align:center">${amountStr}</div>`:''} ${data.processor_response?`<div class="bank-msg">${data.processor_response}</div>`:''}<div class="info-grid"><div class="info-item"><div class="info-label">Transaction Reference</div><div class="info-value">${data.tx_ref}</div></div>${data.email?`<div class="info-item"><div class="info-label">Customer Email</div><div class="info-value">${data.email}</div></div>`:''}<div class="info-item"><div class="info-label">Flutterwave Reference (flw_ref)</div><div class="ref-box">${data.flw_ref}</div></div></div><ol class="steps"><li>Ask the customer for the OTP sent to their phone/email</li><li>Call <strong>validate_charge</strong> with the OTP and the <code>flw_ref</code> above</li></ol></div><div class="footer">Powered by Flutterwave</div></div></body></html>`;
@@ -218,6 +253,7 @@ export interface StablecoinFeeUIData { amount: number; currency: string; debit_c
 export interface StablecoinTransferUIData { reference: string; amount: number; currency: string; debit_currency: string; recipient: string; transfer_type: 'wallet' | 'convert'; status: string; fee?: number; created_at?: string; }
 
 export function createStablecoinFeeUI(data: StablecoinFeeUIData) {
+    data = safeData(data);
     const isCross = !!data.debit_currency && data.debit_currency !== data.currency;
     const feeLabel = data.fee_type === 'percentage' ? `${data.fee}%` : `${data.fee} ${data.currency}`;
     const recipientStr = isCross ? `${data.debit_currency} → ${data.currency}` : `${data.currency} → ${data.currency}`;
@@ -226,6 +262,7 @@ export function createStablecoinFeeUI(data: StablecoinFeeUIData) {
 }
 
 export function createStablecoinTransferUI(data: StablecoinTransferUIData) {
+    data = safeData(data);
     const statusClass = data.status.toLowerCase() === 'new' ? 'pending' : data.status.toLowerCase() === 'successful' ? 'success' : 'failed';
     const isWallet = data.transfer_type === 'wallet';
     const shortAddr = isWallet && data.recipient.startsWith('0x')
@@ -241,6 +278,7 @@ export interface BankAccountUIData { account_number: string; account_name: strin
 export interface CardBinUIData { bin: string; brand?: string; type?: string; issuer?: string; country?: string; country_code?: string; }
 
 export function createBvnConsentUI(data: BvnConsentUIData) {
+    data = safeData(data);
     const hasUrl = !!data.url;
     const headerColor = hasUrl ? '#1A2455' : '#00695C';
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>BVN Verification</title>${baseStyles}<style>.kyc-header{background:linear-gradient(135deg,${headerColor} 0%,${hasUrl ? '#0A0E27' : '#00897B'} 100%);color:white;padding:28px 24px;text-align:center}.kyc-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.kyc-header p{font-size:13px;opacity:0.85}.consent-btn{display:block;width:100%;padding:14px 24px;background:${COLORS.primary};color:white;text-decoration:none;border-radius:10px;font-weight:700;text-align:center;font-size:14px;margin-top:16px}.badge-kyc{display:inline-block;padding:8px 18px;border-radius:24px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;background:${COLORS.primary};color:white}.steps{list-style:none;counter-reset:step;margin-top:16px}.steps li{counter-increment:step;padding:12px 14px 12px 44px;position:relative;border-left:3px solid ${COLORS.primary};margin-bottom:10px;background:#FFFDF7;border-radius:0 8px 8px 0;font-size:14px}.steps li::before{content:counter(step);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;background:${COLORS.primary};color:white;border-radius:50%;font-size:11px;font-weight:700;line-height:22px;text-align:center}</style></head><body><div class="container"><div class="kyc-header"><h1>BVN Verification</h1><p>${hasUrl ? 'Customer Consent Required' : 'Consent Already Provided'}</p></div><div class="content"><div style="text-align:center;margin-bottom:20px"><div class="badge-kyc">${hasUrl ? 'Action Required' : 'Ready to Retrieve'}</div></div><div class="info-grid"><div class="info-item"><div class="info-label">Customer Name</div><div class="info-value">${data.firstname} ${data.lastname}</div></div><div class="info-item"><div class="info-label">BVN (last 4)</div><div class="info-value">••••••• ${data.bvn_last4}</div></div><div class="info-item"><div class="info-label">Reference</div><div class="info-value" style="font-family:monospace;font-size:13px">${data.reference}</div></div></div>${hasUrl ? `<ol class="steps"><li>Share the consent link below with the customer</li><li>Customer visits the NIBSS portal and approves data sharing</li><li>Call <strong>get_bvn_details</strong> with reference <code style="background:#f1f1f1;padding:2px 6px;border-radius:4px">${data.reference}</code> to retrieve their BVN data</li></ol><div class="link-box" style="margin-top:16px">${data.url}</div><a href="${data.url}" target="_blank" class="consent-btn">Open Consent Page →</a>` : `<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:12px 16px;font-size:13px;color:#1B5E20;margin-top:16px">This customer has already provided consent. Call <strong>get_bvn_details</strong> with reference <code style="background:#C8E6C9;padding:2px 6px;border-radius:4px">${data.reference}</code> to retrieve their identity data.</div>`}</div><div class="footer">Powered by Flutterwave · Secured by NIBSS</div></div></body></html>`;
@@ -248,6 +286,7 @@ export function createBvnConsentUI(data: BvnConsentUIData) {
 }
 
 export function createBvnDetailsUI(data: BvnDetailsUIData) {
+    data = safeData(data);
     const isComplete = data.status === 'COMPLETED';
     const statusClass = isComplete ? 'success' : 'pending';
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>BVN Details</title>${baseStyles}<style>.kyc-header{background:linear-gradient(135deg,#1A2455 0%,#0A0E27 100%);color:white;padding:28px 24px;text-align:center}.kyc-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.kyc-header p{font-size:13px;opacity:0.85}.masked-bvn{background:#F5F5F5;border:1px solid #E0E0E0;border-radius:8px;padding:12px 16px;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:3px;text-align:center;margin:8px 0;color:#1E1E1E}${data.watchlisted ? '.watchlist-badge{background:#D32F2F;color:white;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px}' : ''}</style></head><body><div class="container"><div class="kyc-header"><h1>BVN Details</h1><p>Identity Verification · Flutterwave</p></div><div class="content"><div style="text-align:center;margin-bottom:20px"><div class="status ${statusClass}">${data.status}</div>${data.watchlisted ? '<br><span class="watchlist-badge" style="display:inline-block;margin-top:8px">⚠ Watchlisted</span>' : ''}</div><div class="info-grid">${data.first_name ? `<div class="info-item"><div class="info-label">Full Name</div><div class="info-value">${data.first_name}${data.last_name ? ' ' + data.last_name : ''}</div></div>` : ''}${data.bvn ? `<div class="info-item"><div class="info-label">BVN</div><div class="masked-bvn">${data.bvn.slice(0, 3)}•••••${data.bvn.slice(-3)}</div></div>` : ''}${data.dob ? `<div class="info-item"><div class="info-label">Date of Birth</div><div class="info-value">${data.dob}</div></div>` : ''}${data.gender ? `<div class="info-item"><div class="info-label">Gender</div><div class="info-value">${data.gender}</div></div>` : ''}${data.phone ? `<div class="info-item"><div class="info-label">Phone Number</div><div class="info-value">${data.phone}</div></div>` : ''}${data.email ? `<div class="info-item"><div class="info-label">Email</div><div class="info-value">${data.email}</div></div>` : ''}${data.nin ? `<div class="info-item"><div class="info-label">NIN</div><div class="info-value" style="font-family:monospace">${data.nin}</div></div>` : ''}${data.state_of_origin ? `<div class="info-item"><div class="info-label">State of Origin</div><div class="info-value">${data.state_of_origin}</div></div>` : ''}<div class="info-item"><div class="info-label">Reference</div><div class="info-value" style="font-family:monospace;font-size:13px">${data.reference}</div></div></div></div><div class="footer">Powered by Flutterwave · Secured by NIBSS</div></div></body></html>`;
@@ -255,11 +294,13 @@ export function createBvnDetailsUI(data: BvnDetailsUIData) {
 }
 
 export function createBankAccountUI(data: BankAccountUIData) {
+    data = safeData(data);
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Account Verified</title>${baseStyles}<style>.verify-header{background:linear-gradient(135deg,#00695C 0%,#00897B 100%);color:white;padding:28px 24px;text-align:center}.verify-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.verify-header p{font-size:13px;opacity:0.85}.account-box{background:linear-gradient(135deg,#F1F8E9 0%,#E8F5E9 100%);border:2px solid #A5D6A7;border-radius:14px;padding:24px;text-align:center;margin:20px 0}.account-name{font-size:24px;font-weight:700;color:#1B5E20;margin-bottom:8px}.account-num{font-size:16px;font-family:monospace;color:#33691E;letter-spacing:2px}.check-icon{font-size:48px;margin-bottom:16px}</style></head><body><div class="container"><div class="verify-header"><h1>Account Verified</h1><p>Bank Account Resolution</p></div><div class="content"><div class="account-box"><div class="check-icon">✓</div><div class="account-name">${data.account_name}</div><div class="account-num">${data.account_number}</div></div><div class="info-grid"><div class="info-item"><div class="info-label">Account Number</div><div class="info-value" style="font-family:monospace">${data.account_number}</div></div><div class="info-item"><div class="info-label">Account Name</div><div class="info-value">${data.account_name}</div></div><div class="info-item"><div class="info-label">Bank Code</div><div class="info-value">${data.bank_code}</div></div></div></div><div class="footer">Powered by Flutterwave</div></div></body></html>`;
     return createUIResource({ uri: `ui://bank-account/${data.account_number}` as URI, content: { type: 'rawHtml', htmlString: html }, encoding: 'text' }).resource;
 }
 
 export function createCardBinUI(data: CardBinUIData) {
+    data = safeData(data);
     const brandColor = data.brand?.toUpperCase() === 'VISA' ? '#1A1F71' : data.brand?.toUpperCase() === 'MASTERCARD' ? '#EB001B' : data.brand?.toUpperCase().includes('AMEX') ? '#007BC1' : COLORS.dark;
     const typeClass = data.type?.toUpperCase() === 'CREDIT' ? 'success' : 'pending';
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Card BIN Info</title>${baseStyles}<style>.bin-header{background:linear-gradient(135deg,${brandColor} 0%,${COLORS.dark} 100%);color:white;padding:28px 24px;text-align:center}.bin-header h1{font-size:22px;font-weight:600;margin-bottom:6px}.bin-header p{font-size:13px;opacity:0.85}.bin-badge{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 16px;border-radius:20px;font-size:15px;font-weight:700;letter-spacing:3px;font-family:monospace}.brand-logo{font-size:32px;font-weight:900;letter-spacing:-1px;margin-bottom:8px;opacity:0.95}</style></head><body><div class="container"><div class="bin-header"><div class="brand-logo">${data.brand ?? 'CARD'}</div><h1>Card BIN Details</h1><div class="bin-badge">${data.bin}</div></div><div class="content"><div style="text-align:center;margin-bottom:20px">${data.type ? `<div class="status ${typeClass}">${data.type}</div>` : ''}</div><div class="info-grid"><div class="info-item"><div class="info-label">BIN</div><div class="info-value" style="font-family:monospace;letter-spacing:2px">${data.bin}</div></div>${data.brand ? `<div class="info-item"><div class="info-label">Brand</div><div class="info-value">${data.brand}</div></div>` : ''}${data.type ? `<div class="info-item"><div class="info-label">Card Type</div><div class="info-value">${data.type}</div></div>` : ''}${data.issuer ? `<div class="info-item"><div class="info-label">Issuer</div><div class="info-value">${data.issuer}</div></div>` : ''}${data.country ? `<div class="info-item"><div class="info-label">Country</div><div class="info-value">${data.country}${data.country_code ? ` (${data.country_code})` : ''}</div></div>` : ''}</div></div><div class="footer">Powered by Flutterwave</div></div></body></html>`;
@@ -270,6 +311,7 @@ export interface FxQuoteUIData { quote_id: string; reference: string; instrument
 export interface FxTradeUIData { trade_id: string; reference: string; instrument: string; quantity: number; approved_quantity?: number; price: number; status: string; narration?: string; recipient?: { id?: string; name?: string }; response_message?: string; created_at?: string; }
 
 export function createFxQuoteUI(data: FxQuoteUIData) {
+    data = safeData(data);
     const statusColor = data.status === 'READY' ? '#00C853' : data.status === 'FAILED' || data.status === 'EXPIRED' ? '#D32F2F' : data.status === 'PROCESSING' ? '#006AFF' : '#FFA726';
     const [baseCcy, targetCcy] = data.instrument.split('/');
     const rateHtml = data.rate
@@ -297,6 +339,7 @@ export function createFxQuoteUI(data: FxQuoteUIData) {
 }
 
 export function createFxTradeUI(data: FxTradeUIData) {
+    data = safeData(data);
     const statusColor = data.status === 'SETTLED' ? '#00C853' : data.status === 'FAILED' ? '#D32F2F' : data.status === 'PENDING' ? '#FFA726' : '#757575';
     const [baseCcy, targetCcy] = data.instrument.split('/');
     const settledNote = data.status === 'SETTLED'
@@ -315,6 +358,7 @@ export interface BillPaymentUIData { reference: string; biller_code: string; ite
 export interface BillStatusUIData { reference: string; amount: number; status: string; biller?: string; customer?: string; token?: string; completed_at?: string; }
 
 export function createBillPaymentUI(data: BillPaymentUIData) {
+    data = safeData(data);
     const statusClass = data.status.toLowerCase() === 'successful' ? 'success' : data.status.toLowerCase() === 'pending' ? 'pending' : 'failed';
     const tokenHtml = data.token
         ? `<div class="info-item"><div class="info-label">Prepaid Token</div><div style="background:#1E1E1E;color:#A8FF78;padding:14px 18px;border-radius:10px;font-family:monospace;font-size:18px;font-weight:700;letter-spacing:4px;text-align:center;margin-top:6px">${data.token}</div></div>`
@@ -324,6 +368,7 @@ export function createBillPaymentUI(data: BillPaymentUIData) {
 }
 
 export function createBillStatusUI(data: BillStatusUIData) {
+    data = safeData(data);
     const statusClass = data.status.toLowerCase() === 'successful' ? 'success' : data.status.toLowerCase() === 'pending' ? 'pending' : 'failed';
     const tokenHtml = data.token
         ? `<div class="info-item"><div class="info-label">Prepaid Token</div><div style="background:#1E1E1E;color:#A8FF78;padding:14px 18px;border-radius:10px;font-family:monospace;font-size:18px;font-weight:700;letter-spacing:4px;text-align:center;margin-top:6px">${data.token}</div></div><div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:12px 16px;font-size:13px;color:#1B5E20;margin-top:12px">Share this token with the customer to load their electricity meter.</div>`
@@ -333,6 +378,8 @@ export function createBillStatusUI(data: BillStatusUIData) {
 }
 
 export function createTimelineUI(tx_id: string, timeline: any) {
+    tx_id = safeData(tx_id);
+    timeline = safeData(timeline);
     if (!timeline || (Array.isArray(timeline) && timeline.length === 0)) {
         return createUIResource({ uri: `ui://timeline/${tx_id}` as URI, content: { type: 'rawHtml', htmlString: '<p style="padding:20px;color:#757575;">No timeline data available.</p>' }, encoding: 'text' }).resource;
     }

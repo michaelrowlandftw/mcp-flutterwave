@@ -1,0 +1,24 @@
+{
+  "captured_at_utc": "2026-11-12 12:51:37",
+  "headers": {
+    "user-agent": "axios/1.21.0",
+    "verif-hash": "<temporary test value>",
+    "content-type": "application/json"
+  },
+  "body": {
+    "id": 111359,
+    "AmountRefunded": 100,
+    "status": "processing",
+    "FlwRef": "4647385147661794050789116",
+    "destination": "payment_source",
+    "comments": null,
+    "settlement_id": "NEW",
+    "meta": "{\"source\":\"ledgerbalance\",\"isPartialRefund\":true}",
+    "createdAt": "2026-11-12T12:51:37.000Z",
+    "updatedAt": "2026-11-12T12:51:37.000Z",
+    "deletedAt": null,
+    "walletId": "<redacted>",
+    "AccountId": "<redacted>",
+    "TransactionId": 9841785
+  }
+}
