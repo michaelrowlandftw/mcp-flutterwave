@@ -127,7 +127,8 @@ export async function verifyPayout(
   const status = normaliseStatus(version, 'payout', record.status);
   const text = JSON.stringify([record.complete_message, record.reversal, record.events]).toLowerCase();
   const reversed = status.normalised === 'reversed' || text.includes('revers');
-  const final = record.status === 'SUCCESSFUL' || record.status === 'FAILED' || record.status === 'CANCELLED' || reversed;
+  // Final means a known final status for this version (unknown spellings keep polling, then escalate).
+  const final = status.normalised === 'successful' || status.normalised === 'failed' || reversed;
 
   if (reversed) reasons.push('The transfer was reversed, even if it showed successful before. The money came back.');
   else if (record.status !== 'SUCCESSFUL') {

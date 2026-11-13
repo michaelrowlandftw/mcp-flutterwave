@@ -76,7 +76,7 @@ function looksLikeCard(d: string): boolean {
 }
 
 function maskCards(text: string): string {
-  return text.replace(/(?<![\d.])(?:\d[ -]?){12,18}\d(?!\d|\.\d)/g, (match) => {
+  return text.replace(/(?<!\d|\d\.)(?:\d[ -]?){12,18}\d(?!\d|\.\d)/g, (match) => {
     const digits = match.replace(/[ -]/g, '');
     return looksLikeCard(digits) && luhn(digits) ? `[CARD ****${digits.slice(-4)}]` : match;
   });
@@ -91,11 +91,16 @@ function maskEncodedSecrets(text: string, secrets: string[]): string {
   const holds = (decoded: string) => secrets.some((secret) => decoded.includes(secret));
   return text
     .replace(/[A-Za-z0-9+/_-]{16,}={0,2}/g, (run) => {
-      try {
-        return holds(Buffer.from(run, 'base64').toString('utf8')) ? MASK : run;
-      } catch {
-        return run;
+      // Other base64-like characters can sit in front of the encoded secret
+      // ("Basic x...", "id_..."), so try every 4-character alignment.
+      for (let offset = 0; offset < 4; offset++) {
+        try {
+          if (holds(Buffer.from(run.slice(offset), 'base64').toString('utf8'))) return MASK;
+        } catch {
+          /* not base64 at this offset */
+        }
       }
+      return run;
     })
     .replace(/\b(?:[0-9a-fA-F]{2}){8,}\b/g, (run) => (holds(Buffer.from(run, 'hex').toString('utf8')) ? MASK : run));
 }

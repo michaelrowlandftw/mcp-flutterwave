@@ -99,7 +99,7 @@ function rawAmount(tool: string, args: Args): Raw {
   if (tool === 'request_fx_quote') return { amount: args.quantity, currency: args.base_currency };
   if (tool === 'pay_bill') {
     // Bills are Nigeria only; any other country gives no currency, which a cap refuses (review N5).
-    const country = (args.country ?? 'NG') as string;
+    const country = String(args.country ?? 'NG').toUpperCase();
     return { amount: args.amount, currency: country === 'NG' ? 'NGN' : undefined };
   }
   return { amount: args.amount, currency: args.currency ?? args.debit_currency };
