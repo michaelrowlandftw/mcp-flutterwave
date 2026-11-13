@@ -114,3 +114,28 @@ describe('safe creates (v3)', () => {
     expect(calls.filter((c) => c.method === 'GET')).toHaveLength(0);
   });
 });
+
+describe('v3 lookup errors (review H4)', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    calls = [];
+    store = [];
+    process.env.FLW_LOOKUP_DELAYS_MS = '0,0';
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete process.env.FLW_LOOKUP_DELAYS_MS;
+  });
+
+  it('a lookup that fails (500) is not "not found": unknown, and no retry', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: Request | string, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      calls.push({ url: request.url, method: request.method.toUpperCase(), body: undefined });
+      return request.method.toUpperCase() === 'POST' ? new Response('', { status: 503 }) : json({ status: 'error' }, 500);
+    }));
+    const out = await run(TOOLS[0][0], TOOLS[0][1], TOOLS[0][2]);
+    expect(out.status).toBe('unknown');
+    expect(out.reason).toMatch(/lookup failed/);
+    expect(posts()).toHaveLength(1);
+  });
+});

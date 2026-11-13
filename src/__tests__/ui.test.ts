@@ -250,3 +250,30 @@ describe('createOtpPromptUI', () => {
         expect(JSON.stringify(resource)).toContain('validate_charge');
     });
 });
+
+describe('result cards escape API and AI data (review H3)', () => {
+    const textOf = (r: { text?: string; blob?: string }) => r.text ?? Buffer.from(r.blob ?? '', 'base64').toString();
+
+    it('escapes HTML in names and values', () => {
+        const r = createCheckoutUI({ link: 'https://pay.flutterwave.com/abc?x=1&y=2', customer: { name: '<img src=x onerror=alert(1)>', email: '"a"@b.co' }, amount: 2000, currency: 'NGN' }) as never;
+        const html = textOf(r);
+        expect(html).not.toContain('<img src=x');
+        expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+        expect(html).toContain('href="https://pay.flutterwave.com/abc?x=1&amp;y=2"');
+    });
+
+    it('turns javascript: and other non-http links into #', () => {
+        for (const link of ['javascript:alert(1)', 'data:text/html,hi', 'not a url']) {
+            const html = textOf(createCheckoutUI({ link, customer: { name: 'J', email: 'j@x.co' }, amount: 1, currency: 'NGN' }) as never);
+            expect(html).toContain('href="#"');
+            expect(html).not.toContain('javascript:');
+        }
+        const html = textOf(create3dsRedirectUI({ tx_ref: 'r', charge_type: 'card', redirect_url: 'javascript:alert(1)' }) as never);
+        expect(html).not.toContain('javascript:');
+    });
+
+    it('escapes keys and values in the timeline', () => {
+        const html = textOf(createTimelineUI('1', { '<b>k</b>': '<script>x</script>' }) as never);
+        expect(html).not.toMatch(/<script>|<b>k/);
+    });
+});

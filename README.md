@@ -100,7 +100,7 @@ The server communicates over stdio, so it must be launched by an MCP client — 
 
 The `-i` flag keeps stdin open so Claude Desktop can communicate with the server over stdio. For v4 (the default), pass `FLW_CLIENT_ID` and `FLW_CLIENT_SECRET` instead of the v3 secret and encryption key. See [Flutterwave v4](#flutterwave-v4).
 
-**Requirements:** Node.js 20 or later (for npm/npx).
+**Requirements:** Node.js 22 or later (for npm/npx).
 
 ### Test mode only
 
@@ -110,6 +110,18 @@ Live mode is disabled until the security review is complete. The server refuses 
 - v4: `FLW_ENVIRONMENT=production` is refused.
 
 No flag or environment variable turns live mode back on.
+
+### Safety settings
+
+| Setting | What it does |
+|---|---|
+| `FLW_ENV_FILE=/path/to/file` | Loads credentials from that file. A `.env` in the working folder is **not** read, and safety switches in a file are ignored |
+| `FLW_REQUIRE_ELICITATION=true` | Blocks money-moving tools in AI clients that can't ask you to confirm directly (always on with live credentials) |
+| `FLW_MAX_AMOUNT`, `FLW_MAX_AMOUNT_<CURRENCY>` | Amount caps. With a cap set, calls whose amount or currency can't be read are refused, and so are tools that move money with no amount of their own (`retry_transfer`, `update_transfer`, `initiate_fx_trade`) |
+| `FLW_ALLOWED_URL_HOSTS=a.com,b.com` | Only these hosts are allowed in `callback_url` and `redirect_url` |
+| `FLW_TIMEOUT_MS` | API timeout (default 60 seconds); a timed-out create returns `unknown` |
+
+`callback_url` and `redirect_url` must be https (`http://localhost` is allowed in test mode). `update_charge` with a PIN needs `--enable-raw-card-tools`.
 
 ### Read-only mode
 
@@ -634,6 +646,16 @@ npm run build
 ```
 
 Use npm 11 or later to install from the lock file (`npx npm@11 ci`); npm 10 disagrees with the lock file about optional peer packages.
+
+### Contract tests (sandbox)
+
+`npm run test:contract` runs the cases from our API test findings against the real sandboxes: date formats per endpoint, clear errors before bad calls, one record after a retried create, and sandbox transfer scenarios. They are skipped unless these are set (separate names, because the unit-test config sets dummy values for the normal ones):
+
+- `FLW_SANDBOX_CLIENT_ID`, `FLW_SANDBOX_CLIENT_SECRET`: v4 sandbox
+- `FLW_SANDBOX_SECRET_KEY`: v3 test key (`FLWSECK_TEST...`); a live key skips the v3 suite
+- `FLW_SANDBOX_RECIPIENT_ID` (optional): a sandbox transfer recipient, for the transfer cases
+
+They create sandbox records (a customer, a virtual account, small test transfers). They never run against live.
 
 ### Environment variables
 
