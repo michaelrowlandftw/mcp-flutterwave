@@ -1,5 +1,5 @@
 import Flutterwave from "../client/index.js";
-import { withReference } from '../utils/reference.js';
+import { uncertainV3, withReference } from '../utils/reference.js';
 import { lookupV3Transfer, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
@@ -130,7 +130,7 @@ export async function sendStablecoin(payload: {
         const response = sent.response;
         return buildTransferResponse(response, 'wallet');
     } catch (error) {
-        return createErrorResponse(`Error sending stablecoin: ${JSON.stringify(error)}`);
+        return uncertainV3('send stablecoin', payload.reference, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -159,7 +159,7 @@ export async function convertToStablecoin(payload: {
         const response = sent.response;
         return buildTransferResponse(response, 'convert');
     } catch (error) {
-        return createErrorResponse(`Error converting to stablecoin: ${JSON.stringify(error)}`);
+        return uncertainV3('convert to stablecoin', payload.reference, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -195,10 +195,11 @@ export function registerStablecoinTools() {
         ].join(' '),
         SendStablecoinSchema,
         async (args) => {
+            const a = withReference(args, 'reference');
             try {
-                return await sendStablecoin(withReference(args, 'reference') as any);
+                return await sendStablecoin(a as any);
             } catch (error) {
-                return createErrorResponse('Error sending stablecoin');
+                return uncertainV3('send stablecoin', a.reference, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
             }
         }
     );
@@ -216,10 +217,11 @@ export function registerStablecoinTools() {
         ].join(' '),
         ConvertToStablecoinSchema,
         async (args) => {
+            const a = withReference(args, 'reference');
             try {
-                return await convertToStablecoin(withReference(args, 'reference') as any);
+                return await convertToStablecoin(a as any);
             } catch (error) {
-                return createErrorResponse('Error converting to stablecoin');
+                return uncertainV3('convert to stablecoin', a.reference, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
             }
         }
     );

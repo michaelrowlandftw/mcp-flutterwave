@@ -156,3 +156,22 @@ describe('review findings M3, M5, H3', () => {
     expect(r.content[0].resource.text).toBe('<p>[REDACTED] [CARD ****4242]</p>');
   });
 });
+
+describe('review N4', () => {
+  it('masks a card number at the end of a sentence, and JCB and Diners numbers', () => {
+    expect(redactText('card 4111111111111111.', {})).toBe('card [CARD ****1111].');
+    expect(redactText('jcb 3530111333300000', {})).toBe('jcb [CARD ****0000]');
+    expect(redactText('diners 36227206271667', {})).toBe('diners [CARD ****1667]');
+    expect(redactText('amount 1234567890123.45', {})).toBe('amount 1234567890123.45');
+  });
+
+  it('masks base64 and hex text that contains a secret', () => {
+    const env = { FLW_SECRET_HASH: 'my-webhook-hash-value' };
+    const basic = Buffer.from(`user:${env.FLW_SECRET_HASH}`).toString('base64');
+    const hex = Buffer.from(`x${env.FLW_SECRET_HASH}y`).toString('hex');
+    expect(redactText(`Authorization: Basic ${basic}`, env)).not.toContain(basic);
+    expect(redactText(`blob ${hex}`, env)).toBe('blob [REDACTED]');
+    const harmless = Buffer.from('nothing secret here at all').toString('base64');
+    expect(redactText(`data ${harmless}`, env)).toBe(`data ${harmless}`);
+  });
+});

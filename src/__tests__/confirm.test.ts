@@ -155,6 +155,15 @@ describe('tokens', () => {
     expect(checkToken('create_transfer', ARGS, '9999999999999.zz')).toMatch(/not valid/);
   });
 
+  it('leading zeros do not make a used token new again (review N1)', () => {
+    const args = { ...ARGS, amount: 1501 };
+    const t = issueToken('create_transfer', args);
+    expect(checkToken('create_transfer', args, t)).toBeNull();
+    for (const variant of [`0${t}`, `00${t}`]) {
+      expect(checkToken('create_transfer', args, variant)).not.toBeNull();
+    }
+  });
+
   it('a used token cannot be replayed in another spelling (review H2)', () => {
     const t = issueToken('create_transfer', ARGS);
     expect(checkToken('create_transfer', ARGS, t)).toBeNull();
@@ -189,10 +198,26 @@ describe('amount cap holes from the review (M1)', () => {
     expect(capError({ amount: 200000 }, NGN_CAP, 'pay_bill')).toMatch(/200000 NGN/);
   });
 
-  it('tools with no amount of their own are not blocked', () => {
-    for (const tool of ['validate_charge', 'retry_transfer', 'initiate_fx_trade', 'update_order']) {
+  it('incoming no-amount tools are not blocked; outgoing ones are refused under a cap (review N2)', () => {
+    for (const tool of ['validate_charge', 'update_order', 'update_charge']) {
       expect(capError({ id: 'x' }, NGN_CAP, tool)).toBeNull();
     }
+    for (const tool of ['retry_transfer', 'update_transfer', 'initiate_fx_trade']) {
+      expect(capError({ id: 'x' }, NGN_CAP, tool)).toMatch(/no amount the server can check/);
+      expect(capError({ id: 'x' }, {}, tool)).toBeNull(); // no cap, test mode
+    }
+    // update_chargeback carries an amount, so the cap applies.
+    expect(capError({ amount: 200000, currency: 'NGN' }, NGN_CAP, 'update_chargeback')).toMatch(/above the cap/);
+  });
+
+  it('live mode refuses a currency without its own cap (review N3)', () => {
+    const live = { FLW_API_VERSION: 'v4', FLW_ENVIRONMENT: 'production', FLW_MAX_AMOUNT_NGN: '100000' };
+    expect(capError({ amount: 1e9, currency: 'USD' }, live, 'create_charge')).toMatch(/no cap for USD/);
+    expect(capError({ amount: 1e9, currency: 'USD' }, NGN_CAP, 'create_charge')).toBeNull(); // test mode
+  });
+
+  it('pay_bill outside Nigeria has no currency, so a cap refuses it (review N5)', () => {
+    expect(capError({ amount: 10, country: 'GH' }, NGN_CAP, 'pay_bill')).toMatch(/currency of this call can't be read/);
   });
 
   it('live mode requires a cap', () => {

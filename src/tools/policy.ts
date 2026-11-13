@@ -3,7 +3,7 @@ import type { Options } from '../types/index.js';
 import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
 import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
-import { capError, guardMoneyTool } from './confirm.js';
+import { capError, guardMoneyTool, isLive } from './confirm.js';
 import { z } from 'zod';
 import { redactResult } from '../utils/redact.js';
 import { SCENARIO_TOOLS } from './sandbox.js';
@@ -26,6 +26,45 @@ export function registeredTools(server: McpServer): Record<string, RegisteredToo
  * Read-only mode keeps only tools that read data.
  * Returns the names of the tools that stay registered.
  */
+/**
+ * Callback and redirect URLs, at any depth, must be https (review L5, N8).
+ * http://localhost and http://127.0.0.1 are allowed outside live, for local testing.
+ * FLW_ALLOWED_URL_HOSTS (comma-separated) restricts the hosts further.
+ */
+const URL_FIELDS = new Set(['callback_url', 'redirect_url']);
+
+function checkUrls(value: unknown, depth = 0): void {
+  if (!value || typeof value !== 'object' || depth > 8) return;
+  for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
+    if (URL_FIELDS.has(key) && inner !== undefined) checkUrl(key, inner);
+    else checkUrls(inner, depth + 1);
+  }
+}
+
+function checkUrl(key: string, value: unknown): void {
+  let url: URL;
+  try {
+    url = new URL(String(value));
+  } catch {
+    throw new Error(`${key} must be an https URL.`);
+  }
+  const local = url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  if (typeof value !== 'string' || /\s/.test(value) || !(url.protocol === 'https:' || (local && !isLive()))) {
+    throw new Error(`${key} must be an https URL.`);
+  }
+  const allowed = (process.env.FLW_ALLOWED_URL_HOSTS ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+  if (allowed.length > 0 && !local && !allowed.includes(url.hostname.toLowerCase())) {
+    throw new Error(`${key} host ${url.hostname} is not in FLW_ALLOWED_URL_HOSTS.`);
+  }
+}
+
+function hasPin(value: unknown, depth = 0): boolean {
+  if (!value || typeof value !== 'object' || depth > 8) return false;
+  return Object.entries(value as Record<string, unknown>).some(
+    ([k, v]) => /^(pin|encrypted_pin)$/i.test(k) || hasPin(v, depth + 1),
+  );
+}
+
 export function applyToolPolicy(server: McpServer, options: Options): string[] {
   const wanted = new Set((options.tools ?? ['all']).map((tool) => tool.trim()));
   const keepAll = wanted.has('all');
@@ -95,14 +134,12 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
     (tool as { handler: unknown }).handler = async (...args: unknown[]) => {
       let out: { content?: unknown[]; isError?: boolean };
       try {
-        // Callback and redirect URLs must be https, so payment webhooks and customers
-        // can't be sent to plain-http or script URLs (review L5).
         const input = (args[0] ?? {}) as Record<string, unknown>;
-        for (const key of ['callback_url', 'redirect_url']) {
-          const value = input[key];
-          if (value !== undefined && !(typeof value === 'string' && /^https:\/\/[^\s]+$/i.test(value))) {
-            throw new Error(`${key} must be an https URL.`);
-          }
+        checkUrls(input);
+        // update_charge can carry authorization.pin; no tool encrypts a PIN, so a raw
+        // PIN would be sent. Only with the raw card tools switched on (review L1, N10).
+        if (name === 'update_charge' && options.rawCardTools !== true && hasPin(input)) {
+          throw new Error('update_charge with a PIN needs the raw card tools switch (--enable-raw-card-tools). Card PINs should not pass through the AI model.');
         }
         out = await handler(...args);
       } catch (error) {

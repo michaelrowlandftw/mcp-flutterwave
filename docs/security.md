@@ -14,7 +14,10 @@ PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. The
 | Raw card tools | Off, even with `--tools=all` | `--enable-raw-card-tools` |
 | Read-only mode | Off | `--read-only`, `--read-only=false`, `FLW_READ_ONLY` |
 | Confirmation for money-moving tools | On | `FLW_CONFIRM=false` (for automated sandbox tests) |
-| Amount cap | None | `FLW_MAX_AMOUNT`, `FLW_MAX_AMOUNT_<CURRENCY>` |
+| Amount cap | None in test mode; required with live credentials, for every currency used | `FLW_MAX_AMOUNT`, `FLW_MAX_AMOUNT_<CURRENCY>` |
+| Confirmation in clients that can't ask the person | Allowed in test mode (token flow); blocked with live credentials | `FLW_REQUIRE_ELICITATION=true` blocks it in test mode too |
+| Env file | None: a `.env` in the working folder is not read | `FLW_ENV_FILE` (credentials and API version only) |
+| Callback and redirect URLs | https only (localhost http in test mode) | `FLW_ALLOWED_URL_HOSTS` |
 | Transport | stdio only (no network listener) | Hosted mode is a design note only |
 
 **Live mode:** disabled. The `--allow-live` flag and `FLW_ALLOW_LIVE` were removed in #16. Live v3 keys and `FLW_ENVIRONMENT=production` stop start-up with a clear message. Turning live mode on again needs a code change after the security review.
@@ -98,6 +101,19 @@ PR numbers refer to the review stack on `michaelrowlandftw/mcp-flutterwave`. The
 - **Sandbox scenarios:** `get_sandbox_scenarios` lists documented test scenarios without card numbers. v4 charge, order and transfer tools accept `sandbox_scenario`, validated against the documented key shape and sent as `X-Scenario-Key` to the sandbox host only (#20).
 - **Contract tests:** `npm run test:contract` checks the server against the real sandboxes when sandbox credentials are set (#21). CI skips them until the credentials are repository secrets.
 - **Timeouts:** v4 calls time out after 60 seconds (`FLW_TIMEOUT_MS`), so a hung call becomes an "unknown" result, not a silent wait (#8).
+
+## Independent reviews (13 Nov 2026)
+
+Two independent review rounds were run on the code (no access to our own notes).
+
+- **First round:** 4 high, 5 medium and 7 low findings.
+- **Second round** (checking the fixes): one regression and 10 further issues. The worst was a confirmation token replay with leading zeros.
+- **Status:** every finding from both rounds is fixed in #22. Each fix has a test, and the contract tests pass against the sandboxes.
+- **Before live mode is switched back on:**
+  - keep elicitation required (the code already does this for live);
+  - set a cap for every currency used;
+  - set `FLW_ALLOWED_URL_HOSTS`;
+  - replace in-memory replay and token stores with a shared store if more than one server instance runs.
 
 ## Open questions for the security team
 

@@ -1,4 +1,5 @@
 import { setUsageHeaders } from '../config/userAgent.js';
+import { assertSafePath } from '../utils/safePath.js';
 import { uncertainV3, V3Rejected } from '../utils/reference.js';
 import { lookupDelays, sleep } from './v4/safeCreate.js';
 
@@ -105,6 +106,7 @@ export async function sendV3Safely<T>(opts: {
 type V3Reply = { status: number; body: { status?: string; message?: string; data?: any } | null };
 
 async function v3Get(path: string): Promise<V3Reply> {
+  assertSafePath(path);
   const response = await fetch(`https://api.flutterwave.com/v3${path}`, {
     headers: setUsageHeaders(new Headers({ Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` })),
     signal: AbortSignal.timeout(60_000),

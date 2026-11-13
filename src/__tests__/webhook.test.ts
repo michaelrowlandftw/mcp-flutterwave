@@ -174,3 +174,15 @@ describe('reversal webhooks (review M2)', () => {
     expect(out.flags.join(' ')).toMatch(/Reversal webhook/);
   });
 });
+
+describe('replay memory (review N7)', () => {
+  it('remembers bodies without recursing, so a repeat is flagged', async () => {
+    const body = JSON.stringify({ type: 'charge.completed', data: { id: 'chg_n7', status: 'succeeded', reference: 'r' }, id: 'wbk_n7' });
+    const sig = createHmac('sha256', 's3cret').update(body).digest('base64');
+    const payment = vi.fn(async () => ({ content: [{ type: 'text' as const, text: JSON.stringify({ safe_to_give_value: true }) }] }));
+    const args = { raw_body: body, headers: { 'flutterwave-signature': sig }, expected_amount: 1, expected_currency: 'NGN', expected_reference: 'r' };
+    const deps = { secret: 's3cret', version: 'v4' as const, payment };
+    expect(parse(await verifyWebhook(args, deps)).replay_suspected).toBe(false);
+    expect(parse(await verifyWebhook(args, deps)).replay_suspected).toBe(true);
+  });
+});

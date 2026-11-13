@@ -23,7 +23,8 @@ import { redactText } from '../utils/redact.js';
 
 const TOKEN_TTL_MS = 5 * 60_000;
 const secret = randomBytes(32);
-const usedTokens = new Set<string>();
+/** Used tokens by MAC (the MAC identifies a token whatever its spelling), with their expiry. */
+const usedTokens = new Map<string, number>();
 
 type Args = Record<string, unknown>;
 type Result = { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
@@ -51,7 +52,7 @@ export function issueToken(tool: string, args: Args, now = Date.now()): string {
 }
 
 /** Exact token format. Anything else (extra parts, upper case, trailing text) is refused. */
-const TOKEN_FORMAT = /^(\d{1,16})\.([0-9a-f]{64})$/;
+const TOKEN_FORMAT = /^([1-9]\d{0,15})\.([0-9a-f]{64})$/;
 
 export function checkToken(tool: string, args: Args, token: string, now = Date.now()): string | null {
   const match = TOKEN_FORMAT.exec(token);
@@ -63,10 +64,10 @@ export function checkToken(tool: string, args: Args, token: string, now = Date.n
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
     return 'The confirmation token does not match this tool and these arguments. Ask the user to confirm the new details.';
   }
-  // The format is exact, so the token string is its own canonical form.
-  if (usedTokens.has(token)) return 'The confirmation token was already used.';
-  usedTokens.add(token);
-  // ponytail: used tokens are kept until restart; they expire after 5 minutes, prune if memory matters.
+  // Keyed on the MAC, so no other spelling of a used token works (review N1).
+  for (const [mac, until] of usedTokens) if (until < now) usedTokens.delete(mac); // expired: can't be replayed anyway
+  if (usedTokens.has(match[2])) return 'The confirmation token was already used.';
+  usedTokens.set(match[2], expires);
   return null;
 }
 
@@ -76,9 +77,14 @@ export function checkToken(tool: string, args: Args, token: string, now = Date.n
  * existing payment; initiate_fx_trade uses a quote from request_fx_quote, whose
  * quantity is capped.
  */
-export const NO_AMOUNT_TOOLS = new Set([
-  'validate_charge', 'update_charge', 'update_order', 'update_transfer', 'update_chargeback', 'retry_transfer', 'initiate_fx_trade',
-]);
+export const NO_AMOUNT_TOOLS = new Set(['validate_charge', 'update_charge', 'update_order']);
+
+/**
+ * Tools that send money out but carry no amount: they act on a transfer or quote
+ * that may not have been made (or capped) by this server. When a cap is set, or
+ * with live credentials, they are refused rather than let through (review N2).
+ */
+export const OUTGOING_NO_AMOUNT_TOOLS = new Set(['retry_transfer', 'update_transfer', 'initiate_fx_trade']);
 
 type Raw = { amount?: unknown; currency?: unknown };
 
@@ -91,7 +97,11 @@ function rawAmount(tool: string, args: Args): Raw {
     return { amount: amount?.value, currency };
   }
   if (tool === 'request_fx_quote') return { amount: args.quantity, currency: args.base_currency };
-  if (tool === 'pay_bill') return { amount: args.amount, currency: 'NGN' }; // bills are Nigeria only
+  if (tool === 'pay_bill') {
+    // Bills are Nigeria only; any other country gives no currency, which a cap refuses (review N5).
+    const country = (args.country ?? 'NG') as string;
+    return { amount: args.amount, currency: country === 'NG' ? 'NGN' : undefined };
+  }
   return { amount: args.amount, currency: args.currency ?? args.debit_currency };
 }
 
@@ -121,10 +131,15 @@ export function isLive(env: NodeJS.ProcessEnv = process.env): boolean {
  */
 export function capError(args: Args, env: NodeJS.ProcessEnv = process.env, tool = ''): string | null {
   if (NO_AMOUNT_TOOLS.has(tool)) return null;
+  const live = isLive(env);
   const general = env.FLW_MAX_AMOUNT;
   const anyCurrencyCap = Object.keys(env).some((k) => /^FLW_MAX_AMOUNT_[A-Z]{3,5}$/.test(k) && !!env[k]);
+  if (OUTGOING_NO_AMOUNT_TOOLS.has(tool) && (live || general || anyCurrencyCap)) {
+    return `${tool} sends money but has no amount the server can check against the cap. Not allowed while an amount cap is set or with live credentials. The call was not sent.`;
+  }
+  if (OUTGOING_NO_AMOUNT_TOOLS.has(tool)) return null;
   if (!general && !anyCurrencyCap) {
-    return isLive(env)
+    return live
       ? 'Live mode needs an amount cap: set FLW_MAX_AMOUNT (and FLW_MAX_AMOUNT_<CURRENCY> if needed). The call was not sent.'
       : null;
   }
@@ -140,10 +155,14 @@ export function capError(args: Args, env: NodeJS.ProcessEnv = process.env, tool 
   const perCurrency = perCurrencyName ? env[perCurrencyName] : undefined;
   const capText = perCurrency ?? general;
   if (!capText) {
-    // Only per-currency caps are set. A known currency without a cap passes; an unknown one does not.
-    return currency
-      ? null
-      : "The currency of this call can't be read and only per-currency caps are set. Set FLW_MAX_AMOUNT too. The call was not sent.";
+    // Only per-currency caps are set. An unknown currency is refused. A known currency
+    // without its own cap passes in test mode, but not with live credentials (review N3).
+    if (!currency) {
+      return "The currency of this call can't be read and only per-currency caps are set. Set FLW_MAX_AMOUNT too. The call was not sent.";
+    }
+    return live
+      ? `There is no cap for ${currency}: set ${perCurrencyName} or FLW_MAX_AMOUNT. The call was not sent.`
+      : null;
   }
   const cap = Number(capText);
   const source = perCurrency ? perCurrencyName : 'FLW_MAX_AMOUNT';

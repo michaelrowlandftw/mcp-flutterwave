@@ -1,4 +1,5 @@
-FROM node:20-alpine AS builder
+# Node 22 LTS (Node 20 reached end of life in April 2026), pinned by digest. Update the digest when patching.
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS builder
 
 WORKDIR /app
 
@@ -15,7 +16,7 @@ COPY src/ ./src/
 
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
 
 WORKDIR /app
 

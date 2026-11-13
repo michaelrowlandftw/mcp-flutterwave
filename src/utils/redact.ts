@@ -68,25 +68,47 @@ function looksLikeCard(d: string): boolean {
   if ((p6 >= 506099 && p6 <= 506198) || (p6 >= 650002 && p6 <= 650027)) return n >= 16 && n <= 19; // Verve
   if (d.startsWith('6011') || p2 === 65 || (p6 >= 622126 && p6 <= 622925)) return n >= 16 && n <= 19; // Discover/UnionPay
   if (p4 >= 5018 && p4 <= 6999) return n >= 16 && n <= 19; // Maestro and other 5/6 ranges
+  if (p4 >= 3528 && p4 <= 3589) return n >= 16 && n <= 19; // JCB
+  if ((p2 === 36 || p2 === 38 || p2 === 39) || (Number(d.slice(0, 3)) >= 300 && Number(d.slice(0, 3)) <= 305)) {
+    return n >= 14 && n <= 19; // Diners Club
+  }
   return false;
 }
 
 function maskCards(text: string): string {
-  return text.replace(/(?<![\d.])(?:\d[ -]?){12,18}\d(?![\d.])/g, (match) => {
+  return text.replace(/(?<![\d.])(?:\d[ -]?){12,18}\d(?!\d|\.\d)/g, (match) => {
     const digits = match.replace(/[ -]/g, '');
     return looksLikeCard(digits) && luhn(digits) ? `[CARD ****${digits.slice(-4)}]` : match;
   });
 }
 
+/**
+ * Base64 or hex runs that decode to text containing a secret (for example a
+ * Basic auth header "user:secret") are masked whole (review N4).
+ */
+function maskEncodedSecrets(text: string, secrets: string[]): string {
+  if (secrets.length === 0) return text;
+  const holds = (decoded: string) => secrets.some((secret) => decoded.includes(secret));
+  return text
+    .replace(/[A-Za-z0-9+/_-]{16,}={0,2}/g, (run) => {
+      try {
+        return holds(Buffer.from(run, 'base64').toString('utf8')) ? MASK : run;
+      } catch {
+        return run;
+      }
+    })
+    .replace(/\b(?:[0-9a-fA-F]{2}){8,}\b/g, (run) => (holds(Buffer.from(run, 'hex').toString('utf8')) ? MASK : run));
+}
+
 export function redactText(text: string, env: NodeJS.ProcessEnv = process.env): string {
   let out = text;
-  for (const name of SECRET_ENV) {
-    const value = env[name];
-    if (!value || value.length < 8) continue;
+  const secrets = SECRET_ENV.map((name) => env[name]).filter((v): v is string => !!v && v.length >= 8);
+  for (const value of secrets) {
     for (const form of [value, Buffer.from(value).toString('base64'), Buffer.from(value).toString('base64url')]) {
       out = out.split(form).join(MASK);
     }
   }
+  out = maskEncodedSecrets(out, secrets);
   out = out.replace(FIELD_RE, (_m, key: string, keyQuote: string, valueQuote?: string) => {
     const q = valueQuote ?? keyQuote;
     return `${key}${q}"${MASK}${q}"`;

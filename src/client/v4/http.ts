@@ -3,6 +3,9 @@ import { getAccessToken, invalidateAccessTokenCache } from './auth.js';
 import { getV4BaseUrl } from './environment.js';
 import { setUsageHeaders } from '../../config/userAgent.js';
 import { currentScenario } from './scenario.js';
+import { assertSafePath } from '../../utils/safePath.js';
+
+export { assertSafePath };
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
@@ -78,26 +81,6 @@ async function performFetch(
     return new Response('', { status: 503 });
   }
   return response;
-}
-
-/**
- * IDs are put into paths with encodeURIComponent, which leaves '.' and '..'
- * alone, and URLs resolve them: '/charges/..' would become '/'. Refuse any dot
- * segment, encoded or not (review L4).
- */
-export function assertSafePath(path: string): void {
-  const segments = path.split('?')[0].split('/');
-  for (const segment of segments) {
-    let decoded = segment;
-    try {
-      decoded = decodeURIComponent(segment);
-    } catch {
-      /* keep the raw segment */
-    }
-    if (decoded === '.' || decoded === '..') {
-      throw new Error(`Refused a request path with a "${decoded}" segment. IDs can't be "." or "..".`);
-    }
-  }
 }
 
 export async function flwV4Fetch(

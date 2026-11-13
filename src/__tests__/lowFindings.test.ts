@@ -40,3 +40,49 @@ describe('callback and redirect URLs must be https (review L5)', () => {
     expect((await setup()({}, {})).content[0].text).toBe('ran');
   });
 });
+
+describe('dot segments in v3 path parameters (review N6)', () => {
+  it('the v3 middleware refuses "." and ".." path parameters', async () => {
+    const { default: mw } = await import('../client/middleware/authMiddlewareV3.js');
+    const request = new Request('https://api.flutterwave.com/v3/status');
+    for (const reference of ['..', '.', '%2e%2e']) {
+      await expect(mw.onRequest!({ request, params: { path: { reference } } } as never)).rejects.toThrow(/can't be/);
+    }
+    await expect(mw.onRequest!({ request, params: { path: { reference: 'BPUSSD123' } } } as never)).resolves.toBeTruthy();
+  });
+});
+
+describe('URL rules (review N8) and update_charge PINs (review N10)', () => {
+  const make = (name: string, options = {}) => {
+    const server = new McpServer({ name: 't', version: '0' });
+    server.tool(name, 'x', { meta: z.any().optional(), redirect_url: z.string().optional(), authorization: z.any().optional() }, async () => ({
+      content: [{ type: 'text' as const, text: 'ran' }],
+    }));
+    applyToolPolicy(server, options);
+    return registeredTools(server)[name].handler as (a: unknown, e: unknown) => Promise<{ isError?: boolean; content: Array<{ text: string }> }>;
+  };
+  const ran = async (h: ReturnType<typeof make>, args: unknown) => (await h(args, {})).content[0].text;
+
+  it('checks nested callback URLs', async () => {
+    expect(await ran(make('get_x'), { meta: { inner: { callback_url: 'http://evil.example' } } })).toMatch(/must be an https URL/);
+  });
+
+  it('allows http://localhost in test mode', async () => {
+    expect(await ran(make('get_x'), { redirect_url: 'http://localhost:3000/done' })).toBe('ran');
+  });
+
+  it('FLW_ALLOWED_URL_HOSTS restricts hosts', async () => {
+    process.env.FLW_ALLOWED_URL_HOSTS = 'merchant.example';
+    try {
+      expect(await ran(make('get_x'), { redirect_url: 'https://other.example/x' })).toMatch(/not in FLW_ALLOWED_URL_HOSTS/);
+      expect(await ran(make('get_x'), { redirect_url: 'https://merchant.example/x' })).toBe('ran');
+    } finally {
+      delete process.env.FLW_ALLOWED_URL_HOSTS;
+    }
+  });
+
+  it('update_charge runs without a PIN, and is refused with one unless card tools are on', async () => {
+    expect(await ran(make('update_charge'), { authorization: { type: 'otp', otp: { code: '123456' } } })).not.toMatch(/PIN/);
+    expect(await ran(make('update_charge'), { authorization: { type: 'pin', pin: { nonce: 'n', encrypted_pin: 'x' } } })).toMatch(/needs the raw card tools switch/);
+  });
+});

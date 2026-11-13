@@ -8,8 +8,6 @@ export const RAW_CARD_TOOLS = new Set<string>([
   'create_card_payment_method',
   'create_orchestrator_charge',
   'create_orchestrator_order',
-  // Takes authorization.pin; no tool encrypts a PIN, so a raw PIN would be sent.
-  'update_charge',
 ]);
 
 export const RAW_CARD_SWITCH_HINT =

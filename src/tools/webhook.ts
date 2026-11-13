@@ -146,7 +146,7 @@ const seen = new Set<string>();
 const SEEN_LIMIT = 10_000;
 
 function remember(digest: string): void {
-  remember(digest);
+  seen.add(digest);
   // Keep memory bounded (review L7): drop the oldest entries first.
   // ponytail: per-process and capped; use a shared store with expiry for several server instances.
   if (seen.size > SEEN_LIMIT) seen.delete(seen.values().next().value as string);
@@ -190,7 +190,7 @@ export async function verifyWebhook(
   const parsed = parseWebhook(body, signature.version!);
   const digest = createHash('sha256').update(args.raw_body).digest('hex');
   const replay = seen.has(digest);
-  seen.add(digest);
+  remember(digest);
   if (replay) parsed.flags.push('This exact webhook was already seen by this server. It may be a retry or a replay; do not give value twice.');
 
   const serverVersion = deps.version ?? getApiVersion();
