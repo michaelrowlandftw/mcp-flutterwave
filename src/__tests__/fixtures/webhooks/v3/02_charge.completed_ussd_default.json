@@ -1,0 +1,38 @@
+{
+  "captured_at_utc": "2026-11-12 12:51:33",
+  "headers": {
+    "content-type": "application/json",
+    "verif-hash": "<temporary test value>"
+  },
+  "body": {
+    "event": "charge.completed",
+    "data": {
+      "id": 10582299,
+      "tx_ref": "VELI_AMT_USSD_1793289096",
+      "flw_ref": "flwm3s4m0c1793289097102",
+      "device_fingerprint": "<redacted>",
+      "amount": 1500,
+      "currency": "NGN",
+      "charged_amount": 1521,
+      "app_fee": 21,
+      "merchant_fee": 0,
+      "processor_response": "Transaction completed",
+      "auth_model": "USSD",
+      "ip": "<redacted>",
+      "narration": "<redacted>",
+      "status": "successful",
+      "payment_type": "ussd",
+      "created_at": "2026-10-29T15:51:36.000Z",
+      "account_id": "<redacted>",
+      "customer": {
+        "id": 0,
+        "name": "<redacted>",
+        "phone_number": "<redacted>",
+        "email": "<redacted>",
+        "created_at": "2026-10-29T15:51:36.000Z"
+      }
+    },
+    "meta_data": {},
+    "event.type": "USSD_TRANSACTION"
+  }
+}
