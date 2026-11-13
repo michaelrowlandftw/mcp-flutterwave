@@ -46,9 +46,9 @@ export const OrdersPostBody = zod.object({
   "redirect_url": zod.string().optional().describe('Specifies the URL to redirect to.'),
   "authorization": zod.object({
   "type": zod.enum(['3ds']).default(ordersPostBodyAuthorizationOneTypeDefault),
-  "3ds": zod.object({
+  "3ds": zod.looseObject({
 
-}).passthrough().optional()
+}).optional()
 }).describe('3DS authorization object.').optional(),
   "merchant_vat_amount": zod.number().optional()
 })

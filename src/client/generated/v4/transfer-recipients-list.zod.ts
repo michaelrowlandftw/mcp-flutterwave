@@ -19,7 +19,7 @@ export const transfersRecipientsListQuerySizeMax = 50;
 export const TransfersRecipientsListQueryParams = zod.object({
   "next": zod.string().optional(),
   "previous": zod.string().optional(),
-  "size": zod.number().int().min(transfersRecipientsListQuerySizeMin).max(transfersRecipientsListQuerySizeMax).default(transfersRecipientsListQuerySizeDefault).describe('Length of data returned. Defaults to 10.')
+  "size": zod.int().min(transfersRecipientsListQuerySizeMin).max(transfersRecipientsListQuerySizeMax).default(transfersRecipientsListQuerySizeDefault).describe('Length of data returned. Defaults to 10.')
 })
 
 export const transfersRecipientsListHeaderXTraceIdMin = 12;

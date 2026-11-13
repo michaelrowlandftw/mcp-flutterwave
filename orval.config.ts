@@ -20,8 +20,8 @@ const zodOutput = (target: string) =>
     target,
     override: {
       zod: {
-        // Repo depends on zod@3; pin so CI/local output stays identical.
-        version: 3 as const,
+        // Repo depends on zod@4; pin so CI/local output stays identical.
+        version: 4 as const,
         // MCP tools need request validation (body/header/param/query).
         // Skip response schemas for now — Flutterwave's processor_response
         // enum-of-objects emits invalid zod.literal({…}) under zod@3.

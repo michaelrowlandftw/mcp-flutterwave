@@ -20,9 +20,9 @@ export const getWalletStatementQuerySizeMax = 50;
 export const GetWalletStatementQueryParams = zod.object({
   "next": zod.string().optional(),
   "previous": zod.string().optional(),
-  "size": zod.number().int().min(getWalletStatementQuerySizeMin).max(getWalletStatementQuerySizeMax).default(getWalletStatementQuerySizeDefault).describe('Length of data returned. Defaults to 10.'),
-  "from": zod.string().date().optional().describe('Start date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
-  "to": zod.string().date().optional().describe('End date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
+  "size": zod.int().min(getWalletStatementQuerySizeMin).max(getWalletStatementQuerySizeMax).default(getWalletStatementQuerySizeDefault).describe('Length of data returned. Defaults to 10.'),
+  "from": zod.iso.date().optional().describe('Start date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
+  "to": zod.iso.date().optional().describe('End date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
   "currency": zod.enum(['AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'AQD', 'ARS', 'AUD', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BWP', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLP', 'CNY', 'COP', 'CRC', 'CUP', 'CVE', 'CYP', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'ECS', 'EEK', 'EGP', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR', 'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LTL', 'LVL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SKK', 'SLL', 'SOS', 'SRD', 'STD', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VEF', 'VND', 'VUV', 'XAF', 'XCD', 'XOF', 'XPF', 'YER', 'ZAR', 'ZMK', 'ZWD', 'ZMW', 'USDC', 'USDT', 'RLUSD']).describe('The currency code used in the query')
 })
 

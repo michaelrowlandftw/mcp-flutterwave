@@ -19,7 +19,7 @@ export const transfersListQuerySizeMax = 50;
 export const TransfersListQueryParams = zod.object({
   "next": zod.string().optional(),
   "previous": zod.string().optional(),
-  "size": zod.number().int().min(transfersListQuerySizeMin).max(transfersListQuerySizeMax).default(transfersListQuerySizeDefault).describe('Length of data returned. Defaults to 10.'),
+  "size": zod.int().min(transfersListQuerySizeMin).max(transfersListQuerySizeMax).default(transfersListQuerySizeDefault).describe('Length of data returned. Defaults to 10.'),
   "bulk_id": zod.string().optional().describe('ID of a bulk transfer'),
   "recipient_id": zod.string().optional().describe('ID of the recipient'),
   "sender_id": zod.string().optional().describe('ID of the sender'),
@@ -28,8 +28,8 @@ export const TransfersListQueryParams = zod.object({
   "action": zod.enum(['instant', 'deferred', 'scheduled', 'retry']).optional().describe('Action of the transfer'),
   "type": zod.enum(['bank', 'mobile_money', 'wallet', 'cash_pickup']).optional().describe('type of transfer'),
   "status": zod.enum(['new', 'pending', 'failed', 'successful', 'cancelled']).optional().describe('The status of transfer'),
-  "from": zod.string().date().optional().describe('Start date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
-  "to": zod.string().date().optional().describe('End date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.')
+  "from": zod.iso.date().optional().describe('Start date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.'),
+  "to": zod.iso.date().optional().describe('End date, date only (yyyy-MM-dd), for example 2026-10-21. The day is included. ISO date-times are rejected.')
 })
 
 export const transfersListHeaderXTraceIdMin = 12;

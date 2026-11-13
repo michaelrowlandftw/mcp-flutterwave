@@ -34,7 +34,7 @@ export const ChargebackPutBody = zod.object({
   "comment": zod.string().optional().describe('Additional comments for the chargeback'),
   "provider": zod.string().optional().describe('Provider for the chargeback'),
   "arn": zod.string().optional().describe('Acquirer reference number for transaction'),
-  "due_datetime": zod.string().datetime({"offset":true}).optional().describe('The due_datetime specifies the exact date and time by which an action or response is required. This is typically used to set deadlines for submitting documentation or responding to a chargeback.'),
+  "due_datetime": zod.iso.datetime({"offset":true}).optional().describe('The due_datetime specifies the exact date and time by which an action or response is required. This is typically used to set deadlines for submitting documentation or responding to a chargeback.'),
   "proof_data": zod.string().optional().describe('Base64 encoded string of proof against chargeback'),
   "amount": zod.number().min(chargebackPutBodyAmountMin).optional().describe('The payment amount in decimals.')
 })

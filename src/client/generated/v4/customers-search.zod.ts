@@ -20,8 +20,8 @@ export const customersSearchQuerySizeMax = 50;
 
 
 export const CustomersSearchQueryParams = zod.object({
-  "page": zod.number().int().min(1).default(customersSearchQueryPageDefault).describe('The page of the data to retrieve. The most recent data entry is on page 1.'),
-  "size": zod.number().int().min(customersSearchQuerySizeMin).max(customersSearchQuerySizeMax).default(customersSearchQuerySizeDefault).describe('Length of data returned. Defaults to 10.')
+  "page": zod.int().min(1).default(customersSearchQueryPageDefault).describe('The page of the data to retrieve. The most recent data entry is on page 1.'),
+  "size": zod.int().min(customersSearchQuerySizeMin).max(customersSearchQuerySizeMax).default(customersSearchQuerySizeDefault).describe('Length of data returned. Defaults to 10.')
 })
 
 export const customersSearchHeaderXTraceIdMin = 12;

@@ -19,10 +19,10 @@ export const virtualAccountsListQuerySizeMax = 50;
 
 
 export const VirtualAccountsListQueryParams = zod.object({
-  "to": zod.string().datetime({"offset":true}).optional().describe('The end date and time for a period. This parameter is used in conjunction with the \'from\' parameter to define a time range. The value should be in **ISO 8601 format**.'),
-  "from": zod.string().datetime({"offset":true}).optional().describe('The start date and time for a period. This parameter is used in conjunction with the \'to\' parameter to define a time range. The value should be in ISO 8601 format.'),
-  "page": zod.number().int().min(1).default(virtualAccountsListQueryPageDefault).describe('The page of the data to retrieve. The most recent data entry is on page 1.'),
-  "size": zod.number().int().min(virtualAccountsListQuerySizeMin).max(virtualAccountsListQuerySizeMax).default(virtualAccountsListQuerySizeDefault).describe('Length of data returned. Defaults to 10.'),
+  "to": zod.iso.datetime({"offset":true}).optional().describe('The end date and time for a period. This parameter is used in conjunction with the \'from\' parameter to define a time range. The value should be in **ISO 8601 format**.'),
+  "from": zod.iso.datetime({"offset":true}).optional().describe('The start date and time for a period. This parameter is used in conjunction with the \'to\' parameter to define a time range. The value should be in ISO 8601 format.'),
+  "page": zod.int().min(1).default(virtualAccountsListQueryPageDefault).describe('The page of the data to retrieve. The most recent data entry is on page 1.'),
+  "size": zod.int().min(virtualAccountsListQuerySizeMin).max(virtualAccountsListQuerySizeMax).default(virtualAccountsListQuerySizeDefault).describe('Length of data returned. Defaults to 10.'),
   "reference": zod.string().optional().describe('A custom identifier to track the transaction, This must be unique across all your transactions.')
 })
 

@@ -464,22 +464,22 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwoOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwoOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwoOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(transfersRecipientsCreateBodyTwoOneNationalIdentificationOneIdentifierMin).max(transfersRecipientsCreateBodyTwoOneNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(transfersRecipientsCreateBodyTwoOneNationalIdentificationOneExpirationDateRegExp).optional()
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('Recipient government identification'),
+})).describe('Recipient government identification'),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersRecipientsCreateBodyTwoOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersRecipientsCreateBodyTwoOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "address": zod.object({
   "city": zod.string().regex(transfersRecipientsCreateBodyTwoOneAddressOneCityRegExp).describe('The name of the city.'),
   "country": zod.string().regex(transfersRecipientsCreateBodyTwoOneAddressOneCountryRegExp).describe('ISO2 country code'),
@@ -487,9 +487,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersRecipientsCreateBodyTwoOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersRecipientsCreateBodyTwoOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersRecipientsCreateBodyTwoOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyTwoOneBankAccountNumberMin).max(transfersRecipientsCreateBodyTwoOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyTwoOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyTwoOneBankCodeRegExp).describe('recipient bank code')
@@ -505,9 +505,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyThreeOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyThreeOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyThreeOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyThreeOneBankAccountNumberMin).max(transfersRecipientsCreateBodyThreeOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyThreeOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyThreeOneBankCodeRegExp).describe('recipient bank code')
@@ -523,15 +523,15 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyFourOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyFourOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyFourOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersRecipientsCreateBodyFourOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersRecipientsCreateBodyFourOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(transfersRecipientsCreateBodyFourOneEmailOneRegExp).describe('The Customer\'s email address.').describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersRecipientsCreateBodyFourOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -540,9 +540,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersRecipientsCreateBodyFourOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersRecipientsCreateBodyFourOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersRecipientsCreateBodyFourOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyFourOneBankAccountNumberMin).max(transfersRecipientsCreateBodyFourOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyFourOneBankAccountNumberRegExp).describe('recipient account number'),
   "name": zod.string().min(transfersRecipientsCreateBodyFourOneBankNameMin).max(transfersRecipientsCreateBodyFourOneBankNameMax).describe('recipient bank name'),
@@ -559,15 +559,15 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyFiveOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyFiveOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyFiveOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersRecipientsCreateBodyFiveOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersRecipientsCreateBodyFiveOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(transfersRecipientsCreateBodyFiveOneEmailOneRegExp).describe('The Customer\'s email address.').describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersRecipientsCreateBodyFiveOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -576,9 +576,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersRecipientsCreateBodyFiveOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersRecipientsCreateBodyFiveOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersRecipientsCreateBodyFiveOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyFiveOneBankAccountNumberMin).max(transfersRecipientsCreateBodyFiveOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyFiveOneBankAccountNumberRegExp).describe('recipient account number'),
   "account_type": zod.enum(['individual', 'corporate']).describe('recipient account type'),
@@ -596,9 +596,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodySixOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodySixOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodySixOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodySixOneBankAccountNumberMin).max(transfersRecipientsCreateBodySixOneBankAccountNumberMax).regex(transfersRecipientsCreateBodySixOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodySixOneBankCodeRegExp).describe('recipient bank code'),
@@ -615,9 +615,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodySevenOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodySevenOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodySevenOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodySevenOneBankAccountNumberMin).max(transfersRecipientsCreateBodySevenOneBankAccountNumberMax).regex(transfersRecipientsCreateBodySevenOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodySevenOneBankCodeRegExp).describe('recipient bank code'),
@@ -634,15 +634,15 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyEightOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyEightOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyEightOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersRecipientsCreateBodyEightOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersRecipientsCreateBodyEightOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(transfersRecipientsCreateBodyEightOneEmailOneRegExp).describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersRecipientsCreateBodyEightOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -651,9 +651,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersRecipientsCreateBodyEightOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersRecipientsCreateBodyEightOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersRecipientsCreateBodyEightOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyEightOneBankAccountNumberMin).max(transfersRecipientsCreateBodyEightOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyEightOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyEightOneBankCodeRegExp).describe('recipient bank code'),
@@ -672,15 +672,15 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyNineOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyNineOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyNineOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersRecipientsCreateBodyNineOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersRecipientsCreateBodyNineOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(transfersRecipientsCreateBodyNineOneEmailOneRegExp).describe('The Customer\'s email address.').describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersRecipientsCreateBodyNineOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -689,9 +689,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersRecipientsCreateBodyNineOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersRecipientsCreateBodyNineOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersRecipientsCreateBodyNineOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyNineOneBankAccountNumberMin).max(transfersRecipientsCreateBodyNineOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyNineOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyNineOneBankCodeRegExp).describe('recipient bank code')
@@ -707,9 +707,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnezeroOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnezeroOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnezeroOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyOnezeroOneBankAccountNumberMin).max(transfersRecipientsCreateBodyOnezeroOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyOnezeroOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyOnezeroOneBankCodeRegExp).describe('recipient bank code')
@@ -725,9 +725,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOneoneOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOneoneOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOneoneOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyOneoneOneBankAccountNumberMin).max(transfersRecipientsCreateBodyOneoneOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyOneoneOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyOneoneOneBankCodeRegExp).describe('recipient bank code'),
@@ -744,9 +744,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnetwoOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnetwoOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnetwoOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyOnetwoOneBankAccountNumberMin).max(transfersRecipientsCreateBodyOnetwoOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyOnetwoOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyOnetwoOneBankCodeRegExp).describe('recipient bank code'),
@@ -763,9 +763,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnethreeOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnethreeOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnethreeOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyOnethreeOneBankAccountNumberMin).max(transfersRecipientsCreateBodyOnethreeOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyOnethreeOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyOnethreeOneBankCodeRegExp).describe('recipient bank code'),
@@ -782,9 +782,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnefourOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnefourOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnefourOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyOnefourOneBankAccountNumberMin).max(transfersRecipientsCreateBodyOnefourOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyOnefourOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyOnefourOneBankCodeRegExp).describe('recipient bank code'),
@@ -801,9 +801,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnefiveOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnefiveOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnefiveOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(transfersRecipientsCreateBodyOnefiveOneBankAccountNumberMin).max(transfersRecipientsCreateBodyOnefiveOneBankAccountNumberMax).regex(transfersRecipientsCreateBodyOnefiveOneBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(transfersRecipientsCreateBodyOnefiveOneBankCodeRegExp).describe('recipient bank code'),
@@ -820,9 +820,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnesixOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnesixOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnesixOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyOnesixOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyOnesixOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyOnesixOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyOnesixOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyOnesixOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyOnesixOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -838,9 +838,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnesevenOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnesevenOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnesevenOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyOnesevenOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyOnesevenOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyOnesevenOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyOnesevenOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyOnesevenOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyOnesevenOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -856,9 +856,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOneeightOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOneeightOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOneeightOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyOneeightOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyOneeightOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyOneeightOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyOneeightOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyOneeightOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyOneeightOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -874,9 +874,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyOnenineOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyOnenineOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyOnenineOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyOnenineOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyOnenineOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyOnenineOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyOnenineOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyOnenineOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyOnenineOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -892,9 +892,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwozeroOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwozeroOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwozeroOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyTwozeroOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyTwozeroOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyTwozeroOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyTwozeroOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyTwozeroOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyTwozeroOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -910,9 +910,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwooneOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwooneOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwooneOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyTwooneOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyTwooneOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyTwooneOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyTwooneOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyTwooneOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyTwooneOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -928,9 +928,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwotwoOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwotwoOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwotwoOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyTwotwoOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyTwotwoOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyTwotwoOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyTwotwoOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyTwotwoOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyTwotwoOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -946,16 +946,16 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(transfersRecipientsCreateBodyTwothreeOneNationalIdentificationOneIdentifierMin).max(transfersRecipientsCreateBodyTwothreeOneNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneNationalIdentificationOneExpirationDateRegExp).optional()
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('Recipient government identification'),
+})).describe('Recipient government identification'),
   "address": zod.object({
   "city": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneAddressOneCityRegExp).describe('The name of the city.'),
   "country": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneAddressOneCountryRegExp).describe('ISO2 country code'),
@@ -963,9 +963,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersRecipientsCreateBodyTwothreeOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyTwothreeOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyTwothreeOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyTwothreeOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(transfersRecipientsCreateBodyTwothreeOneMobileMoneyMsisdnMin).max(transfersRecipientsCreateBodyTwothreeOneMobileMoneyMsisdnMax).regex(transfersRecipientsCreateBodyTwothreeOneMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -981,9 +981,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwofourOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwofourOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwofourOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyTwofourOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyTwofourOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyTwofourOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "country": zod.string().regex(transfersRecipientsCreateBodyTwofourOneMobileMoneyCountryRegExp).describe('recipient country'),
@@ -1000,9 +1000,9 @@ export const TransfersRecipientsCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersRecipientsCreateBodyTwofiveOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersRecipientsCreateBodyTwofiveOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersRecipientsCreateBodyTwofiveOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(transfersRecipientsCreateBodyTwofiveOneMobileMoneyNetworkMin).max(transfersRecipientsCreateBodyTwofiveOneMobileMoneyNetworkMax).regex(transfersRecipientsCreateBodyTwofiveOneMobileMoneyNetworkRegExp).describe('recipient network'),
   "country": zod.string().regex(transfersRecipientsCreateBodyTwofiveOneMobileMoneyCountryRegExp).describe('recipient country'),

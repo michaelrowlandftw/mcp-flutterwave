@@ -134,9 +134,9 @@ export const OrchestrationDirectOrderPostBody = zod.object({
   "meta": zod.record(zod.string(), zod.string()).optional()
 }).and(zod.object({
   "type": zod.enum(['bank_account']).default(orchestrationDirectOrderPostBodyPaymentMethodTwoTwoTypeDefault).describe('The type of the payment method.'),
-  "bank_account": zod.object({
+  "bank_account": zod.looseObject({
 
-}).passthrough().optional()
+}).optional()
 })),zod.object({
   "type": zod.string().describe('The type of the payment method.'),
   "customer_id": zod.string().optional().describe('ID of the customer.'),
@@ -155,9 +155,9 @@ export const OrchestrationDirectOrderPostBody = zod.object({
   "meta": zod.record(zod.string(), zod.string()).optional()
 }).and(zod.object({
   "type": zod.enum(['opay']).default(orchestrationDirectOrderPostBodyPaymentMethodFourTwoTypeDefault).describe('The type of the payment method.'),
-  "opay": zod.object({
+  "opay": zod.looseObject({
 
-}).passthrough().optional()
+}).optional()
 })),zod.object({
   "type": zod.string().describe('The type of the payment method.'),
   "customer_id": zod.string().optional().describe('ID of the customer.'),
@@ -189,9 +189,9 @@ export const OrchestrationDirectOrderPostBody = zod.object({
   "redirect_url": zod.string().optional().describe('Specifies the URL to redirect to.'),
   "authorization": zod.object({
   "type": zod.enum(['3ds']).default(orchestrationDirectOrderPostBodyAuthorizationOneTypeDefault),
-  "3ds": zod.object({
+  "3ds": zod.looseObject({
 
-}).passthrough().optional()
+}).optional()
 }).describe('3DS authorization object.').optional(),
   "merchant_vat_amount": zod.number().optional()
 })

@@ -125,9 +125,9 @@ export const BankAccountResolvePostBody = zod.union([zod.object({
   "first": zod.string().regex(bankAccountResolvePostBodyTwoAccountOneTwoNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(bankAccountResolvePostBodyTwoAccountOneTwoNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(bankAccountResolvePostBodyTwoAccountOneTwoNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough())
+}))
 })).and(zod.object({
   "type": zod.enum(['individual'])
 })),zod.object({

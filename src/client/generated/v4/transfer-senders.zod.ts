@@ -103,23 +103,23 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersSendersCreateBodyOneOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersSendersCreateBodyOneOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersSendersCreateBodyOneOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(transfersSendersCreateBodyOneOneNationalIdentificationOneIdentifierMin).max(transfersSendersCreateBodyOneOneNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(transfersSendersCreateBodyOneOneNationalIdentificationOneExpirationDateRegExp)
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s official government ID.'),
+})).describe('The Sender\'s official government ID.'),
   "date_of_birth": zod.string().describe('Sender\'s date of birth in YYYY-MM-DD.'),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersSendersCreateBodyOneOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersSendersCreateBodyOneOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s mobile number.'),
+})).describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(transfersSendersCreateBodyOneOneEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersSendersCreateBodyOneOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -128,9 +128,9 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersSendersCreateBodyOneOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersSendersCreateBodyOneOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersSendersCreateBodyOneOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address')
+})).describe('The Sender\'s residential address')
 }).describe('Sender information for EGP bank transfers.').and(zod.object({
   "type": zod.string().default(transfersSendersCreateBodyOneTwoTypeDefault)
 })).and(zod.object({
@@ -140,9 +140,9 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersSendersCreateBodyTwoOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersSendersCreateBodyTwoOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersSendersCreateBodyTwoOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s name.'),
+})).describe('The Sender\'s name.'),
   "email": zod.string().regex(transfersSendersCreateBodyTwoOneEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersSendersCreateBodyTwoOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -151,15 +151,15 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersSendersCreateBodyTwoOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersSendersCreateBodyTwoOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersSendersCreateBodyTwoOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address'),
+})).describe('The Sender\'s residential address'),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersSendersCreateBodyTwoOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersSendersCreateBodyTwoOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s phone number')
+})).describe('The Sender\'s phone number')
 }).describe('Sender information for GBP bank transfers.').and(zod.object({
   "type": zod.string().default(transfersSendersCreateBodyTwoTwoTypeDefault)
 })).and(zod.object({
@@ -169,9 +169,9 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersSendersCreateBodyThreeOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersSendersCreateBodyThreeOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersSendersCreateBodyThreeOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s name.'),
+})).describe('The Sender\'s name.'),
   "email": zod.string().regex(transfersSendersCreateBodyThreeOneEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersSendersCreateBodyThreeOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -180,15 +180,15 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersSendersCreateBodyThreeOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersSendersCreateBodyThreeOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersSendersCreateBodyThreeOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address'),
+})).describe('The Sender\'s residential address'),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersSendersCreateBodyThreeOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersSendersCreateBodyThreeOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s phone number')
+})).describe('The Sender\'s phone number')
 }).describe('Sender information for EUR bank transfers.').and(zod.object({
   "type": zod.string().default(transfersSendersCreateBodyThreeTwoTypeDefault)
 })).and(zod.object({
@@ -198,15 +198,15 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersSendersCreateBodyFourOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersSendersCreateBodyFourOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersSendersCreateBodyFourOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersSendersCreateBodyFourOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersSendersCreateBodyFourOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(transfersSendersCreateBodyFourOneEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(transfersSendersCreateBodyFourOneAddressOneCityRegExp).describe('The name of the city.'),
@@ -215,9 +215,9 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersSendersCreateBodyFourOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersSendersCreateBodyFourOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersSendersCreateBodyFourOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).describe('Sender information.').and(zod.object({
   "type": zod.string().default(transfersSendersCreateBodyFourTwoTypeDefault)
 })).and(zod.object({
@@ -227,22 +227,22 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "first": zod.string().regex(transfersSendersCreateBodyFiveOneNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(transfersSendersCreateBodyFiveOneNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(transfersSendersCreateBodyFiveOneNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s full name.'),
+})).describe('The Sender\'s full name.'),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(transfersSendersCreateBodyFiveOneNationalIdentificationOneIdentifierMin).max(transfersSendersCreateBodyFiveOneNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(transfersSendersCreateBodyFiveOneNationalIdentificationOneExpirationDateRegExp)
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s official government ID.'),
+})).describe('The Sender\'s official government ID.'),
   "phone": zod.object({
   "country_code": zod.string().regex(transfersSendersCreateBodyFiveOnePhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(transfersSendersCreateBodyFiveOnePhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s mobile number.'),
+})).describe('The Sender\'s mobile number.'),
   "date_of_birth": zod.string().describe('Sender\'s date of birth in YYYY-MM-DD.'),
   "email": zod.string().regex(transfersSendersCreateBodyFiveOneEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address.'),
   "address": zod.object({
@@ -252,9 +252,9 @@ export const TransfersSendersCreateBody = zod.union([zod.object({
   "line2": zod.string().regex(transfersSendersCreateBodyFiveOneAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(transfersSendersCreateBodyFiveOneAddressOnePostalCodeRegExp),
   "state": zod.string().regex(transfersSendersCreateBodyFiveOneAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address.')
+})).describe('The Sender\'s residential address.')
 }).describe('Sender information for EGP mobile money transfers.').and(zod.object({
   "type": zod.string().default(transfersSendersCreateBodyFiveTwoTypeDefault)
 })).and(zod.object({

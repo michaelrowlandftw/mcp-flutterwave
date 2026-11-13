@@ -38,5 +38,5 @@ export const ChargebacksPostBody = zod.object({
   "provider": zod.string().optional().describe('Provider for the chargeback'),
   "arn": zod.string().optional().describe('Acquirer reference number for transaction'),
   "initiator": zod.string().optional().describe('Initiator of the chargeback'),
-  "expiry": zod.number().int().describe('Duration of chargeback in hours used in calculating due_datetime')
+  "expiry": zod.int().describe('Duration of chargeback in hours used in calculating due_datetime')
 }).describe('A chargeback input object')

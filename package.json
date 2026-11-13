@@ -40,7 +40,7 @@
     "@mcp-ui/server": "^5.16.3",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "openapi-fetch": "^0.15.0",
-    "zod": "^3.24.2"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.104.2",
@@ -50,8 +50,7 @@
     "openapi-typescript": "^7.6.1",
     "orval": "^8.36.0",
     "typescript": "^5.8.2",
-    "vitest": "^4.1.9",
-    "zod-to-json-schema": "^3.24.6"
+    "vitest": "^4.1.9"
   },
   "overrides": {
     "undici": ">=7.29.0",

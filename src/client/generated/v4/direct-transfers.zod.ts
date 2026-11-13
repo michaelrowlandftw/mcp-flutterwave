@@ -608,15 +608,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -625,9 +625,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionOneSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['EGP']).default(directTransfersPostBodyOnePaymentInstructionTwoDestinationCurrencyDefault),
@@ -641,22 +641,22 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(directTransfersPostBodyOnePaymentInstructionTwoRecipientNationalIdentificationOneIdentifierMin).max(directTransfersPostBodyOnePaymentInstructionTwoRecipientNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientNationalIdentificationOneExpirationDateRegExp).optional()
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('Recipient government identification'),
+})).describe('Recipient government identification'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientAddressOneCityRegExp).describe('The name of the city.'),
   "country": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientAddressOneCountryRegExp).describe('ISO2 country code'),
@@ -664,9 +664,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionTwoRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionTwoRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoRecipientBankCodeRegExp).describe('recipient bank code')
@@ -677,23 +677,23 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(directTransfersPostBodyOnePaymentInstructionTwoSenderNationalIdentificationOneIdentifierMin).max(directTransfersPostBodyOnePaymentInstructionTwoSenderNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderNationalIdentificationOneExpirationDateRegExp)
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s official government ID.'),
+})).describe('The Sender\'s official government ID.'),
   "date_of_birth": zod.string().describe('Sender\'s date of birth in YYYY-MM-DD.'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s mobile number.'),
+})).describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -702,9 +702,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionTwoSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address')
+})).describe('The Sender\'s residential address')
 }).describe('Sender information for EGP bank transfers.'),
   "transfer_purpose": zod.enum(['family_maintenance', 'personal', 'education', 'medical', 'donation', 'business', 'salary_payment', 'investment', 'loan_repayment', 'bill_payment', 'travel', 'gift', 'other']).describe('The reason for the transfer.')
 }),zod.object({
@@ -720,9 +720,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionThreeRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionThreeRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionThreeRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeRecipientBankCodeRegExp).describe('recipient bank code')
@@ -733,15 +733,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -750,9 +750,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionThreeSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['EUR']).default(directTransfersPostBodyOnePaymentInstructionFourDestinationCurrencyDefault),
@@ -767,15 +767,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientEmailOneRegExp).describe('The Customer\'s email address.').describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientAddressOneCityRegExp).describe('The name of the city.'),
@@ -784,9 +784,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionFourRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionFourRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionFourRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "name": zod.string().min(directTransfersPostBodyOnePaymentInstructionFourRecipientBankNameMin).max(directTransfersPostBodyOnePaymentInstructionFourRecipientBankNameMax).describe('recipient bank name'),
@@ -798,9 +798,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s name.'),
+})).describe('The Sender\'s name.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -809,15 +809,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address'),
+})).describe('The Sender\'s residential address'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFourSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s phone number')
+})).describe('The Sender\'s phone number')
 }).describe('Sender information for EUR bank transfers.')
 }),zod.object({
   "destination_currency": zod.enum(['GBP']).default(directTransfersPostBodyOnePaymentInstructionFiveDestinationCurrencyDefault),
@@ -832,15 +832,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientEmailOneRegExp).describe('The Customer\'s email address.').describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientAddressOneCityRegExp).describe('The name of the city.'),
@@ -849,9 +849,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionFiveRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionFiveRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionFiveRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "account_type": zod.enum(['individual', 'corporate']).describe('recipient account type'),
@@ -864,9 +864,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s name.'),
+})).describe('The Sender\'s name.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -875,15 +875,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address'),
+})).describe('The Sender\'s residential address'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionFiveSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s phone number')
+})).describe('The Sender\'s phone number')
 }).describe('Sender information for GBP bank transfers.')
 }),zod.object({
   "destination_currency": zod.enum(['GHS', 'RWF', 'SLL', 'UGX', 'XAF', 'XOF']).default(directTransfersPostBodyOnePaymentInstructionSixDestinationCurrencyDefault),
@@ -898,9 +898,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionSixRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionSixRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionSixRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixRecipientBankCodeRegExp).describe('recipient bank code'),
@@ -912,15 +912,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -929,9 +929,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSixSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['MWK']).default(directTransfersPostBodyOnePaymentInstructionSevenDestinationCurrencyDefault),
@@ -946,9 +946,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionSevenRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionSevenRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionSevenRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenRecipientBankCodeRegExp).describe('recipient bank code'),
@@ -960,15 +960,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -977,9 +977,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionSevenSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['USD']).default(directTransfersPostBodyOnePaymentInstructionEightDestinationCurrencyDefault),
@@ -994,15 +994,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientEmailOneRegExp).describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientAddressOneCityRegExp).describe('The name of the city.'),
@@ -1011,9 +1011,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionEightRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionEightRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionEightRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightRecipientBankCodeRegExp).describe('recipient bank code'),
@@ -1027,15 +1027,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1044,9 +1044,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionEightSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['ZAR']).default(directTransfersPostBodyOnePaymentInstructionNineDestinationCurrencyDefault),
@@ -1061,15 +1061,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientEmailOneRegExp).describe('The Customer\'s email address.').describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientAddressOneCityRegExp).describe('The name of the city.'),
@@ -1078,9 +1078,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "bank": zod.object({
   "account_number": zod.string().min(directTransfersPostBodyOnePaymentInstructionNineRecipientBankAccountNumberMin).max(directTransfersPostBodyOnePaymentInstructionNineRecipientBankAccountNumberMax).regex(directTransfersPostBodyOnePaymentInstructionNineRecipientBankAccountNumberRegExp).describe('recipient account number'),
   "code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineRecipientBankCodeRegExp).describe('recipient bank code')
@@ -1091,15 +1091,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1108,9 +1108,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyOnePaymentInstructionNineSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 })]).describe('Currency-specific information for the transfer.')
 }),zod.object({
@@ -1137,9 +1137,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(directTransfersPostBodyTwoPaymentInstructionOneRecipientMobileMoneyNetworkMin).max(directTransfersPostBodyTwoPaymentInstructionOneRecipientMobileMoneyNetworkMax).regex(directTransfersPostBodyTwoPaymentInstructionOneRecipientMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(directTransfersPostBodyTwoPaymentInstructionOneRecipientMobileMoneyMsisdnMin).max(directTransfersPostBodyTwoPaymentInstructionOneRecipientMobileMoneyMsisdnMax).regex(directTransfersPostBodyTwoPaymentInstructionOneRecipientMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -1150,15 +1150,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1167,9 +1167,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionOneSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['EGP']).default(directTransfersPostBodyTwoPaymentInstructionTwoDestinationCurrencyDefault),
@@ -1184,16 +1184,16 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(directTransfersPostBodyTwoPaymentInstructionTwoRecipientNationalIdentificationOneIdentifierMin).max(directTransfersPostBodyTwoPaymentInstructionTwoRecipientNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientNationalIdentificationOneExpirationDateRegExp).optional()
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('Recipient government identification'),
+})).describe('Recipient government identification'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientAddressOneCityRegExp).describe('The name of the city.'),
   "country": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientAddressOneCountryRegExp).describe('ISO2 country code'),
@@ -1201,9 +1201,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "mobile_money": zod.object({
   "network": zod.string().min(directTransfersPostBodyTwoPaymentInstructionTwoRecipientMobileMoneyNetworkMin).max(directTransfersPostBodyTwoPaymentInstructionTwoRecipientMobileMoneyNetworkMax).regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientMobileMoneyNetworkRegExp).describe('recipient network'),
   "msisdn": zod.string().min(directTransfersPostBodyTwoPaymentInstructionTwoRecipientMobileMoneyMsisdnMin).max(directTransfersPostBodyTwoPaymentInstructionTwoRecipientMobileMoneyMsisdnMax).regex(directTransfersPostBodyTwoPaymentInstructionTwoRecipientMobileMoneyMsisdnRegExp).describe('recipient phone number')
@@ -1214,22 +1214,22 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s full name.'),
+})).describe('The Sender\'s full name.'),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(directTransfersPostBodyTwoPaymentInstructionTwoSenderNationalIdentificationOneIdentifierMin).max(directTransfersPostBodyTwoPaymentInstructionTwoSenderNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderNationalIdentificationOneExpirationDateRegExp)
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s official government ID.'),
+})).describe('The Sender\'s official government ID.'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s mobile number.'),
+})).describe('The Sender\'s mobile number.'),
   "date_of_birth": zod.string().describe('Sender\'s date of birth in YYYY-MM-DD.'),
   "email": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address.'),
   "address": zod.object({
@@ -1239,9 +1239,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionTwoSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address.')
+})).describe('The Sender\'s residential address.')
 }).describe('Sender information for EGP mobile money transfers.'),
   "transfer_purpose": zod.enum(['family_maintenance', 'personal', 'education', 'medical', 'donation', 'business', 'salary_payment', 'investment', 'loan_repayment', 'bill_payment', 'travel', 'gift', 'other']).optional().describe('The reason for the transfer.')
 }),zod.object({
@@ -1257,9 +1257,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "mobile_money": zod.object({
   "network": zod.string().min(directTransfersPostBodyTwoPaymentInstructionThreeRecipientMobileMoneyNetworkMin).max(directTransfersPostBodyTwoPaymentInstructionThreeRecipientMobileMoneyNetworkMax).regex(directTransfersPostBodyTwoPaymentInstructionThreeRecipientMobileMoneyNetworkRegExp).describe('recipient network'),
   "country": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeRecipientMobileMoneyCountryRegExp).describe('recipient country'),
@@ -1271,15 +1271,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1288,9 +1288,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyTwoPaymentInstructionThreeSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 })])
 }),zod.object({
@@ -1328,15 +1328,15 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1345,9 +1345,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyThreePaymentInstructionSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 })
 }),zod.object({
@@ -1373,22 +1373,22 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(directTransfersPostBodyFourPaymentInstructionOneRecipientNationalIdentificationOneIdentifierMin).max(directTransfersPostBodyFourPaymentInstructionOneRecipientNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientNationalIdentificationOneExpirationDateRegExp).optional()
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('Recipient government identification'),
+})).describe('Recipient government identification'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient phone number'),
+})).describe('Recipient phone number'),
   "email": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientEmailOneRegExp).describe('Recipient email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientAddressOneCityRegExp).describe('The name of the city.'),
@@ -1397,9 +1397,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneRecipientAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('Recipient address'),
+})).describe('Recipient address'),
   "cash_pickup": zod.object({
   "provider": zod.enum(['BDC']).describe('cashpickup provider')
 })
@@ -1409,22 +1409,22 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s full name.'),
+})).describe('The Sender\'s full name.'),
   "national_identification": zod.object({
   "type": zod.enum(['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID']),
   "identifier": zod.string().min(directTransfersPostBodyFourPaymentInstructionOneSenderNationalIdentificationOneIdentifierMin).max(directTransfersPostBodyFourPaymentInstructionOneSenderNationalIdentificationOneIdentifierMax),
   "expiration_date": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderNationalIdentificationOneExpirationDateRegExp)
-}).and(zod.object({
+}).and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s official government ID.'),
+})).describe('The Sender\'s official government ID.'),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s mobile number.'),
+})).describe('The Sender\'s mobile number.'),
   "date_of_birth": zod.string().describe('Sender\'s date of birth in YYYY-MM-DD.'),
   "email": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderEmailOneRegExp).describe('The Customer\'s email address.').describe('The Sender\'s email address'),
   "address": zod.object({
@@ -1434,9 +1434,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyFourPaymentInstructionOneSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).describe('The Sender\'s residential address.')
+})).describe('The Sender\'s residential address.')
 }).describe('Sender information for EGP cash pickup transfers.'),
   "transfer_purpose": zod.enum(['family_maintenance', 'personal', 'education', 'medical', 'donation', 'business', 'salary_payment', 'investment', 'loan_repayment', 'bill_payment', 'travel', 'gift', 'other']).optional().describe('The reason for the transfer.')
 })
@@ -1468,24 +1468,24 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).optional()
+})).optional()
 }),
   "sender": zod.object({
   "name": zod.object({
   "first": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1494,9 +1494,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyFivePaymentInstructionOneSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['USDT']).default(directTransfersPostBodyFivePaymentInstructionTwoDestinationCurrencyDefault),
@@ -1515,24 +1515,24 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).optional()
+})).optional()
 }),
   "sender": zod.object({
   "name": zod.object({
   "first": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1541,9 +1541,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyFivePaymentInstructionTwoSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 }),zod.object({
   "destination_currency": zod.enum(['RLUSD']).default(directTransfersPostBodyFivePaymentInstructionThreeDestinationCurrencyDefault),
@@ -1562,24 +1562,24 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "first": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeRecipientNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeRecipientNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeRecipientNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()).optional()
+})).optional()
 }),
   "sender": zod.object({
   "name": zod.object({
   "first": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderNameOneFirstRegExp).describe('The Customer\'s first name.'),
   "middle": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderNameOneMiddleRegExp).optional().describe('The Customer\'s middle name.'),
   "last": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderNameOneLastRegExp).describe('The Customer\'s last name.')
-}).describe('The Customer\'s full name.').and(zod.object({
+}).describe('The Customer\'s full name.').and(zod.looseObject({
 
-}).passthrough()),
+})),
   "phone": zod.object({
   "country_code": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderPhoneOneCountryCodeRegExp).describe('The dialling country code e.g. 234 for NG.'),
   "number": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderPhoneOneNumberRegExp).describe('Unformatted 7-10-digit phone number without the country code.')
-}).describe('The customer\'s mobile number.').and(zod.object({
+}).describe('The customer\'s mobile number.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s mobile number.'),
+})).optional().describe('The Sender\'s mobile number.'),
   "email": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderEmailOneRegExp).describe('The Customer\'s email address.').optional().describe('The Sender\'s email address'),
   "address": zod.object({
   "city": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderAddressOneCityRegExp).describe('The name of the city.'),
@@ -1588,9 +1588,9 @@ export const DirectTransfersPostBody = zod.union([zod.object({
   "line2": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderAddressOneLine2RegExp).optional().describe('The second line of the Customer\'s address.'),
   "postal_code": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderAddressOnePostalCodeRegExp),
   "state": zod.string().regex(directTransfersPostBodyFivePaymentInstructionThreeSenderAddressOneStateRegExp).describe('The state or region.')
-}).describe('Customer address information.').and(zod.object({
+}).describe('Customer address information.').and(zod.looseObject({
 
-}).passthrough()).optional().describe('The Sender\'s residential address')
+})).optional().describe('The Sender\'s residential address')
 }).optional().describe('Sender information.')
 })])
 })])

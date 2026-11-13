@@ -24,8 +24,8 @@ export const settlementGetQuerySizeMax = 50;
 
 
 export const SettlementGetQueryParams = zod.object({
-  "page": zod.number().int().min(1).default(settlementGetQueryPageDefault).describe('The page of the data to retrieve. The most recent data entry is on page 1.'),
-  "size": zod.number().int().min(settlementGetQuerySizeMin).max(settlementGetQuerySizeMax).default(settlementGetQuerySizeDefault).describe('Length of data returned. Defaults to 10.')
+  "page": zod.int().min(1).default(settlementGetQueryPageDefault).describe('The page of the data to retrieve. The most recent data entry is on page 1.'),
+  "size": zod.int().min(settlementGetQuerySizeMin).max(settlementGetQuerySizeMax).default(settlementGetQuerySizeDefault).describe('Length of data returned. Defaults to 10.')
 })
 
 export const settlementGetHeaderXTraceIdMin = 12;

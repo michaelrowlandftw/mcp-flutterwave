@@ -43,7 +43,7 @@ export const VirtualAccountsPostBody = zod.object({
   "reference": zod.string().min(virtualAccountsPostBodyReferenceMin).max(virtualAccountsPostBodyReferenceMax).regex(virtualAccountsPostBodyReferenceRegExp).describe('A custom identifier to track the transaction, This must be unique across all your transactions.'),
   "customer_id": zod.string().describe('The customer id'),
   "amount": zod.number().optional().describe('The amount to be collected. Specify `0` for static accounts.'),
-  "expiry": zod.number().int().min(virtualAccountsPostBodyExpiryMin).max(virtualAccountsPostBodyExpiryMax).optional().describe('The expiry time of the virtual account.'),
+  "expiry": zod.int().min(virtualAccountsPostBodyExpiryMin).max(virtualAccountsPostBodyExpiryMax).optional().describe('The expiry time of the virtual account.'),
   "currency": zod.enum(['NGN', 'GHS', 'EGP', 'KES', 'MAD', 'ZAR']).describe('ISO 4217 currency code.'),
   "account_type": zod.enum(['static', 'dynamic']).describe('The type of virtual account.'),
   "meta": zod.record(zod.string(), zod.string()).optional(),

@@ -86,9 +86,9 @@ export const PaymentMethodsPostBody = zod.union([zod.object({
   "meta": zod.record(zod.string(), zod.string()).optional()
 }).and(zod.object({
   "type": zod.enum(['bank_account']).default(paymentMethodsPostBodyTwoTwoTypeDefault).describe('The type of the payment method.'),
-  "bank_account": zod.object({
+  "bank_account": zod.looseObject({
 
-}).passthrough().optional()
+}).optional()
 })),zod.object({
   "type": zod.string().describe('The type of the payment method.'),
   "customer_id": zod.string().optional().describe('ID of the customer.'),
@@ -107,9 +107,9 @@ export const PaymentMethodsPostBody = zod.union([zod.object({
   "meta": zod.record(zod.string(), zod.string()).optional()
 }).and(zod.object({
   "type": zod.enum(['opay']).default(paymentMethodsPostBodyFourTwoTypeDefault).describe('The type of the payment method.'),
-  "opay": zod.object({
+  "opay": zod.looseObject({
 
-}).passthrough().optional()
+}).optional()
 })),zod.object({
   "type": zod.string().describe('The type of the payment method.'),
   "customer_id": zod.string().optional().describe('ID of the customer.'),

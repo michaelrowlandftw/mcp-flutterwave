@@ -42,9 +42,11 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
     }
     tool.annotations = { ...tool.annotations, ...annotationsFor(name) };
     if (MONEY_MOVING.has(name)) {
-      const schema = tool.inputSchema as unknown as { extend?: (shape: object) => unknown } | undefined;
-      if (schema?.extend) {
-        (tool as { inputSchema: unknown }).inputSchema = schema.extend({
+      // The SDK may store the schema as a zod-mini object (no .extend), so rebuild it from its shape.
+      const shape = (tool.inputSchema as unknown as { shape?: Record<string, z.ZodType> } | undefined)?.shape;
+      if (shape) {
+        (tool as { inputSchema: unknown }).inputSchema = z.object({
+          ...shape,
           confirmation_token: z
             .string()
             .optional()
