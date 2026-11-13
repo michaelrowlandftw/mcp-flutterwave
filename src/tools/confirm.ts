@@ -86,6 +86,11 @@ export const NO_AMOUNT_TOOLS = new Set(['validate_charge', 'update_charge', 'upd
  */
 export const OUTGOING_NO_AMOUNT_TOOLS = new Set(['retry_transfer', 'update_transfer', 'initiate_fx_trade']);
 
+/** True when any amount cap is set. */
+export function capConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return !!env.FLW_MAX_AMOUNT || Object.keys(env).some((k) => /^FLW_MAX_AMOUNT_[A-Z]{3,5}$/.test(k) && !!env[k]);
+}
+
 type Raw = { amount?: unknown; currency?: unknown };
 
 /** Where each tool keeps its amount and currency. */
@@ -138,6 +143,15 @@ export function capError(args: Args, env: NodeJS.ProcessEnv = process.env, tool 
     return `${tool} sends money but has no amount the server can check against the cap. Not allowed while an amount cap is set or with live credentials. The call was not sent.`;
   }
   if (OUTGOING_NO_AMOUNT_TOOLS.has(tool)) return null;
+  if (tool === 'update_chargeback') {
+    if (args.amount === undefined) return null;
+    const value = parseAmount(args.amount);
+    if (value === undefined) return 'The chargeback amount is not a plain number. The call was not sent.';
+    const cap = general ? Number(general) : undefined;
+    return cap !== undefined && Number.isFinite(cap) && value > cap
+      ? `Amount ${value} is above the cap of ${cap} set by FLW_MAX_AMOUNT. The call was not sent.`
+      : null;
+  }
   if (!general && !anyCurrencyCap) {
     return live
       ? 'Live mode needs an amount cap: set FLW_MAX_AMOUNT (and FLW_MAX_AMOUNT_<CURRENCY> if needed). The call was not sent.'

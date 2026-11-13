@@ -86,3 +86,44 @@ describe('URL rules (review N8) and update_charge PINs (review N10)', () => {
     expect(await ran(make('update_charge'), { authorization: { type: 'pin', pin: { nonce: 'n', encrypted_pin: 'x' } } })).toMatch(/needs the raw card tools switch/);
   });
 });
+
+describe('third review', () => {
+  it('issue 1: money-out tools with no amount are not offered under a cap', () => {
+    process.env.FLW_MAX_AMOUNT = '1000';
+    try {
+      const server = new McpServer({ name: 't', version: '0' });
+      for (const n of ['retry_transfer', 'initiate_fx_trade', 'update_transfer', 'get_banks']) {
+        server.tool(n, n, async () => ({ content: [] }));
+      }
+      expect(applyToolPolicy(server, {})).toEqual(['get_banks']);
+    } finally {
+      delete process.env.FLW_MAX_AMOUNT;
+    }
+  });
+
+  it('issue 2: URLs that parsers read differently are refused', async () => {
+    const server = new McpServer({ name: 't', version: '0' });
+    server.tool('get_x', 'x', { redirect_url: z.string() }, async () => ({ content: [{ type: 'text' as const, text: 'ran' }] }));
+    applyToolPolicy(server, {});
+    const h = registeredTools(server).get_x.handler as (a: unknown, e: unknown) => Promise<{ content: Array<{ text: string }> }>;
+    for (const u of ['https://merchant.example\@evil.example/x', 'https://user@evil.example/', 'https://merchant.example/\u0000x']) {
+      expect((await h({ redirect_url: u }, {})).content[0].text).toMatch(/plain https URL|https URL/);
+    }
+    expect((await h({ redirect_url: 'https://merchant.example/x?a=1' }, {})).content[0].text).toBe('ran');
+  });
+
+  it('issue 5: a dot-segment refusal in v3 is a definite refusal (V3Rejected)', async () => {
+    const { default: mw } = await import('../client/middleware/authMiddlewareV3.js');
+    const { V3Rejected } = await import('../utils/reference.js');
+    await expect(mw.onRequest!({ request: new Request('https://api.flutterwave.com/v3/x'), params: { path: { reference: '..' } } } as never)).rejects.toBeInstanceOf(V3Rejected);
+  });
+
+  it('issue 3: base64 inside a path, 0x hex and percent-encoded secrets are masked', async () => {
+    const { redactText } = await import('../utils/redact.js');
+    const env = { FLW_SECRET_HASH: 'hash with spaces&chars' };
+    const b64 = Buffer.from(`user:${env.FLW_SECRET_HASH}`).toString('base64');
+    expect(redactText(`/v3/path/${b64}`, env)).not.toContain(b64);
+    expect(redactText(`0x${Buffer.from(env.FLW_SECRET_HASH).toString('hex')}`, env)).toBe('[REDACTED]');
+    expect(redactText(`q=${encodeURIComponent(env.FLW_SECRET_HASH)}`, env)).toBe('q=[REDACTED]');
+  });
+});
