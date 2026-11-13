@@ -3,7 +3,9 @@ import { TransfersListQueryParams } from '../../client/generated/v4/transfers-li
 import { toQueryString, v4JsonResult } from './httpResult.js';
 
 export const ListTransfersSchema = {
-  next: TransfersListQueryParams.shape.next,
+  next: TransfersListQueryParams.shape.next.describe(
+    'Cursor for the next page, from the previous response. This endpoint pages by cursor; there is no page number.',
+  ),
   previous: TransfersListQueryParams.shape.previous,
   size: TransfersListQueryParams.shape.size,
   bulk_id: TransfersListQueryParams.shape.bulk_id,

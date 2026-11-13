@@ -19,7 +19,7 @@ describe('docs guide', () => {
     const { resources } = await client.listResources();
     expect(resources.map((r) => r.uri)).toContain(DOCS_GUIDE_URI);
     const { contents } = await client.readResource({ uri: DOCS_GUIDE_URI });
-    const text = String(contents[0]?.text);
+    const text = String((contents[0] as { text?: string } | undefined)?.text);
     expect(text).toContain('https://developer.flutterwave.com/llms.txt');
     expect(text).toContain('https://github.com/Flutterwave/Node-v3');
   });

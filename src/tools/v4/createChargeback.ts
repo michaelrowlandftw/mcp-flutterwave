@@ -1,6 +1,5 @@
-import { flwV4Fetch } from '../../client/v4/http.js';
+import { safeCreate } from './safeCreate.js';
 import { ChargebacksPostBody } from '../../client/generated/v4/chargebacks.zod.js';
-import { v4JsonResult } from './httpResult.js';
 
 export const CreateChargebackSchema = {
   charge_id: ChargebacksPostBody.shape.charge_id,
@@ -38,9 +37,10 @@ export async function createChargeback(args: CreateChargebackArgs) {
     );
   }
 
-  const response = await flwV4Fetch('/chargebacks', {
-    method: 'POST',
-    body: JSON.stringify(body.data),
+  return safeCreate({
+    path: '/chargebacks',
+    body: body.data,
+    label: 'create chargeback',
+    lookupHint: 'Check with list_chargebacks.',
   });
-  return v4JsonResult(response, 'create chargeback');
 }
