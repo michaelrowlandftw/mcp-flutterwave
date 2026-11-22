@@ -1,0 +1,19 @@
+# Every change needs a review from a code owner once branch protection requires it
+# (Security review of DX-RFC-001; settings in docs/release.md).
+# Add Flutterwave Security's GitHub team to the security-sensitive paths below once it is named.
+*                                   @michaelrowlandftw
+
+# Security-sensitive: credentials, live mode, confirmation, caps, redaction, tool policy, release.
+/src/config/                        @michaelrowlandftw
+/src/tools/policy.ts                @michaelrowlandftw
+/src/tools/confirm.ts               @michaelrowlandftw
+/src/utils/redact.ts                @michaelrowlandftw
+/src/logRedaction.ts                @michaelrowlandftw
+/src/tools/webhook.ts               @michaelrowlandftw
+/src/verify/                        @michaelrowlandftw
+/.github/                           @michaelrowlandftw
+/Dockerfile                         @michaelrowlandftw
+/package.json                       @michaelrowlandftw
+/package-lock.json                  @michaelrowlandftw
+/SECURITY.md                        @michaelrowlandftw
+/docs/security.md                   @michaelrowlandftw
