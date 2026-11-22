@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tokenized-charges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Charge a saved card by token
+         * @description Charge a card saved from an earlier 3DS checkout payment, using the token from that payment (data.card.token). Request fields as measured in Test Mode (candidate V3 spec, 0.1.0-candidate+20261122); the docs list token, currency, amount, email and tx_ref. Required flags are not measured yet. By default the charge runs 3DS and answers with a redirect, so the customer must be present (Michael, 2026-11-22; to verify).
+         */
+        post: operations["createTokenizedCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/validate-charge": {
         parameters: {
             query?: never;
@@ -106,7 +126,7 @@ export interface operations {
         parameters: {
             query: {
                 /** @description The payment method type to charge. */
-                type: "card" | "account" | "mobile_money_ghana" | "enaira" | "qr" | "mono" | "debit_uk_account" | "ach_payment" | "bank_transfer" | "mobile_money_tanzania" | "mobile_money_uganda" | "mobile_money_rwanda" | "mobile_money_zambia" | "mobile_money_francophone" | "mpesa" | "ussd" | "capitec" | "fawry_pay" | "opay" | "voucher_payment";
+                type: "account" | "mobile_money_ghana" | "enaira" | "qr" | "mono" | "debit_uk_account" | "ach_payment" | "bank_transfer" | "mobile_money_tanzania" | "mobile_money_uganda" | "mobile_money_rwanda" | "mobile_money_zambia" | "mobile_money_francophone" | "mpesa" | "ussd" | "capitec" | "fawry_pay" | "opay" | "voucher_payment";
             };
             header?: never;
             path?: never;
@@ -115,8 +135,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example encrypted_card_data_here */
-                    client?: string;
                     /** @example MC-158523s09v5050e8 */
                     tx_ref?: string;
                     /** @example 100 */
@@ -131,45 +149,71 @@ export interface operations {
                     phone_number?: string;
                     /** @example https://example.com/callback */
                     redirect_url?: string;
-                    /** @example 5531886652142950 */
-                    card_number?: string;
-                    /** @example 564 */
-                    cvv?: string;
-                    /** @example 09 */
-                    expiry_month?: string;
-                    /** @example 32 */
-                    expiry_year?: string;
                     /** @example 044 */
                     account_bank?: string;
                     /** @example 0690000031 */
                     account_number?: string;
                     /** @example MTN */
                     network?: string;
-                    /**
-                     * @description Card holder name (required for AMEX transactions)
-                     * @example John Doe
-                     */
-                    card_holder_name?: string;
-                    /** @description Authorization data for PIN or AVS flows — second call only, after initial charge returns the required mode. */
-                    authorization?: {
-                        /**
-                         * @description Authorization mode returned by the initial charge response.
-                         * @enum {string}
-                         */
-                        mode?: "pin" | "avs_noauth";
-                        /** @description Card PIN (for pin mode) */
-                        pin?: string;
-                        city?: string;
-                        address?: string;
-                        state?: string;
-                        country?: string;
-                        zipcode?: string;
-                    };
                 };
             };
         };
         responses: {
             /** @description Charge initiated successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChargeResponse"];
+                };
+            };
+            /** @description Bad request, invalid data. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized, invalid API key. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createTokenizedCharge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @example flw-t1nf-c25d14a3a6b5afaf8022fe88212a3eaa-k3n */
+                    token: string;
+                    /** @example NGN */
+                    currency: string;
+                    /** @example NG */
+                    country?: string;
+                    /** @example 100 */
+                    amount: number;
+                    /** @example user@example.com */
+                    email: string;
+                    /** @example MC-158523s09v5050e8 */
+                    tx_ref: string;
+                    narration?: string;
+                    /** @example https://example.com/callback */
+                    redirect_url?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Charge initiated. */
             200: {
                 headers: {
                     [name: string]: unknown;

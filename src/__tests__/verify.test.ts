@@ -7,11 +7,13 @@ import { applyToolPolicy, registeredTools } from '../tools/policy.js';
 // Expected mappings, written out by hand so a change to the map must change the test too.
 const EXPECTED = {
   v3: {
-    collection: { successful: 'successful', pending: 'pending', failed: 'failed' },
+    collection: { successful: 'successful', pending: 'pending', failed: 'failed', voided: 'failed' },
     payout: { NEW: 'pending', PENDING: 'pending', SUCCESSFUL: 'successful', FAILED: 'failed', REVERSED: 'reversed' },
     refund: {
       processing: 'pending', 'pending-bank-transfer': 'pending', 'pending-momo': 'pending',
-      completed: 'successful', 'completed-bank-transfer': 'successful', 'completed-preauth': 'successful', failed: 'failed',
+      completed: 'successful', 'completed-bank-transfer': 'successful', completedbanktransfer: 'successful',
+      completedmomo: 'successful', completedmpgs: 'successful', completedoffline: 'successful',
+      completedpreauth: 'successful', 'completed-preauth': 'successful', failed: 'failed',
     },
   },
   v4: {

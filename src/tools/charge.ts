@@ -3,7 +3,7 @@ import { uncertainV3, withReference } from '../utils/reference.js';
 import { lookupV3Transaction, sendV3Safely } from './safeCreateV3.js';
 import { server } from "../server.js";
 import {
-    ChargeCardSchema,
+    ChargeTokenizedCardSchema,
     ChargeBankAccountSchema,
     ChargeMobileMoneySchema,
     ChargeMpesaSchema,
@@ -12,8 +12,6 @@ import {
 } from "../types/charge/schema.js";
 import {
     createChargeUI,
-    createPinAuthUI,
-    createAvsAuthUI,
     create3dsRedirectUI,
     createOtpPromptUI,
 } from "../ui/index.js";
@@ -24,66 +22,45 @@ function createErrorResponse(message: string) {
     return { content: [{ type: "text" as const, text: message }] };
 }
 
+/**
+ * V3 puts the redirect URL in a different field per rail (flw-api-monitor report
+ * sections 9 and 14): meta.authorization.redirect, data.meta.authorization.redirect
+ * or meta.authorization.redirect_url. Read all three.
+ */
+export function redirectUrlOf(response: any): string {
+    const candidates = [
+        response?.meta?.authorization?.redirect,
+        response?.data?.meta?.authorization?.redirect,
+        response?.meta?.authorization?.redirect_url,
+        response?.data?.meta?.authorization?.redirect_url,
+    ];
+    const found = candidates.find((value) => typeof value === 'string' && value !== '');
+    return found ?? '';
+}
+
 function isValidResponse(status: unknown, data: unknown): boolean {
     return !(typeof status === 'number' && status >= 400) && !!data;
 }
 
 /**
- * Inspect the Flutterwave charge response and return the right UI + text
- * for each of the five card charge scenarios:
+ * Inspect a Flutterwave charge response (bank account, mobile money, M-Pesa,
+ * USSD, tokenised card) and return the right UI + text:
  *
- *   pin        – initial call, card needs PIN; no data yet
- *   avs_noauth – initial call, card needs billing address; no data yet
- *   redirect   – 3DS redirect (appears on first call OR after PIN/AVS)
- *   otp        – OTP sent after successful PIN/AVS; data present
- *   (none)     – charge completed (successful/failed) or no auth needed
+ *   redirect   – the customer must open a page (3DS, captcha, provider page)
+ *   otp        – an OTP was sent; data present
+ *   (none)     – charge completed (successful/failed) or pending
+ *
+ * Card PIN and AVS steps belong to Direct Charge, which this server does not
+ * offer (Security review of DX-RFC-001, 2026-11-22).
  */
 function buildChargeResponse(response: any, tx_ref: string, chargeType: string) {
     const meta       = response?.meta;
     const authMode   = meta?.authorization?.mode as string | undefined;
     const chargeData = response?.data;
 
-    // ── Scenario 1: PIN required (first call, no data) ───────────────────────
-    if (authMode === 'pin') {
-        const ui = createPinAuthUI({ tx_ref, charge_type: chargeType });
-        return {
-            content: [
-                {
-                    type: "text" as const,
-                    text: [
-                        `PIN authorization required for ${tx_ref}. No charge has been made yet.`,
-                        `Ask the customer for their 4-digit card PIN, then call charge_card again`,
-                        `with the same parameters and add: authorization: { mode: "pin", pin: "<PIN>" }`,
-                    ].join('\n'),
-                },
-                { type: "resource" as const, resource: ui },
-            ],
-        };
-    }
-
-    // ── Scenario 2: AVS required (first call, no data) ───────────────────────
-    if (authMode === 'avs_noauth') {
-        const fields: string[] = meta?.authorization?.fields ?? ['city', 'address', 'state', 'country', 'zipcode'];
-        const ui = createAvsAuthUI({ tx_ref, charge_type: chargeType, fields });
-        return {
-            content: [
-                {
-                    type: "text" as const,
-                    text: [
-                        `Address Verification (AVS) required for ${tx_ref}. No charge has been made yet.`,
-                        `Collect the following billing address fields from the customer: ${fields.join(', ')}.`,
-                        `Then call charge_card again with the same parameters and add:`,
-                        `authorization: { mode: "avs_noauth", ${fields.map(f => `${f}: "<value>"`).join(', ')} }`,
-                    ].join('\n'),
-                },
-                { type: "resource" as const, resource: ui },
-            ],
-        };
-    }
-
     // ── Scenario 3: 3DS redirect (first or second call) ──────────────────────
-    if (authMode === 'redirect') {
-        const redirectUrl = meta?.authorization?.redirect ?? '';
+    const redirectUrl = redirectUrlOf(response);
+    if (authMode === 'redirect' || (redirectUrl && authMode !== 'otp')) {
         const ui = create3dsRedirectUI({
             tx_ref:       chargeData?.tx_ref ?? tx_ref,
             charge_type:  chargeType,
@@ -97,7 +74,7 @@ function buildChargeResponse(response: any, tx_ref: string, chargeType: string) 
                 {
                     type: "text" as const,
                     text: [
-                        `3D Secure authentication required.`,
+                        `The customer must complete this payment on the page below (3D Secure, captcha or the provider's page).`,
                         `Redirect the customer to: ${redirectUrl}`,
                         `Transaction ID: ${chargeData?.id ?? 'N/A'} — store this to verify later.`,
                         `After the customer completes bank authentication they will be sent to redirect_url.`,
@@ -162,52 +139,34 @@ function buildChargeResponse(response: any, tx_ref: string, chargeType: string) 
 
 // ─── Tool handlers ────────────────────────────────────────────────────────────
 
-type CardAuthorizationInput = {
-    mode: 'pin' | 'avs_noauth';
-    pin?: string;
-    city?: string;
-    address?: string;
-    state?: string;
-    country?: string;
-    zipcode?: string;
-};
-
-export async function chargeCard(payload: {
-    tx_ref: string; amount: string; currency: string; email: string;
-    card_number: string; cvv: string; expiry_month: string; expiry_year: string;
-    fullname?: string; phone_number?: string; redirect_url?: string;
-    card_holder_name?: string;
-    authorization?: CardAuthorizationInput;
+export async function chargeTokenizedCard(payload: {
+    token: string; tx_ref: string; amount: number; currency: string; email: string;
+    country?: string; narration?: string; redirect_url?: string;
 }) {
     try {
         const sent = await sendV3Safely({
-            action: 'charge card', reference: payload.tx_ref, lookupTool: 'read_transaction_with_reference',
-            lookup: lookupV3Transaction, send: () => chargeClient.chargeCard({
-            tx_ref:           payload.tx_ref,
-            amount:           payload.amount,
-            currency:         payload.currency,
-            email:            payload.email,
-            card_number:      payload.card_number,
-            cvv:              payload.cvv,
-            expiry_month:     payload.expiry_month,
-            expiry_year:      payload.expiry_year,
-            fullname:         payload.fullname,
-            phone_number:     payload.phone_number,
-            redirect_url:     payload.redirect_url,
-            card_holder_name: payload.card_holder_name,
-            authorization:    payload.authorization,
-        } as any),
+            action: 'charge saved card', reference: payload.tx_ref, lookupTool: 'read_transaction_with_reference',
+            lookup: lookupV3Transaction, send: () => chargeClient.chargeTokenized({
+            token:        payload.token,
+            tx_ref:       payload.tx_ref,
+            amount:       payload.amount,
+            currency:     payload.currency,
+            email:        payload.email,
+            country:      payload.country,
+            narration:    payload.narration,
+            redirect_url: payload.redirect_url,
+        }),
         });
         if ('result' in sent) return sent.result;
         const response = sent.response;
 
         if (!response || !isValidResponse(null, response)) {
-            return uncertainV3('charge card', payload.tx_ref, 'read_transaction_with_reference');
+            return uncertainV3('charge saved card', payload.tx_ref, 'read_transaction_with_reference');
         }
 
-        return buildChargeResponse(response, payload.tx_ref, 'card');
+        return buildChargeResponse(response, payload.tx_ref, 'tokenized_card');
     } catch (error) {
-        return uncertainV3('charging card', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
+        return uncertainV3('charging saved card', payload.tx_ref, 'read_transaction_with_reference', error instanceof Error ? error.message : 'request error');
     }
 }
 
@@ -376,23 +335,20 @@ export async function validateCharge(payload: { otp: string; flw_ref: string; ty
 
 export function registerChargeTools() {
     server.tool(
-        "charge_card",
+        "charge_tokenized_card",
         [
-            "Directly charge a customer's debit or credit card with Flutterwave.",
-            "This tool handles a multi-step flow:",
-            "  1. First call: provide card details — returns required auth mode (pin/avs_noauth/redirect/none).",
-            "  2. PIN flow: call again with authorization: { mode: 'pin', pin: '<PIN>' }.",
-            "  3. AVS flow: call again with authorization: { mode: 'avs_noauth', city, address, state, country, zipcode }.",
-            "  4. After PIN/AVS, if OTP is required: use validate_charge with the returned flw_ref.",
-            "  5. If redirect: send customer to the 3DS URL, then use read_transaction to verify.",
-            "  AMEX cards require card_holder_name.",
+            "Charge a card the customer saved on an earlier 3D Secure hosted checkout payment, using its token (POST /v3/tokenized-charges).",
+            "Card numbers, CVVs and PINs are never taken: for a new card use create_checkout.",
+            "By default the charge runs 3D Secure, so the customer must be present: if the result has a redirect, send the customer to it and wait.",
+            "Charging without the customer present (recurring, merchant-initiated) needs Flutterwave to approve and enable it on the account.",
+            "These two rules are Flutterwave's stated behaviour, not yet verified in Test Mode.",
         ].join(' '),
-        ChargeCardSchema,
+        ChargeTokenizedCardSchema,
         async (args) => {
             try {
-                return await chargeCard(withReference(args, 'tx_ref'));
+                return await chargeTokenizedCard(withReference(args, 'tx_ref'));
             } catch (error) {
-                return createErrorResponse(`Error occurred charging card for ${args.email}`);
+                return createErrorResponse(`Error occurred charging the saved card for ${args.email}`);
             }
         }
     );
@@ -451,7 +407,7 @@ export function registerChargeTools() {
 
     server.tool(
         "validate_charge",
-        "Validate a pending Flutterwave charge using the OTP sent to the customer. Call this after charge_card returns auth_mode 'otp'.",
+        "Validate a pending Flutterwave charge using the OTP sent to the customer. Call this after a bank account charge returns auth mode 'otp'.",
         ValidateChargeSchema,
         async (args) => {
             try {

@@ -1,21 +1,25 @@
 import { Options } from "./types/index.js";
 import { getApiVersion } from "./config/apiVersion.js";
 import { acceptedToolsFor } from "./config/acceptedTools.js";
-import { assertTestCredentials } from "./config/livePolicy.js";
-import {
-    RAW_CARD_SWITCH_HINT,
-    RAW_CARD_TOOLS,
-    rawCardToolsAllowedByEnv,
-} from "./config/rawCardTools.js";
+import { assertTestCredentials, credentialsAreLive } from "./config/livePolicy.js";
 import { isReadOnlyTool } from "./config/toolSafety.js";
 
-const ACCEPTED_ARGS = ['tools', 'enable-raw-card-tools', 'read-only'];
+const ACCEPTED_ARGS = ['tools', 'read-only'];
+
+/**
+ * Raw card tools were removed from the package (Security review of DX-RFC-001,
+ * decided 2026-11-22). The old switch now stops start-up, so nobody believes it
+ * still does something.
+ */
+export const RAW_CARD_REMOVED =
+    'Raw card tools (charge_card, create_card_payment_method, create_orchestrator_charge, create_orchestrator_order and the PIN path of update_charge) were removed: card numbers, CVVs and PINs must not pass through the AI model. Use hosted checkout (create_checkout, create_order) or a tokenised charge of a card saved from a 3DS checkout (charge_tokenized_card). Remove --enable-raw-card-tools and FLW_ENABLE_RAW_CARD_TOOLS.';
 
 export function parseArgs(
     args: string[],
     env: NodeJS.ProcessEnv = process.env,
 ): Options {
     const options: Options = {};
+    let readOnlyFlag: boolean | undefined;
 
     args.forEach((arg) => {
         if (arg.startsWith('--')) {
@@ -27,9 +31,10 @@ export function parseArgs(
                 if (value !== undefined && value !== 'true' && value !== 'false') {
                     throw new Error('--read-only takes no value, or =true or =false.');
                 }
-                options.readOnly = value !== 'false';
+                readOnlyFlag = value !== 'false';
+                options.readOnly = readOnlyFlag;
             } else if (key === 'enable-raw-card-tools') {
-                options.rawCardTools = true;
+                throw new Error(RAW_CARD_REMOVED);
             } else {
                 throw new Error(
                     `Invalid argument: ${key}. Accepted arguments are: ${ACCEPTED_ARGS.join(
@@ -64,32 +69,21 @@ export function parseArgs(
         }
     });
 
-    options.rawCardTools =
-        options.rawCardTools === true || rawCardToolsAllowedByEnv(env);
-    const listedCardTools = options.tools
-        .map((tool) => tool.trim())
-        .filter((tool) => RAW_CARD_TOOLS.has(tool));
-    if (!options.rawCardTools && listedCardTools.length > 0) {
-        throw new Error(
-            `${listedCardTools.join(', ')} take raw card data (card number, CVV or PIN) through the AI model, which is a PCI DSS risk. ${RAW_CARD_SWITCH_HINT}`
-        );
-    }
-    if (options.rawCardTools) {
-        console.error(
-            'WARNING: raw card tools are on. Card numbers, CVVs and PINs will pass through the AI model. Use test cards only unless you are PCI DSS compliant.'
-        );
+    if (env.FLW_ENABLE_RAW_CARD_TOOLS !== undefined) {
+        throw new Error(RAW_CARD_REMOVED);
     }
 
-    assertTestCredentials(apiVersion, env);
+    const listedTools = options.tools.map((tool) => tool.trim());
+    // Live credentials stop here until live mode is approved; the error lists the unmet conditions.
+    assertTestCredentials(apiVersion, env, { tools: listedTools, readOnlyFlag });
 
-    // Read-only: explicit flag, then FLW_READ_ONLY. Off by default.
+    // Read-only: explicit flag, then FLW_READ_ONLY. Off by default in test mode;
+    // on by default with live keys (only --read-only=false turns it off there).
     if (options.readOnly === undefined) {
-        options.readOnly = env.FLW_READ_ONLY === 'true';
+        options.readOnly = credentialsAreLive(apiVersion, env) || env.FLW_READ_ONLY === 'true';
     }
     if (options.readOnly) {
-        const writes = options.tools
-            .map((tool) => tool.trim())
-            .filter((tool) => tool !== 'all' && !isReadOnlyTool(tool));
+        const writes = listedTools.filter((tool) => tool !== 'all' && !isReadOnlyTool(tool));
         if (writes.length > 0) {
             throw new Error(
                 `Read-only mode is on, so these tools cannot be registered: ${writes.join(', ')}. Pass --read-only=false or set FLW_READ_ONLY=false to allow writes.`

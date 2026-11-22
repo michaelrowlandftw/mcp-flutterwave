@@ -1,25 +1,19 @@
 import { server } from '../server.js';
 
-const cardChargePrompt = `
-You are a Flutterwave card charge assistant. Help the user charge a customer's card, handling every authentication step automatically:
+const cardPaymentPrompt = `
+You are a Flutterwave card payment assistant. Card numbers, CVVs and PINs never pass through this conversation: this server has no tool that takes them (Direct Charge is not available).
 
-1. Ask the user for: card number, CVV, expiry month, expiry year, card holder name (required for Amex), amount, currency, customer email, and a unique tx_ref.
-2. Call \`charge_card\` with the card details.
+Take a card payment in one of two ways:
 
-3. Handle the response based on auth_mode:
-   - "pin": Ask the customer for their card PIN, then re-call \`charge_card\` with \`authorization: { mode: "pin", pin: "..." }\`.
-   - "avs_noauth": Ask for billing address (city, address, state, country, zipcode), then re-call with \`authorization: { mode: "avs_noauth", ... }\`.
-   - "redirect": Send the customer to the 3DS URL. After they return, call \`read_transaction\` to verify.
-   - "otp": Call \`validate_charge\` with the flw_ref and the OTP the customer received.
-   - No auth_mode / charge_type "debit": Charge is complete — call \`read_transaction\` to confirm.
+1. Hosted checkout (default). Call \`create_checkout\` with the amount, currency, customer email and a redirect_url. Send the customer the payment link. They enter the card on Flutterwave's page, which runs 3D Secure.
+2. A card saved from an earlier 3DS checkout payment. Call \`charge_tokenized_card\` with the card token from that payment, the customer's email, amount and currency.
+   - By default every tokenised charge runs 3D Secure, so the customer must be present. If the result has a redirect, send the customer to it and wait.
+   - Charging a saved card without the customer present (recurring or merchant-initiated) needs Flutterwave to approve and enable it on the account.
+   - These two rules are Flutterwave's stated behaviour and are still to be verified in Test Mode.
 
-4. After completion, display the transaction ID, status, and amount.
+After the customer returns, call \`verify_payment\` with the transaction id, the expected amount and currency before giving value. Never trust the redirect alone.
 
-Important:
-- tx_ref must be unique per transaction. Suggest "TXN-<purpose>-<timestamp>" if the user hasn't provided one.
-- Currency must match the card's supported currencies.
-- Card payloads are automatically encrypted with 3DES-ECB before being sent (PCI DSS compliance).
-- For AMEX cards, \`card_holder_name\` is mandatory.
+If the user asks to type in a card number: explain that this server does not accept card details, and offer hosted checkout instead.
 `;
 
 const mobileMoneyPrompt = `
@@ -35,7 +29,7 @@ You are a Flutterwave mobile money charge assistant. Help the user collect payme
    - KES (Kenya M-Pesa) → \`charge_mpesa\`
    - NGN (Nigeria USSD) → \`charge_ussd\` — requires bank_code
 
-3. Call the appropriate tool. The customer will receive a prompt on their mobile device to approve.
+3. Call the appropriate tool. Always send \`network\` for mobile money. In production the first answer can be a captcha redirect: send the customer to it; the prompt reaches their phone only after they pass it.
 4. Call \`read_transaction\` with the tx_ref to confirm the payment once approved.
 
 Important:
@@ -46,14 +40,14 @@ Important:
 
 export function registerChargePrompts() {
     server.prompt(
-        'charge-a-card',
-        'Charge a customer\'s debit or credit card directly',
+        'take-a-card-payment',
+        'Take a card payment through hosted checkout or a saved (tokenised) card; card numbers are never entered here',
         {},
         async () => ({
             messages: [
                 {
                     role: 'assistant',
-                    content: { type: 'text', text: cardChargePrompt },
+                    content: { type: 'text', text: cardPaymentPrompt },
                 },
             ],
         })

@@ -1,6 +1,5 @@
 import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Options } from '../types/index.js';
-import { RAW_CARD_TOOLS } from '../config/rawCardTools.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
 import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
 import { capConfigured, capError, guardMoneyTool, isLive, OUTGOING_NO_AMOUNT_TOOLS } from './confirm.js';
@@ -22,7 +21,6 @@ export function registeredTools(server: McpServer): Record<string, RegisteredToo
 /**
  * Apply start-up options to the tools already registered.
  * --tools: keep only the tools listed ("all" keeps every tool).
- * Raw card tools stay off unless options.rawCardTools is true.
  * Read-only mode keeps only tools that read data.
  * Returns the names of the tools that stay registered.
  */
@@ -76,12 +74,11 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
   const keepAll = wanted.has('all');
 
   for (const [name, tool] of Object.entries(registeredTools(server))) {
-    const cardBlocked = RAW_CARD_TOOLS.has(name) && options.rawCardTools !== true;
     const writeBlocked = options.readOnly === true && !isReadOnlyTool(name);
     // Under an amount cap (always with live credentials) these would be refused on every
     // call, so they are not offered at all (third review, issue 1).
     const capBlocked = OUTGOING_NO_AMOUNT_TOOLS.has(name) && (capConfigured() || isLive());
-    if (cardBlocked || writeBlocked || capBlocked || (!keepAll && !wanted.has(name))) {
+    if (writeBlocked || capBlocked || (!keepAll && !wanted.has(name))) {
       tool.remove();
     }
   }
@@ -145,10 +142,10 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
       try {
         const input = (args[0] ?? {}) as Record<string, unknown>;
         checkUrls(input);
-        // update_charge can carry authorization.pin; no tool encrypts a PIN, so a raw
-        // PIN would be sent. Only with the raw card tools switched on (review L1, N10).
-        if (name === 'update_charge' && options.rawCardTools !== true && hasPin(input)) {
-          throw new Error('update_charge with a PIN needs the raw card tools switch (--enable-raw-card-tools). Card PINs should not pass through the AI model.');
+        // Defence in depth: the update_charge schema has no PIN option any more, but a
+        // PIN field anywhere in any tool's input is refused before anything is sent.
+        if (hasPin(input)) {
+          throw new Error('Card PINs are not accepted by this server: they must not pass through the AI model.');
         }
         out = await handler(...args);
       } catch (error) {

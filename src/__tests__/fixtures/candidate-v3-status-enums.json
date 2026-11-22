@@ -1,0 +1,123 @@
+{
+  "source": "michaelrowlandftw/flutterwave-v3-openapi, openapi/v3/flutterwave-v3.yaml, version 0.1.0-candidate+20261122. Enum values and their evidence only; no transaction data.",
+  "enums": {
+    "TransactionStatus": {
+      "enum": [
+        "failed",
+        "pending",
+        "successful",
+        "voided"
+      ],
+      "x-sources": {
+        "failed": [
+          "measured-test",
+          "measured-live"
+        ],
+        "pending": [
+          "measured-test",
+          "measured-live"
+        ],
+        "successful": [
+          "measured-test",
+          "measured-live",
+          "docs"
+        ],
+        "voided": [
+          "measured-test"
+        ]
+      }
+    },
+    "TransferStatus": {
+      "enum": [
+        "FAILED",
+        "NEW",
+        "PENDING",
+        "SUCCESSFUL"
+      ],
+      "x-sources": {
+        "FAILED": [
+          "measured-test",
+          "measured-live",
+          "docs"
+        ],
+        "NEW": [
+          "measured-test",
+          "docs"
+        ],
+        "PENDING": [
+          "measured-test",
+          "docs"
+        ],
+        "SUCCESSFUL": [
+          "measured-test",
+          "measured-live",
+          "docs"
+        ]
+      }
+    },
+    "RefundStatus": {
+      "enum": [
+        "completed",
+        "completed-bank-transfer",
+        "completedbanktransfer",
+        "completedmomo",
+        "completedmpgs",
+        "completedoffline",
+        "completedpreauth",
+        "pending-bank-transfer",
+        "pending-momo",
+        "processing"
+      ],
+      "x-sources": {
+        "completed": [
+          "measured-test",
+          "measured-live",
+          "docs"
+        ],
+        "completed-bank-transfer": [
+          "measured-test"
+        ],
+        "completedbanktransfer": [
+          "measured-test",
+          "measured-live"
+        ],
+        "completedmomo": [
+          "measured-test"
+        ],
+        "completedmpgs": [
+          "measured-live"
+        ],
+        "completedoffline": [
+          "measured-live"
+        ],
+        "completedpreauth": [
+          "measured-test"
+        ],
+        "pending-bank-transfer": [
+          "measured-test"
+        ],
+        "pending-momo": [
+          "docs"
+        ],
+        "processing": [
+          "measured-test"
+        ]
+      }
+    },
+    "SettlementStatus": {
+      "enum": [
+        "completed",
+        "pending"
+      ],
+      "x-sources": {
+        "completed": [
+          "measured-live",
+          "docs"
+        ],
+        "pending": [
+          "docs"
+        ]
+      }
+    }
+  }
+}

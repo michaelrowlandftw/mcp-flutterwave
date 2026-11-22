@@ -14,7 +14,6 @@ export interface FlutterwaveConfig {
     version: string;
     clientId: string;
     clientSecret: string;
-    encryptionKeyV4: string;
   };
   server: {
     environment: 'development' | 'production' | 'test';
@@ -38,8 +37,6 @@ export function parseFlutterwaveEnv(env: NodeJS.ProcessEnv): FlutterwaveConfig {
         FLW_CLIENT_SECRET: z
           .string()
           .min(1, 'FLW_CLIENT_SECRET is required when FLW_API_VERSION=v4'),
-        // Only the raw card tools encrypt card data, and they are off by default.
-        FLW_ENCRYPTION_KEY_V4: z.string().optional().default(''),
         NODE_ENV: nodeEnvSchema,
       })
       .safeParse(env);
@@ -56,7 +53,6 @@ export function parseFlutterwaveEnv(env: NodeJS.ProcessEnv): FlutterwaveConfig {
         secretKey: '',
         clientId: parsed.data.FLW_CLIENT_ID,
         clientSecret: parsed.data.FLW_CLIENT_SECRET,
-        encryptionKeyV4: parsed.data.FLW_ENCRYPTION_KEY_V4,
       },
       server: { environment: parsed.data.NODE_ENV },
     };
@@ -81,7 +77,6 @@ export function parseFlutterwaveEnv(env: NodeJS.ProcessEnv): FlutterwaveConfig {
       secretKey: parsed.data.FLW_SECRET_KEY,
       clientId: '',
       clientSecret: '',
-      encryptionKeyV4: '',
     },
     server: { environment: parsed.data.NODE_ENV },
   };

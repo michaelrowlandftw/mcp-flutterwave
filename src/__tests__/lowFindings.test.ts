@@ -81,9 +81,11 @@ describe('URL rules (review N8) and update_charge PINs (review N10)', () => {
     }
   });
 
-  it('update_charge runs without a PIN, and is refused with one unless card tools are on', async () => {
+  it('update_charge runs without a PIN, and a PIN is always refused (raw card tools removed)', async () => {
     expect(await ran(make('update_charge'), { authorization: { type: 'otp', otp: { code: '123456' } } })).not.toMatch(/PIN/);
-    expect(await ran(make('update_charge'), { authorization: { type: 'pin', pin: { nonce: 'n', encrypted_pin: 'x' } } })).toMatch(/needs the raw card tools switch/);
+    expect(await ran(make('update_charge'), { authorization: { type: 'pin', pin: { nonce: 'n', encrypted_pin: 'x' } } })).toMatch(/PINs are not accepted/);
+    // Any tool, any depth.
+    expect(await ran(make('create_charge'), { meta: { nested: { pin: '1234' } } })).toMatch(/PINs are not accepted/);
   });
 });
 

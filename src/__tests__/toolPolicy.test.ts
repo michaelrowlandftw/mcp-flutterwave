@@ -39,21 +39,6 @@ describe('startServer applies --tools to the real v4 registry', () => {
   });
 });
 
-describe('raw card tools', () => {
-  it('are removed by default, even with --tools=all', () => {
-    const server = serverWith('charge_card', 'create_card_payment_method', 'get_banks');
-    expect(applyToolPolicy(server, { tools: ['all'] })).toEqual(['get_banks']);
-  });
-
-  it('stay when the switch is on', () => {
-    const server = serverWith('charge_card', 'get_banks');
-    expect(applyToolPolicy(server, { tools: ['all'], rawCardTools: true })).toEqual([
-      'charge_card',
-      'get_banks',
-    ]);
-  });
-});
-
 describe('read-only mode in the policy step', () => {
   it('keeps only read tools', () => {
     const server = serverWith('get_banks', 'create_transfer', 'verify_payment', 'delete_transfer_sender', 'resend_webhook');

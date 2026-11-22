@@ -12,7 +12,7 @@ describe('test mode only', () => {
 
   it('refuses a v3 live key with a clear message', () => {
     expect(() => parseArgs(['--tools=all'], v3Live)).toThrow(
-      /not a test key.*Live mode is disabled until the security review is complete/,
+      /not a test key.*Live mode is disabled until the security review approves it/,
     );
   });
 
@@ -36,28 +36,6 @@ describe('test mode only', () => {
 
   it('still reports a missing v3 key as missing', () => {
     expect(() => parseArgs(['--tools=all'], { FLW_API_VERSION: 'v3' })).toThrow(/Secret key not provided/);
-  });
-});
-
-describe('raw card tool switch', () => {
-  it('refuses a raw card tool named in --tools without the switch', () => {
-    expect(() => parseArgs(['--tools=charge_card,read_transaction'], v3Test)).toThrow(
-      /charge_card take raw card data.*--enable-raw-card-tools/,
-    );
-  });
-
-  it.each([
-    [['--tools=charge_card', '--enable-raw-card-tools'], {}],
-    [['--tools=charge_card'], { FLW_ENABLE_RAW_CARD_TOOLS: 'true' }],
-  ])('accepts it with the switch and warns (%j)', (args, extra) => {
-    const warn = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseArgs(args, { ...v3Test, ...extra }).rawCardTools).toBe(true);
-    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/raw card tools are on/));
-    warn.mockRestore();
-  });
-
-  it('is off by default', () => {
-    expect(parseArgs(['--tools=all'], v3Test).rawCardTools).toBe(false);
   });
 });
 

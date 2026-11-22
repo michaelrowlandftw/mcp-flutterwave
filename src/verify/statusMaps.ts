@@ -6,12 +6,17 @@ export type StatusObject = 'collection' | 'order' | 'payout' | 'refund' | 'settl
 type StatusMap = Record<string, Exclude<NormalisedStatus, 'unknown'>>;
 
 /**
- * v3 values. The v3 spec has no status enums, only examples, so these come from
- * the docs' examples, sandbox responses and webhooks (12 Nov 2026).
+ * v3 values. The published v3 spec has no status enums. These come from the
+ * candidate V3 spec (michaelrowlandftw/flutterwave-v3-openapi 0.1.0-candidate+20261122,
+ * components TransactionStatus, TransferStatus, RefundStatus, SettlementStatus),
+ * built from measured Test Mode and production responses, plus the docs' examples
+ * and webhooks. src/__tests__/fixtures/candidate-v3-status-enums.json holds the
+ * enums with their sources, and a test checks every value is mapped.
  * Matching is exact: v3 collections are lower case, v3 transfers upper case.
  */
 const V3: Record<StatusObject, StatusMap> = {
-  collection: { successful: 'successful', pending: 'pending', failed: 'failed' },
+  // voided: measured in Test Mode (candidate spec); final and not paid.
+  collection: { successful: 'successful', pending: 'pending', failed: 'failed', voided: 'failed' },
   order: {},
   payout: {
     NEW: 'pending',
@@ -22,12 +27,18 @@ const V3: Record<StatusObject, StatusMap> = {
     REVERSED: 'reversed',
   },
   refund: {
-    // Seen in sandbox responses and refund webhooks; none of these are documented.
+    // Seen in sandbox and production responses and refund webhooks. GET /v3/refunds/{id}
+    // hyphenates (completed-bank-transfer); GET /v3/refunds does not (completedbanktransfer).
     processing: 'pending',
     'pending-bank-transfer': 'pending',
     'pending-momo': 'pending',
     completed: 'successful',
     'completed-bank-transfer': 'successful',
+    completedbanktransfer: 'successful',
+    completedmomo: 'successful',
+    completedmpgs: 'successful',
+    completedoffline: 'successful',
+    completedpreauth: 'successful',
     'completed-preauth': 'successful',
     failed: 'failed',
   },

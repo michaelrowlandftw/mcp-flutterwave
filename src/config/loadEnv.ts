@@ -7,8 +7,7 @@ import { resolve } from 'node:path';
  * from the real environment, never from a file in a folder someone else wrote.
  */
 export const FILE_SETTINGS = new Set([
-  'FLW_SECRET_KEY', 'FLW_CLIENT_ID', 'FLW_CLIENT_SECRET', 'FLW_ENCRYPTION_KEY', 'FLW_ENCRYPTION_KEY_V4',
-  'FLW_SECRET_HASH', 'FLW_API_VERSION',
+  'FLW_SECRET_KEY', 'FLW_CLIENT_ID', 'FLW_CLIENT_SECRET', 'FLW_SECRET_HASH', 'FLW_API_VERSION',
 ]);
 
 /**
