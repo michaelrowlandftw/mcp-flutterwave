@@ -18,15 +18,15 @@ describe('v4 api version selection', () => {
     expect(
       getApiVersion({ FLW_SECRET_KEY: 'FLWSECK_TEST-x', FLW_CLIENT_ID: 'c' }),
     ).toBe('v4');
-    expect(acceptedToolsFor('v3')).toContain('charge_card');
-    expect(acceptedToolsFor('v3')).not.toContain('create_card_payment_method');
+    expect(acceptedToolsFor('v3')).toContain('charge_tokenized_card');
+    expect(acceptedToolsFor('v3')).not.toContain('charge_card');
+    expect(acceptedToolsFor('v4')).not.toContain('create_card_payment_method');
   });
 
   it('selects the v4 tool allowlist only', () => {
     expect(getApiVersion({ FLW_API_VERSION: 'v4' })).toBe('v4');
     expect(acceptedToolsFor('v4')).toEqual([
       'create_customer',
-      'create_card_payment_method',
       'create_charge',
       'get_charge',
       'create_refund',
@@ -59,8 +59,6 @@ describe('v4 api version selection', () => {
       'get_virtual_account',
       'quote_transfer_rate',
       'get_transfer_rate',
-      'create_orchestrator_charge',
-      'create_orchestrator_order',
       'create_orchestrator_transfer',
       'resend_webhook',
       'get_bank_branches',
@@ -111,16 +109,9 @@ describe('v4 api version selection', () => {
       FLW_API_VERSION: 'v4',
       FLW_CLIENT_ID: 'client',
       FLW_CLIENT_SECRET: 'secret',
-      FLW_ENCRYPTION_KEY_V4: 'key',
     });
     expect(config.apiVersion).toBe('v4');
     expect(config.flutterwave.clientId).toBe('client');
-    expect(config.flutterwave.encryptionKeyV4).toBe('key');
-  });
-
-  it('does not need the v4 encryption key (raw card tools are off by default)', () => {
-    const config = parseFlutterwaveEnv({ FLW_CLIENT_ID: 'c', FLW_CLIENT_SECRET: 's' });
-    expect(config.apiVersion).toBe('v4');
-    expect(config.flutterwave.encryptionKeyV4).toBe('');
+    expect(config.flutterwave).not.toHaveProperty('encryptionKeyV4');
   });
 });

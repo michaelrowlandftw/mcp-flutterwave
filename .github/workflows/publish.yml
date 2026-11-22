@@ -1,33 +1,26 @@
 name: Publish Package
 
+# Releases start from a published GitHub release (tag vX.Y.Z) made after a
+# version-bump pull request; nothing here pushes to main, so branch protection holds.
+# npm publishing uses trusted publishing (OIDC): no NPM_TOKEN secret exists. Set up on
+# npmjs.com: package settings, Trusted publishers, GitHub Actions, this repository,
+# workflow publish.yml (see docs/release.md).
 on:
   release:
     types: [published]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-        - patch
-        - minor
-        - major
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write
+      contents: read
+      id-token: write # npm trusted publishing and MCP Registry login
     
     steps:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -44,29 +37,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      - name: Bump version (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          npm version ${{ github.event.inputs.version }} --no-git-tag-version
-          # Update server.json version to match package.json
-          VERSION=$(node -p "require('./package.json').version")
-          jq --arg v "$VERSION" '.version = $v' server.json > tmp && mv tmp server.json
-          git add package.json package-lock.json server.json
-          git commit -m "chore: bump version to $VERSION"
-          git push
-
-      - name: Create tag (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
-
       - name: Update server.json version on release
         if: github.event_name == 'release'
         run: |
@@ -74,47 +44,10 @@ jobs:
           jq --arg v "$VERSION" '.version = $v' server.json > tmp && mv tmp server.json
           jq --arg v "$VERSION" '.packages[0].version = $v' server.json > tmp && mv tmp server.json
 
+      # Trusted publishing (OIDC) needs npm 11.5.1 or later (installed above) and
+      # id-token: write. npm adds provenance automatically; no token is used.
       - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create GitHub Release (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          release_name: Release v${{ steps.version.outputs.version }}
-          body: |
-            Release notes for version ${{ steps.version.outputs.version }}
-            
-            ## Changes
-            - Updated MCP Flutterwave integration
-            
-            ## Installation
-            ```bash
-            npm install -g mcp-flutterwave
-            ```
-            
-            ## Usage with Claude Desktop
-            ```json
-            {
-              "mcpServers": {
-                "flutterwave": {
-                  "command": "mcp-flutterwave",
-                  "args": ["--tools=all"],
-                  "env": {
-                    "FLW_SECRET_KEY": "YOUR_SECRET_KEY",
-                    "FLW_ENCRYPTION_KEY": "YOUR_ENCRYPTION_KEY"
-                  }
-                }
-              }
-            }
-            ```
-          draft: false
-          prerelease: false
+        run: npm publish --access public
 
       # Pinned version and checksum (security review L6). To upgrade, take the
       # value for mcp-publisher_linux_amd64.tar.gz from registry_<version>_checksums.txt.

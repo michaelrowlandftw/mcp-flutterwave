@@ -8,30 +8,15 @@ const MOBILE_MONEY_TYPES = [
     'mobile_money_francophone',
 ] as const;
 
-export const ChargeCardSchema = {
+export const ChargeTokenizedCardSchema = {
+    token: z.string().min(1, 'Card token is required').describe("The card token from an earlier successful 3DS checkout payment (data.card.token on the verified transaction). Never a card number."),
     tx_ref: z.string().min(1).optional().describe("Leave empty to let the server create a unique reference; keep the one it returns. If the result is \"unknown\", look the payment up by this reference before any retry."),
-    amount: z.string().min(1, 'Amount is required'),
-    currency: z.string().min(1, 'Currency is required'),
-    email: z.string().email('Invalid email address'),
-    card_number: z.string().min(12, 'Card number must be at least 12 digits'),
-    cvv: z.string().min(3, 'CVV must be at least 3 digits'),
-    expiry_month: z.string().min(1, 'Expiry month is required'),
-    expiry_year: z.string().min(2, 'Expiry year is required'),
-    fullname: z.string().optional(),
-    phone_number: z.string().optional(),
-    redirect_url: z.string().url('Redirect URL must be a valid URL').optional(),
-    card_holder_name: z.string().optional(),
-    authorization: z.object({
-        mode: z.enum(['pin', 'avs_noauth'] as const, {
-            error: 'Authorization mode must be "pin" or "avs_noauth"',
-        }),
-        pin: z.string().optional(),
-        city: z.string().optional(),
-        address: z.string().optional(),
-        state: z.string().optional(),
-        country: z.string().optional(),
-        zipcode: z.string().optional(),
-    }).optional(),
+    amount: z.number().positive('Amount must be greater than 0'),
+    currency: z.string().regex(/^[A-Z]{3}$/, 'Currency must be an ISO 4217 code, for example NGN'),
+    email: z.string().email('Invalid email address').describe('The email the card was saved with.'),
+    country: z.string().regex(/^[A-Z]{2}$/, 'Country must be an ISO 3166 alpha-2 code').optional(),
+    narration: z.string().max(100).optional(),
+    redirect_url: z.string().url('Redirect URL must be a valid URL').optional().describe('Where the customer returns after 3D Secure. https only.'),
 };
 
 export const ChargeBankAccountSchema = {

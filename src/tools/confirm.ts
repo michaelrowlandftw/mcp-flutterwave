@@ -2,6 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { describeEnvironment } from '../verify/environment.js';
 import { redactText } from '../utils/redact.js';
+import { categoryOf } from '../config/livePolicy.js';
 
 /**
  * Confirmation and amount cap for money-moving tools.
@@ -77,7 +78,7 @@ export function checkToken(tool: string, args: Args, token: string, now = Date.n
  * existing payment; initiate_fx_trade uses a quote from request_fx_quote, whose
  * quantity is capped.
  */
-export const NO_AMOUNT_TOOLS = new Set(['validate_charge', 'update_charge', 'update_order']);
+export const NO_AMOUNT_TOOLS = new Set(['validate_charge', 'update_charge', 'update_order', 'initiate_bvn_verification']);
 
 /**
  * Tools that send money out but carry no amount: they act on a transfer or quote
@@ -154,7 +155,7 @@ export function capError(args: Args, env: NodeJS.ProcessEnv = process.env, tool 
   }
   if (!general && !anyCurrencyCap) {
     return live
-      ? 'Live mode needs an amount cap: set FLW_MAX_AMOUNT (and FLW_MAX_AMOUNT_<CURRENCY> if needed). The call was not sent.'
+      ? 'Live mode needs an amount cap for every currency used: set FLW_MAX_AMOUNT_<CURRENCY>. The call was not sent.'
       : null;
   }
   const raw = rawAmount(tool, args);
@@ -167,6 +168,12 @@ export function capError(args: Args, env: NodeJS.ProcessEnv = process.env, tool 
   }
   const perCurrencyName = currency ? `FLW_MAX_AMOUNT_${currency}` : undefined;
   const perCurrency = perCurrencyName ? env[perCurrencyName] : undefined;
+  // Live mode needs a cap for every currency used (Security, DX-RFC-001): FLW_MAX_AMOUNT alone is not enough.
+  if (live && !perCurrency) {
+    return currency
+      ? `There is no cap for ${currency}: live mode needs ${perCurrencyName}. The call was not sent.`
+      : "The currency of this call can't be read, and live mode needs a cap per currency. The call was not sent.";
+  }
   const capText = perCurrency ?? general;
   if (!capText) {
     // Only per-currency caps are set. An unknown currency is refused. A known currency
@@ -223,7 +230,7 @@ export function guardMoneyTool(
     if (canAsk) {
       const answer = await server.server.elicitInput({
         // Redacted: the person sees the details, but not card data or secrets.
-        message: `Confirm this Flutterwave action:\n${redactText(JSON.stringify(summary, null, 2))}`,
+        message: `Confirm this Flutterwave action${categoryOf(name) ? ` (${categoryOf(name)})` : ''}:\n${redactText(JSON.stringify(summary, null, 2))}`,
         requestedSchema: {
           type: 'object',
           properties: { confirm: { type: 'boolean', title: 'Yes, do this' } },

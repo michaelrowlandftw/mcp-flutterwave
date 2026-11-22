@@ -59,7 +59,7 @@ src/
 │   ├── http/            # v3 HTTP client configuration
 │   ├── lib/             # v3 API endpoint implementations
 │   ├── middleware/      # Auth middleware (e.g. authMiddlewareV3)
-│   ├── v4/              # v4 auth, encryption, environment, http
+│   ├── v4/              # v4 auth, environment, http
 │   ├── specs/           # OpenAPI specifications (v3/ and v4/)
 │   ├── types/           # Generated v3 TypeScript types
 │   └── generated/       # Generated v4 Zod schemas (Orval)
@@ -130,12 +130,13 @@ When adding new Flutterwave API endpoints:
 
 v3 types and v4 Zod output use different generators on purpose: v3 stays on `openapi-typescript`; v4 uses Orval so tool-arg validation schemas come from the same OpenAPI source.
 
-`FLW_API_VERSION` selects which tools this process registers. It defaults to `v3`. Set it to `v4` to register the v4 tool set, including create/get for customer, card payment method, charge, refund, order, and virtual account, plus the list, lookup, wallet, settlement, chargeback, transfer-rate, orchestrator, and bank lookup tools, plus list and update for orders and virtual accounts, and transfer recipient, sender, and transfer tools. v4 startup requires `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, and `FLW_ENCRYPTION_KEY_V4` instead of `FLW_SECRET_KEY`.
+`FLW_API_VERSION` selects which tools this process registers. It defaults to `v4` (`v3` with `FLW_API_VERSION=v3`, or an old install with only `FLW_SECRET_KEY`). The v4 tool set includes create/get for customer, get/list for payment methods, charge, refund, order, and virtual account, plus the list, lookup, wallet, settlement, chargeback, transfer-rate, orchestrator, and bank lookup tools, plus list and update for orders and virtual accounts, and transfer recipient, sender, and transfer tools. v4 startup requires `FLW_CLIENT_ID` and `FLW_CLIENT_SECRET` instead of `FLW_SECRET_KEY`.
+
+**No tool may take a card number, CVV or PIN** (Security review of DX-RFC-001, 2026-11-22). The raw card tools were removed on purpose; a pull request that adds one back will be refused. Card payments go through hosted checkout or tokenised charges of cards saved from a 3DS checkout.
 
 Notes on the current v4 codegen state:
 
 - `create_customer` validates with `CustomersCreateBody` from `src/client/generated/v4/customers.zod.ts`.
-- `create_card_payment_method` validates the encrypted request body with `PaymentMethodsPostBody` from `src/client/generated/v4/payment-methods.zod.ts`. The tool's public arguments stay plaintext; the generated schema describes the wire payload.
 - `create_charge` validates with `ChargesPostBody` from `src/client/generated/v4/charge.zod.ts`.
 - `get_charge` validates the path id with `ChargesGetParams` from `src/client/generated/v4/charges-get.zod.ts`.
 - `create_refund` validates with `RefundsPostBody` from `src/client/generated/v4/refunds.zod.ts`.
@@ -146,7 +147,7 @@ Notes on the current v4 codegen state:
 - `search_customers` validates with `CustomersSearchBody` and `CustomersSearchQueryParams` from `src/client/generated/v4/customers-search.zod.ts`.
 - `update_customer` validates with `CustomersPutBody` from `src/client/generated/v4/customers-update.zod.ts`.
 - `list_charges` validates with `ChargesListQueryParams` from `src/client/generated/v4/charges-list.zod.ts`.
-- `update_charge` validates with `ChargesPutBody` from `src/client/generated/v4/charges-update.zod.ts`.
+- `update_charge` validates with `ChargesPutBody` from `src/client/generated/v4/charges-update.zod.ts`, restricted to the otp, external_3ds and avs authorization types (no PIN).
 - `list_refunds` validates with `RefundsListQueryParams` from `src/client/generated/v4/refunds-list.zod.ts`.
 - `list_payment_methods` validates with `PaymentMethodsListQueryParams` from `src/client/generated/v4/payment-methods-list.zod.ts`.
 - `get_fees` validates with `FeesGetQueryParams` from `src/client/generated/v4/fees.zod.ts`.
@@ -167,8 +168,6 @@ Notes on the current v4 codegen state:
 - `get_virtual_account` validates the path id with `VirtualAccountGetParams` from `src/client/generated/v4/virtual-accounts-get.zod.ts`.
 - `quote_transfer_rate` validates with `TransferRatesPostBody` from `src/client/generated/v4/transfer-rates.zod.ts`.
 - `get_transfer_rate` validates the path id with `TransferRatesGetParams` from `src/client/generated/v4/transfer-rates-get.zod.ts`.
-- `create_orchestrator_charge` encrypts card fields, then validates with `OrchestrationDirectChargePostBody` from `src/client/generated/v4/orchestration-direct-charge.zod.ts`.
-- `create_orchestrator_order` encrypts card fields, then validates with `OrchestrationDirectOrderPostBody` from `src/client/generated/v4/orchestration-direct-order.zod.ts`.
 - `create_orchestrator_transfer` validates with `DirectTransfersPostBody` from `src/client/generated/v4/direct-transfers.zod.ts`.
 - `resend_webhook` validates with `ResendWebhookBody` from `src/client/generated/v4/resend-webhook.zod.ts`.
 - `get_bank_branches` validates the path id with `BankBranchesGetParams` from `src/client/generated/v4/bank-branches.zod.ts`.

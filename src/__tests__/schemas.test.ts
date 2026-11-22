@@ -3,7 +3,6 @@ import { CheckoutPayloadSchema, DisableCheckoutSchema } from '../types/checkout/
 import { CreateTransferPayloadSchema, CreateBeneficiaryPayloadSchema } from '../types/transfer/schema.js';
 import { CreatePlanPayloadSchema, GetPlansFiltersSchema } from '../types/plan/schema.js';
 import {
-    ChargeCardSchema,
     ChargeBankAccountSchema,
     ChargeMobileMoneySchema,
     ChargeMpesaSchema,
@@ -89,58 +88,6 @@ describe('GetPlansFiltersSchema', () => {
     });
     it('accepts undefined status', () => {
         expect(GetPlansFiltersSchema.status.safeParse(undefined).success).toBe(true);
-    });
-});
-
-describe('ChargeCardSchema', () => {
-    it('accepts valid tx_ref', () => {
-        expect(ChargeCardSchema.tx_ref.safeParse('MC-001').success).toBe(true);
-    });
-    it('rejects empty tx_ref', () => {
-        expect(ChargeCardSchema.tx_ref.safeParse('').success).toBe(false);
-    });
-    it('accepts valid email', () => {
-        expect(ChargeCardSchema.email.safeParse('user@example.com').success).toBe(true);
-    });
-    it('rejects invalid email', () => {
-        expect(ChargeCardSchema.email.safeParse('not-an-email').success).toBe(false);
-    });
-    it('rejects card_number shorter than 12 digits', () => {
-        expect(ChargeCardSchema.card_number.safeParse('12345').success).toBe(false);
-    });
-    it('accepts valid card_number', () => {
-        expect(ChargeCardSchema.card_number.safeParse('5531886652142950').success).toBe(true);
-    });
-    it('accepts optional redirect_url when valid URL', () => {
-        expect(ChargeCardSchema.redirect_url.safeParse('https://example.com').success).toBe(true);
-    });
-    it('rejects invalid redirect_url', () => {
-        expect(ChargeCardSchema.redirect_url.safeParse('not-a-url').success).toBe(false);
-    });
-    it('accepts undefined redirect_url', () => {
-        expect(ChargeCardSchema.redirect_url.safeParse(undefined).success).toBe(true);
-    });
-    it('accepts optional card_holder_name for AMEX', () => {
-        expect(ChargeCardSchema.card_holder_name.safeParse('John Doe').success).toBe(true);
-        expect(ChargeCardSchema.card_holder_name.safeParse(undefined).success).toBe(true);
-    });
-    it('accepts valid PIN authorization object', () => {
-        expect(ChargeCardSchema.authorization.safeParse({ mode: 'pin', pin: '3310' }).success).toBe(true);
-    });
-    it('accepts valid AVS authorization object', () => {
-        expect(ChargeCardSchema.authorization.safeParse({
-            mode: 'avs_noauth', city: 'San Francisco', address: '69 Fremont St',
-            state: 'CA', country: 'US', zipcode: '94105',
-        }).success).toBe(true);
-    });
-    it('rejects authorization with invalid mode', () => {
-        expect(ChargeCardSchema.authorization.safeParse({ mode: 'otp' }).success).toBe(false);
-    });
-    it('accepts undefined authorization (first call)', () => {
-        expect(ChargeCardSchema.authorization.safeParse(undefined).success).toBe(true);
-    });
-    it('accepts PIN authorization without optional AVS fields', () => {
-        expect(ChargeCardSchema.authorization.safeParse({ mode: 'pin' }).success).toBe(true);
     });
 });
 

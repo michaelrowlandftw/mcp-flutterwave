@@ -6,16 +6,37 @@ import {
 } from '../../client/generated/v4/charges-update.zod.js';
 import { v4JsonResult } from './httpResult.js';
 
+/**
+ * The generated union has four authorization types: otp, pin, external_3ds, avs.
+ * PIN authorization is removed from this server (Security review of DX-RFC-001,
+ * decided 2026-11-22): a card PIN must never pass through the AI model, so the
+ * tool offers only otp, external_3ds and avs.
+ */
+const [otpAuth, pinAuth, external3dsAuth, avsAuth] = ChargesPutBody.shape.authorization.unwrap().options;
+export const ALLOWED_AUTHORIZATION_TYPES = ['otp', 'external_3ds', 'avs'] as const;
+const typeOf = (option: { shape: { type: unknown } }) =>
+  (option.shape.type as { unwrap(): { options: string[] } }).unwrap().options[0];
+// If the generated union is regenerated in another order, fail at start-up rather than let PIN through.
+if (
+  typeOf(otpAuth) !== 'otp' || typeOf(pinAuth) !== 'pin' ||
+  typeOf(external3dsAuth) !== 'external_3ds' || typeOf(avsAuth) !== 'avs'
+) {
+  throw new Error('update_charge: the generated authorization union changed; review the PIN exclusion.');
+}
+const UpdateChargeAuthorization = z.union([otpAuth, external3dsAuth, avsAuth]);
+
 export const UpdateChargeSchema = {
   id: z.string().min(1).describe('ID of the charge to update (chg_…).'),
   meta: ChargesPutBody.shape.meta,
-  authorization: ChargesPutBody.shape.authorization,
+  authorization: UpdateChargeAuthorization
+    .optional()
+    .describe('otp, external_3ds or avs. PIN authorization is not available: card PINs must not pass through the AI model.'),
 };
 
 export type UpdateChargeArgs = {
   id: string;
   meta?: z.infer<typeof ChargesPutBody>['meta'];
-  authorization?: z.infer<typeof ChargesPutBody>['authorization'];
+  authorization?: z.infer<typeof UpdateChargeAuthorization>;
 };
 
 export async function updateCharge(args: UpdateChargeArgs) {

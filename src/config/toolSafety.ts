@@ -7,20 +7,26 @@ import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 
 /** Moves money, or changes a payment, payout or dispute. */
 export const MONEY_MOVING = new Set<string>([
-  'charge_bank_account', 'charge_card', 'charge_mobile_money', 'charge_mpesa', 'charge_ussd', 'validate_charge',
+  'charge_bank_account', 'charge_tokenized_card', 'charge_mobile_money', 'charge_mpesa', 'charge_ussd', 'validate_charge',
   'create_charge', 'update_charge', 'create_order', 'update_order',
-  'create_orchestrator_charge', 'create_orchestrator_order', 'create_orchestrator_transfer',
+  'create_orchestrator_transfer',
   'create_transfer', 'update_transfer', 'retry_transfer',
   'create_refund', 'create_chargeback', 'update_chargeback',
   'pay_bill', 'initiate_fx_trade', 'send_stablecoin', 'convert_to_stablecoin',
 ]);
+
+/**
+ * Not money-moving, but sends sensitive personal data (a full BVN): confirmed like a
+ * money tool (Security review of DX-RFC-001), with no amount cap.
+ */
+export const CONFIRMED_WRITES = new Set<string>(['initiate_bvn_verification']);
 
 /** Removes or disables something. Repeating it has no further effect. */
 export const DELETES = new Set<string>(['delete_transfer_recipient', 'delete_transfer_sender', 'disable_checkout']);
 
 /** Writes that neither move money nor delete. */
 export const OTHER_WRITES = new Set<string>([
-  'create_beneficiary', 'create_card_payment_method', 'create_checkout', 'create_customer', 'create_payment_plan',
+  'create_beneficiary', 'create_checkout', 'create_customer', 'create_payment_plan',
   'create_transfer_recipient', 'create_transfer_sender', 'create_virtual_account', 'initiate_bvn_verification',
   'request_fx_quote', 'resend_transaction_webhook', 'resend_webhook', 'update_customer', 'update_virtual_account',
 ]);

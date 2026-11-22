@@ -8,11 +8,25 @@
 [![Node.js](https://img.shields.io/node/v/mcp-flutterwave.svg)](https://www.npmjs.com/package/mcp-flutterwave)
 [![MCP](https://img.shields.io/badge/MCP-compatible-blue.svg)](https://modelcontextprotocol.io)
 
-An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that enables AI assistants to interact with the Flutterwave API — create payment links, charge customers directly, manage transfers, collect via virtual accounts, pay bills, and more.
+An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that enables AI assistants to interact with the Flutterwave API: create payment links, charge saved cards, bank accounts and mobile money, manage transfers, collect via virtual accounts, pay bills, and more. Card numbers never pass through the AI model.
 
 > **Note:** The server targets the Flutterwave v4 API by default. Set `FLW_API_VERSION=v3` to register the v3 tool set instead. An existing install that sets only `FLW_SECRET_KEY` (no `FLW_CLIENT_ID`) stays on v3 and prints a warning. A process registers one version at a time.
 
-Also ships with a **built-in web app** that connects to the MCP server and lets you talk to a Claude-powered Flutterwave assistant directly in your browser.
+## What is and is not supported
+
+Decided with Flutterwave Security (review of DX-RFC-001, 2026-11-17; adopted 2026-11-22). Card handling matches Stripe's and Paystack's MCP servers: no raw card data goes through the model.
+
+| Capability | Status | How |
+|---|---|---|
+| Card payments by hosted checkout | ✅ Default | `create_checkout` (v3), `create_order` (v4). The customer enters the card on Flutterwave's page, which runs 3D Secure |
+| Tokenised charge of a card saved from a 3DS checkout | ✅ Customer present | `charge_tokenized_card` (v3), `create_charge` with a saved `payment_method_id` (v4). By default every tokenised charge runs 3D Secure, so expect a redirect the customer must complete |
+| Tokenised charge without the customer present (recurring, merchant-initiated) | ⚠️ Only once Flutterwave enables it | Needs Flutterwave's approval and enablement on the merchant account |
+| Direct Charge (card number, CVV or PIN through the API) | ❌ Not available | It needs Flutterwave's approval and puts the merchant in PCI DSS scope. Approved merchants build it in their own backend, not through this server |
+| Bank account, mobile money, M-Pesa, USSD charges | ✅ | `charge_bank_account`, `charge_mobile_money`, `charge_mpesa`, `charge_ussd` (v3) |
+| BVN | ✅ Restricted | `initiate_bvn_verification` asks for confirmation before a BVN is sent; `get_bvn_details` answers match / no-match only, with no identity data |
+| Live mode | ⛔ Off until Security approves | The conditions are built in and checked at start-up: see [Live mode](#live-mode) and [docs/security.md](docs/security.md) |
+
+The two tokenised-charge rules (3D Secure on every charge by default; customer-not-present needs enablement) are Flutterwave's stated behaviour and are **still to be verified** with a Test Mode tokenised charge of a card saved from a 3DS checkout. Nothing here is assumed from the docs alone.
 
 ---
 
@@ -22,13 +36,12 @@ Also ships with a **built-in web app** that connects to the MCP server and lets 
 - [Installation](#installation)
 - [Available Tools](#available-tools)
 - [Flutterwave v4](#flutterwave-v4)
-- [Card Charge Flow](#card-charge-flow)
+- [Card payments](#card-payments)
 - [Virtual Accounts](#virtual-accounts)
 - [Bill Payment Flow](#bill-payment-flow)
 - [FX Trade Flow](#fx-trade-flow)
 - [Verification](#verification)
 - [Stablecoins](#stablecoins)
-- [Web App](#web-app)
 - [MCP Server Setup](#mcp-server-setup)
 - [Usage with Claude Desktop](#usage-with-claude-desktop)
 - [MCP-UI Components](#mcp-ui-components)
@@ -42,8 +55,7 @@ Also ships with a **built-in web app** that connects to the MCP server and lets 
 ## Features
 
 - **Checkout** — Create hosted payment links and disable them
-- **Direct Charges** — Charge customers via card, bank account, mobile money, M-Pesa, or USSD
-- **Full card auth flow** — PIN, AVS (Address Verification), 3D Secure redirect, and OTP validation all handled automatically
+- **Charges** — Charge a card saved from a 3DS checkout (tokenised), a bank account, mobile money, M-Pesa or USSD. No card numbers, CVVs or PINs
 - **Charge Validation** — Validate OTP-based charges with a dedicated tool
 - **Transactions** — Verify by ID or reference, view event timeline, resend failed webhooks
 - **Transfers** — Initiate single transfers, manage beneficiaries
@@ -51,10 +63,9 @@ Also ships with a **built-in web app** that connects to the MCP server and lets 
 - **Virtual Accounts** — Generate dedicated account numbers for NGN and GHS bank transfer collection (static or dynamic)
 - **Bill Payments** — Pay airtime, data, cable TV, electricity, internet bills and more (Nigeria)
 - **FX Trade** — Convert between NGN, GHS, and USD with live quotes (RFQ → trade in two steps)
-- **Verification** — BVN identity verification, bank account name resolution, and card BIN lookup
+- **Verification** — BVN match / no-match checks, bank account name resolution, and card BIN lookup
 - **Stablecoins** — Send USDC/USDT to Polygon wallets, or convert NGN/USD fiat into stablecoins
 - **Rich UI** — Every tool returns a branded HTML card rendered inline in supported clients
-- **Web App** — A standalone browser chat interface powered by Claude + this MCP server
 
 ---
 
@@ -69,8 +80,10 @@ npm install -g mcp-flutterwave
 ### npx (no install needed)
 
 ```bash
-npx mcp-flutterwave --tools=all
+npx mcp-flutterwave --tools=all --read-only
 ```
+
+Start read-only, then drop `--read-only` (in test mode) when you want write tools.
 
 ### Docker
 
@@ -89,8 +102,8 @@ The server communicates over stdio, so it must be launched by an MCP client — 
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-e", "FLW_SECRET_KEY=YOUR_SECRET_KEY",
-        "-e", "FLW_ENCRYPTION_KEY=YOUR_ENCRYPTION_KEY",
+        "-e", "FLW_API_VERSION=v3",
+        "-e", "FLW_SECRET_KEY=YOUR_TEST_SECRET_KEY",
         "ghcr.io/bajoski34/mcp-flutterwave:latest"
       ]
     }
@@ -98,52 +111,56 @@ The server communicates over stdio, so it must be launched by an MCP client — 
 }
 ```
 
-The `-i` flag keeps stdin open so Claude Desktop can communicate with the server over stdio. For v4 (the default), pass `FLW_CLIENT_ID` and `FLW_CLIENT_SECRET` instead of the v3 secret and encryption key. See [Flutterwave v4](#flutterwave-v4).
+The `-i` flag keeps stdin open so Claude Desktop can communicate with the server over stdio. The image starts with `--tools=all --read-only`. For v4 (the default), pass `FLW_CLIENT_ID` and `FLW_CLIENT_SECRET` instead of the v3 secret key. See [Flutterwave v4](#flutterwave-v4).
 
 **Requirements:** Node.js 22 or later (for npm/npx).
 
-### Test mode only
+### Live mode
 
-Live mode is disabled until the security review is complete. The server refuses live credentials at start-up:
+Live mode is disabled until Security approves it. The server refuses live credentials at start-up (v3: `FLW_SECRET_KEY` must start with `FLWSECK_TEST`; v4: `FLW_ENVIRONMENT=production` is refused), and no flag or environment variable turns it on.
 
-- v3: `FLW_SECRET_KEY` must start with `FLWSECK_TEST`.
-- v4: `FLW_ENVIRONMENT=production` is refused.
+The conditions Security set are already enforced, so the refusal lists what a live setup still lacks. With live keys:
 
-No flag or environment variable turns live mode back on.
+- each tool is listed in `--tools` (no `--tools=all`);
+- keys come from the OS keychain (`FLW_KEY_SOURCE=keychain`; `FLW_KEY_SOURCE=env` is an explicit opt-out);
+- the server is read-only unless `--read-only=false` is on the command line;
+- each money-moving category is approved separately in `FLW_LIVE_APPROVED_CATEGORIES` (`collections`, `payouts`, `refunds`, `disputes`, `bills`, `fx`, and `identity` for the BVN consent tool);
+- every currency used has its own cap, `FLW_MAX_AMOUNT_<CURRENCY>` (`FLW_MAX_AMOUNT` alone is not enough);
+- confirmation can't be switched off (`FLW_CONFIRM=false` is refused) and money tools need a client that asks the person (MCP elicitation);
+- `FLW_ALLOWED_URL_HOSTS` is set.
+
+The server runs over stdio, one process per person, so the in-memory stores for confirmation tokens and webhook replays hold. A hosted, multi-instance server needs shared stores and is part of the hosted-OAuth RFC.
 
 ### Safety settings
 
 | Setting | What it does |
 |---|---|
+| `FLW_KEY_SOURCE=keychain` | Reads `FLW_SECRET_KEY`, `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET` and `FLW_SECRET_HASH` from the OS keychain (service `mcp-flutterwave`). See [docs/security.md](docs/security.md#key-storage) |
+| `FLW_LIVE_APPROVED_CATEGORIES` | Live mode only: the money-moving categories approved for use |
 | `FLW_ENV_FILE=/path/to/file` | Loads credentials from that file. A `.env` in the working folder is **not** read, and safety switches in a file are ignored |
 | `FLW_REQUIRE_ELICITATION=true` | Blocks money-moving tools in AI clients that can't ask you to confirm directly (always on with live credentials) |
 | `FLW_MAX_AMOUNT`, `FLW_MAX_AMOUNT_<CURRENCY>` | Amount caps. With a cap set, calls whose amount or currency can't be read are refused, and so are tools that move money with no amount of their own (`retry_transfer`, `update_transfer`, `initiate_fx_trade`) |
 | `FLW_ALLOWED_URL_HOSTS=a.com,b.com` | Only these hosts are allowed in `callback_url` and `redirect_url` |
 | `FLW_TIMEOUT_MS` | API timeout (default 60 seconds); a timed-out create returns `unknown` |
 
-`callback_url` and `redirect_url` must be https (`http://localhost` is allowed in test mode). `update_charge` with a PIN needs `--enable-raw-card-tools`.
+`callback_url` and `redirect_url` must be https (`http://localhost` is allowed in test mode). A `pin` field in any tool's input is refused.
 
 ### Read-only mode
 
-`--read-only` (or `FLW_READ_ONLY=true`) registers only tools that read data: `get_`, `list_`, `read_`, `resolve_` and `verify_` tools, and a few checks and quotes. Read-only mode is off by default. Naming a write tool in `--tools` while read-only mode is on stops start-up with an error.
+`--read-only` (or `FLW_READ_ONLY=true`) registers only tools that read data: `get_`, `list_`, `read_`, `resolve_` and `verify_` tools, and a few checks and quotes. Read-only mode is off by default in test mode and on by default with live keys. Naming a write tool in `--tools` while read-only mode is on stops start-up with an error.
 
 ### Confirmation and amount cap on money-moving tools
 
-Tools that move money (charges, transfers, refunds, bills, FX, stablecoins, and updates that can void or cancel) never run on the first call.
+Tools that move money (charges, transfers, refunds, bills, FX, stablecoins, and updates that can void or cancel) never run on the first call. Neither does `initiate_bvn_verification`, which sends a full BVN.
 
 - If the MCP client supports elicitation, the server asks the user to confirm a summary directly.
 - Otherwise the first call returns the summary and a `confirmation_token`. The tool runs only when called again with exactly the same arguments plus that token. Tokens are bound to the tool and its arguments, work once, and expire after 5 minutes.
 - `FLW_MAX_AMOUNT` (any currency) and `FLW_MAX_AMOUNT_<CURRENCY>` (for example `FLW_MAX_AMOUNT_NGN=50000`) refuse larger amounts before anything is sent.
 - `FLW_CONFIRM=false` turns confirmation off for automated sandbox tests.
 
-### Raw card tools are off by default
+### No card data through the AI model
 
-These tools take a full card number, CVV or PIN as input, so card data passes through the AI model. For most merchants that is a PCI DSS problem.
-
-- v3: `charge_card`
-- v4: `create_card_payment_method`, `create_orchestrator_charge`, `create_orchestrator_order`
-
-They are not registered, even with `--tools=all`, unless you pass `--enable-raw-card-tools` or set `FLW_ENABLE_RAW_CARD_TOOLS=true`. Naming one in `--tools` without the switch stops start-up with an error. Prefer hosted checkout (`create_checkout`, `create_order`) or saved payment methods.
+The raw card tools were removed from the package: v3 `charge_card`, v4 `create_card_payment_method`, `create_orchestrator_charge` and `create_orchestrator_order`, and the PIN path of `update_charge`. Passing `--enable-raw-card-tools` or setting `FLW_ENABLE_RAW_CARD_TOOLS` stops start-up with an explanation. Card numbers in any output are still redacted, as defence in depth. Use hosted checkout or a tokenised charge (see [What is and is not supported](#what-is-and-is-not-supported)).
 
 ---
 
@@ -163,15 +180,15 @@ The server gives the AI a guide to the Flutterwave docs, so it can help write in
 | `create_checkout` | Create a hosted Flutterwave payment link |
 | `disable_checkout` | Disable an existing payment link |
 
-### Direct Charges
+### Charges
 | Tool | Description |
 |---|---|
-| `charge_card` | Directly charge a debit or credit card — handles PIN, AVS, 3DS, and OTP flows. Off by default; see [Raw card tools](#raw-card-tools-are-off-by-default) |
+| `charge_tokenized_card` | Charge a card saved from an earlier 3DS checkout payment, by its token. Runs 3D Secure by default: the customer must be present |
 | `charge_bank_account` | Debit a bank account (NGN / GHS) |
 | `charge_mobile_money` | Mobile money — Ghana, Uganda, Rwanda, Zambia, Francophone Africa |
 | `charge_mpesa` | M-Pesa charge (KES) |
 | `charge_ussd` | USSD charge (NGN) |
-| `validate_charge` | Validate a pending charge using OTP |
+| `validate_charge` | Validate a pending bank account charge using OTP |
 
 ### Transactions
 | Tool | Description |
@@ -223,8 +240,8 @@ The server gives the AI a guide to the Flutterwave docs, so it can help write in
 ### Verification
 | Tool | Description |
 |---|---|
-| `initiate_bvn_verification` | Begin a BVN identity check — returns a single-use customer consent URL |
-| `get_bvn_details` | Retrieve full BVN identity data after consent is given |
+| `initiate_bvn_verification` | Begin a BVN consent request (confirmed first, since it sends a full BVN); returns a single-use consent URL |
+| `get_bvn_details` | Compare a completed verification with the names you expect: match / no-match only, no identity data |
 | `resolve_bank_account` | Look up the account holder name for a bank account number |
 | `verify_card_bin` | Look up card brand, type, issuer, and country from the first 6 digits |
 
@@ -245,96 +262,65 @@ v4 is the default. Set `FLW_API_VERSION=v3` to use the v3 tools instead. Install
 
 The v4 tools cover every callable v4 operation in the [developer docs](https://developer.flutterwave.com/llms.txt) (57 operations, checked 12 Nov 2026).
 
-v4 signs in with OAuth client credentials and encrypts card fields with AES-256-GCM. Card tools take plaintext card details and encrypt them before the request. The inbound `refund.completed` webhook is not a tool.
+v4 signs in with OAuth client credentials. No v4 tool takes card details: cards are entered on hosted checkout (`create_order`) and charged later by `payment_method_id`. The inbound `refund.completed` webhook is not a tool.
 
 | Variable | Required | Description |
 |---|---|---|
 | `FLW_API_VERSION` | No | `v4` (default) or `v3` |
 | `FLW_CLIENT_ID` | Yes | OAuth client id from Dashboard → Settings → API Keys |
 | `FLW_CLIENT_SECRET` | Yes | OAuth client secret from that same view |
-| `FLW_ENCRYPTION_KEY_V4` | Only for raw card tools | Base64 AES-256-GCM key. Decoded length is 32 bytes. |
 | `FLW_ENVIRONMENT` | No | `sandbox` (default) or `production`. `production` is refused: live mode is disabled |
 
-`sandbox` uses `https://developersandbox-api.flutterwave.com`. `production` uses `https://f4bexperience.flutterwave.com`. `FLW_SECRET_KEY` and `FLW_ENCRYPTION_KEY` are the v3 credentials and are not used in this mode.
+`sandbox` uses `https://developersandbox-api.flutterwave.com`. `production` uses `https://f4bexperience.flutterwave.com`. `FLW_SECRET_KEY` is the v3 credential and is not used in this mode. No encryption key is needed in either version.
 
 **v4 accepted tool names** (`--tools=all` enables every name in this list):
 
 ```
-create_customer                 create_card_payment_method
-create_charge                   get_charge                      create_refund
-get_customer                    get_refund                      get_payment_method
-list_customers                  search_customers                update_customer
-list_charges                    update_charge                   list_refunds
-list_payment_methods            get_fees
-get_banks                       get_mobile_networks
-get_wallet_balance              list_wallet_balances            get_wallet_statement
-resolve_wallet_account
-list_settlements                get_settlement
-list_chargebacks                get_chargeback                  create_chargeback
-update_chargeback
-create_order                    get_order
-create_virtual_account          get_virtual_account
-quote_transfer_rate             get_transfer_rate
-create_orchestrator_charge      create_orchestrator_order       create_orchestrator_transfer
-resend_webhook
-get_bank_branches               resolve_bank_account
-list_orders                     update_order
-list_virtual_accounts           update_virtual_account
-list_transfer_recipients        create_transfer_recipient       get_transfer_recipient
-delete_transfer_recipient
+create_customer                 create_charge                   get_charge
+create_refund                   get_customer                    get_refund
+get_payment_method              list_customers                  search_customers
+update_customer                 list_charges                    update_charge
+list_refunds                    list_payment_methods            get_fees
+get_banks                       get_mobile_networks             get_wallet_balance
+list_wallet_balances            get_wallet_statement            resolve_wallet_account
+list_settlements                get_settlement                  list_chargebacks
+get_chargeback                  create_chargeback               update_chargeback
+create_order                    get_order                       create_virtual_account
+get_virtual_account             quote_transfer_rate             get_transfer_rate
+create_orchestrator_transfer    resend_webhook                  get_bank_branches
+resolve_bank_account            list_orders                     update_order
+list_virtual_accounts           update_virtual_account          list_transfer_recipients
+create_transfer_recipient       get_transfer_recipient          delete_transfer_recipient
 list_transfer_senders           create_transfer_sender          get_transfer_sender
-delete_transfer_sender
-create_transfer                 get_transfer                    list_transfers
-update_transfer                 retry_transfer
+delete_transfer_sender          create_transfer                 get_transfer
+list_transfers                  update_transfer                 retry_transfer
 verify_payment                  verify_payout                   verify_webhook
 get_sandbox_scenarios
 ```
 
 ---
 
-## Card Charge Flow
+## Card payments
 
-Direct card charges are multi-step. The `charge_card` tool handles every stage automatically and tells Claude what to do next.
+This server never takes a card number, CVV or PIN. Two paths:
 
 ```
-1. charge_card(card details)
-        │
-        ├─ mode: "pin"        → ask customer for PIN
-        │       charge_card(same params + authorization: { mode: "pin", pin: "..." })
-        │               │
-        │               ├─ mode: "otp"      → validate_charge(flw_ref, otp)
-        │               └─ mode: "redirect" → send customer to 3DS URL
-        │
-        ├─ mode: "avs_noauth" → ask customer for billing address
-        │       charge_card(same params + authorization: { mode: "avs_noauth", city, address, ... })
-        │               │
-        │               ├─ mode: "otp"      → validate_charge(flw_ref, otp)
-        │               └─ mode: "redirect" → send customer to 3DS URL
-        │
-        ├─ mode: "redirect"   → send customer to 3DS URL, then read_transaction to verify
-        │
-        └─ (none)             → charge complete — read_transaction to verify
+1. New card: hosted checkout
+   create_checkout (v3) / create_order (v4)
+        ↓ customer pays on Flutterwave's page (3D Secure)
+   verify_payment(id, expected amount, currency)   ← before giving value
+        ↓ the verified transaction carries data.card.token
+
+2. Saved card: tokenised charge
+   charge_tokenized_card(token, email, amount, currency, redirect_url)
+        ├─ redirect   → send the customer to it (3D Secure, by default on every charge)
+        └─ completed  → verify_payment before giving value
 ```
 
-### Authorization parameters
-
-When a second call is needed, pass `authorization` alongside the original card details:
-
-```json
-// PIN flow
-{ "authorization": { "mode": "pin", "pin": "3310" } }
-
-// AVS flow
-{ "authorization": { "mode": "avs_noauth", "city": "Lagos", "address": "12 Victoria Island", "state": "LA", "country": "NG", "zipcode": "100001" } }
-```
-
-### AMEX cards
-
-American Express transactions require the `card_holder_name` field in addition to standard card details.
-
-### Payload encryption
-
-Card payloads are encrypted with 3DES-ECB using your `FLW_ENCRYPTION_KEY` before they are sent to Flutterwave (PCI DSS requirement). The encryption is handled automatically — set the environment variable and the server does the rest.
+- A card can be tokenised only after it went through a 3DS checkout payment.
+- Charging a saved card with no customer present needs Flutterwave to approve and enable it on the account.
+- Both rules are Flutterwave's statements, to be verified in Test Mode.
+- The redirect URL is in a different field per rail (`meta.authorization.redirect`, `data.meta.authorization.redirect` or `meta.authorization.redirect_url`); the server reads all three.
 
 ---
 
@@ -498,24 +484,23 @@ Identify card metadata from the first 6 digits of a card number.
 // → { brand: "MASTERCARD", type: "CREDIT", issuer: "NEXUS MERCHANT BANK", country: "NIGERIA" }
 ```
 
-> AMEX cards identified via BIN require the `card_holder_name` field when calling `charge_card`.
+> Card numbers cannot be entered through this server; take card payments on hosted checkout.
 
-### BVN Verification (Nigeria)
+### BVN match check (Nigeria)
 
-Two-step consent flow — customer must approve data sharing on the NIBSS portal.
+Kept for support use, in the form Security set: the server never returns BVN identity data.
 
 ```
 1. initiate_bvn_verification(bvn, firstname, lastname, redirect_url)
-        ↓ returns reference + single-use consent URL
+        ↓ confirmation first (it sends a full BVN); returns reference + single-use consent URL
 
-2. Customer visits consent URL → approves data sharing on NIBSS portal
-        ↓ webhook (bvn.completed) fires OR poll:
+2. Customer visits consent URL → approves data sharing on the NIBSS portal
 
-3. get_bvn_details(reference)
-        ↓ returns name, DOB, gender, phone, NIN, state of origin, watchlist status
+3. get_bvn_details(reference, expected_first_name, expected_last_name, expected_date_of_birth?)
+        ↓ { match: true | false | null, fields: { first_name: "match", last_name: "no_match", ... } }
 ```
 
-> Requires Flutterwave account enablement — contact hi@flutterwavego.com. If the customer has already consented, `initiate_bvn_verification` returns `url: null` and you can call `get_bvn_details` immediately.
+> No name, date of birth, phone, NIN, photo or watchlist data leaves the server, in text or a UI card. `match` is null until consent is complete. The record's date-of-birth format is not documented, so a date the server can't read is `not_available`. Needs BVN verification enabled on the Flutterwave account.
 
 ---
 
@@ -555,79 +540,6 @@ Send USDC or USDT over the **Polygon network**, or convert NGN/USD fiat balances
 
 ---
 
-## Web App
-
-The `app/` directory contains a standalone browser chat interface that wraps this MCP server with a Claude-powered conversation loop.
-
-![Flutterwave MCP-UI components: transaction, payment link and transfer cards](./docs/images/mcp-ui-components.png)
-
-### How it works
-
-```
-Browser  →  POST /api/chat
-               ↓
-           Claude (Sonnet) — all MCP tools injected via advanced-tool-use beta
-               ↓  tool_use
-           MCP Server (this repo, spawned via stdio)
-               ↓
-           Flutterwave API
-```
-
-The web app uses three Anthropic Advanced Tool Use features:
-
-- **Tool Search** — non-core tools are deferred and loaded on demand, reducing token usage by ~85%
-- **Programmatic Tool Calling** — Claude can write code that calls multiple tools in sequence without inflating the conversation context
-- **Tool Use Examples** — curated `input_examples` for every tool improve parameter accuracy from ~72% to ~90%
-
-The app returns a rich branded UI card for every tool response — checkout links, transaction details, charge states, transfer summaries, virtual accounts, bill receipts — rendered inline in the chat.
-
-### Running the web app
-
-**Prerequisites**
-
-| Variable | Required | Description |
-|---|---|---|
-| `FLW_SECRET_KEY` | Yes | Your Flutterwave secret key |
-| `FLW_ENCRYPTION_KEY` | For card charges | Your Flutterwave encryption key |
-| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key |
-
-Get your keys from the [Flutterwave Dashboard](https://dashboard.flutterwave.com) under **Settings → API Keys**.  
-Get your Anthropic key from the [Anthropic Console](https://console.anthropic.com).
-
-**Build and start**
-
-```bash
-# Clone and install
-git clone https://github.com/bajoski34/mcp-flutterwave.git
-cd mcp-flutterwave
-npm install
-
-# Build both the MCP server and the web app
-npm run build:all
-
-# Start
-ANTHROPIC_API_KEY=sk-ant-... FLW_SECRET_KEY=FLWSECK_... npm run start:app
-```
-
-Then open [http://localhost:3000](http://localhost:3000).
-
-**Available scripts**
-
-| Script | Description |
-|---|---|
-| `npm run build` | Build the MCP server only |
-| `npm run build:app` | Build the web app only |
-| `npm run build:all` | Build everything |
-| `npm run start:app` | Start the web app (requires a prior build) |
-| `npm run dev:app` | Build everything then start the web app |
-| `npm test` | Run the test suite |
-
-**Port**
-
-Set the `PORT` environment variable to change from the default `3000`.
-
----
-
 ## MCP Server Setup
 
 ### Via npm
@@ -664,9 +576,8 @@ v3 (`FLW_API_VERSION=v3`):
 | Variable | Required | Description |
 |---|---|---|
 | `FLW_SECRET_KEY` | Yes | Your Flutterwave secret key |
-| `FLW_ENCRYPTION_KEY` | For card charges | Your Flutterwave encryption key (from Dashboard → Settings → API) |
 
-v4 (default) uses `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, and optional `FLW_ENVIRONMENT` and `FLW_ENCRYPTION_KEY_V4`. See [Flutterwave v4](#flutterwave-v4).
+v4 (default) uses `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, and optional `FLW_ENVIRONMENT`. Neither version needs an encryption key. See [Flutterwave v4](#flutterwave-v4).
 
 ---
 
@@ -674,7 +585,7 @@ v4 (default) uses `FLW_CLIENT_ID`, `FLW_CLIENT_SECRET`, and optional `FLW_ENVIRO
 
 Add the following to your `claude_desktop_config.json`. See the [MCP quickstart](https://modelcontextprotocol.io/quickstart/user) for details.
 
-Pass `--tools=all` to enable every tool, or supply a comma-separated list to restrict which tools are registered.
+Pass `--tools=all` to enable every tool, or a comma-separated list to restrict them. The examples start read-only (`--read-only`); remove it in test mode when you want write tools. With live keys (once approved) list each tool instead of `all`.
 
 ### Via npm
 
@@ -683,10 +594,10 @@ Pass `--tools=all` to enable every tool, or supply a comma-separated list to res
   "mcpServers": {
     "flutterwave": {
       "command": "mcp-flutterwave",
-      "args": ["--tools=all"],
+      "args": ["--tools=all", "--read-only"],
       "env": {
-        "FLW_SECRET_KEY": "YOUR_SECRET_KEY",
-        "FLW_ENCRYPTION_KEY": "YOUR_ENCRYPTION_KEY"
+        "FLW_API_VERSION": "v3",
+        "FLW_SECRET_KEY": "YOUR_TEST_SECRET_KEY"
       }
     }
   }
@@ -702,11 +613,12 @@ Pass `--tools=all` to enable every tool, or supply a comma-separated list to res
       "command": "node",
       "args": [
         "/path/to/mcp-flutterwave/build/index.js",
-        "--tools=all"
+        "--tools=all",
+        "--read-only"
       ],
       "env": {
-        "FLW_SECRET_KEY": "YOUR_SECRET_KEY",
-        "FLW_ENCRYPTION_KEY": "YOUR_ENCRYPTION_KEY"
+        "FLW_API_VERSION": "v3",
+        "FLW_SECRET_KEY": "YOUR_TEST_SECRET_KEY"
       }
     }
   }
@@ -724,24 +636,20 @@ Pass `--tools=all` to enable every tool, or supply a comma-separated list to res
 **v3 accepted tool names** (`FLW_API_VERSION=v3`; use `all` to enable everything in this list):
 
 ```
-create_checkout            disable_checkout
-read_transaction           read_transaction_with_reference
-read_transaction_timeline  resend_transaction_webhook
-create_transfer            create_beneficiary            list_beneficiaries
-create_payment_plan        get_payment_plans
-charge_card                charge_bank_account           charge_mobile_money
-charge_mpesa               charge_ussd                   validate_charge
-create_virtual_account     get_virtual_account           update_virtual_account
-list_virtual_account_bulk
-get_bill_categories        get_bill_providers            get_bill_items
-validate_bill_customer     pay_bill                      get_bill_status
-request_fx_quote           get_fx_quote
-initiate_fx_trade          get_fx_trade
-initiate_bvn_verification  get_bvn_details
-resolve_bank_account       verify_card_bin
-get_stablecoin_fee         send_stablecoin               convert_to_stablecoin
-verify_payment             verify_payout                 verify_webhook
-get_sandbox_scenarios
+create_checkout                 disable_checkout                read_transaction
+read_transaction_with_reference read_transaction_timeline       resend_transaction_webhook
+create_transfer                 create_beneficiary              list_beneficiaries
+create_payment_plan             get_payment_plans               charge_tokenized_card
+charge_bank_account             charge_mobile_money             charge_mpesa
+charge_ussd                     validate_charge                 create_virtual_account
+get_virtual_account             update_virtual_account          list_virtual_account_bulk
+get_bill_categories             get_bill_providers              get_bill_items
+validate_bill_customer          pay_bill                        get_bill_status
+request_fx_quote                get_fx_quote                    initiate_fx_trade
+get_fx_trade                    initiate_bvn_verification       get_bvn_details
+resolve_bank_account            verify_card_bin                 get_stablecoin_fee
+send_stablecoin                 convert_to_stablecoin           verify_payment
+verify_payout                   verify_webhook                  get_sandbox_scenarios
 ```
 
 In v4 mode (the default), `--tools=all` enables the [v4 accepted tool names](#flutterwave-v4) instead.
@@ -753,12 +661,11 @@ In v4 mode (the default), `--tools=all` enables the [v4 accepted tool names](#fl
   "mcpServers": {
     "flutterwave": {
       "command": "mcp-flutterwave",
-      "args": ["--tools=all"],
+      "args": ["--tools=all", "--read-only"],
       "env": {
         "FLW_API_VERSION": "v4",
         "FLW_CLIENT_ID": "YOUR_CLIENT_ID",
         "FLW_CLIENT_SECRET": "YOUR_CLIENT_SECRET",
-        "FLW_ENCRYPTION_KEY_V4": "YOUR_V4_ENCRYPTION_KEY",
         "FLW_ENVIRONMENT": "sandbox"
       }
     }
@@ -772,13 +679,11 @@ In v4 mode (the default), `--tools=all` enables the [v4 accepted tool names](#fl
 
 Every tool returns a rich HTML card alongside its text response, powered by [@mcp-ui/server](https://www.npmjs.com/package/@mcp-ui/server). The cards use Flutterwave's design tokens — navy `#0A0E27`, deep orange `#FF5804`, brand orange `#F5A623`, and the system sans-serif typeface.
 
-### Card charge UI states
+### Charge UI states
 
 | State | Card shown |
 |---|---|
-| PIN required | Step-by-step instructions, transaction reference |
-| AVS required | Required billing address fields as chips |
-| 3DS redirect | Bank authentication URL with a direct link |
+| Redirect | 3D Secure, captcha or provider page URL with a direct link |
 | OTP required | Bank message, `flw_ref` to pass to `validate_charge` |
 | Completed | Amount, status badge, transaction and Flutterwave references |
 
@@ -795,10 +700,10 @@ The virtual account card shows the bank account number in a large, prominent box
 
 ### Verification UI
 
+The BVN tools return text only, with no card, so no identity data is rendered.
+
 | Tool | Card shown |
 |---|---|
-| `initiate_bvn_verification` | Consent card — customer name (BVN last-4 only), single-use consent link with open button, step-by-step instructions |
-| `get_bvn_details` | Identity card — name, DOB, gender, phone, NIN, state of origin; BVN partially masked; red watchlist badge if flagged |
 | `resolve_bank_account` | Green verified card — account name in large text with account number and bank code |
 | `verify_card_bin` | Brand-coloured card (Visa blue / Mastercard red / Amex blue / dark for others) — brand, type badge, issuer, country |
 
@@ -825,7 +730,6 @@ Both `request_fx_quote`/`get_fx_quote` and `initiate_fx_trade`/`get_fx_trade` re
 
 Cards are compatible with:
 
-- **Flutterwave Web App** (this repo's `app/`) — rendered inline in the chat
 - **MCP Inspector** — for testing during development
 - **Any MCP client** that supports the `resource` content type with HTML
 

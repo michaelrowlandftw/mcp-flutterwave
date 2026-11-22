@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Flutterwave Charge API
-  description: API for directly charging customers via card, bank account, mobile money, USSD, or M-Pesa.
+  description: API for charging customers by bank account, mobile money, USSD or M-Pesa, and charging cards saved from a 3DS checkout (tokenised charges). Direct card charges are not part of this server.
   version: 1.0.0
 servers:
   - url: https://api.flutterwave.com/v3
@@ -18,7 +18,6 @@ paths:
           schema:
             type: string
             enum:
-              - card
               - account
               - mobile_money_ghana
               - enaira
@@ -46,9 +45,6 @@ paths:
             schema:
               type: object
               properties:
-                client:
-                  type: string
-                  example: 'encrypted_card_data_here'
                 tx_ref:
                   type: string
                   example: 'MC-158523s09v5050e8'
@@ -70,18 +66,6 @@ paths:
                 redirect_url:
                   type: string
                   example: 'https://example.com/callback'
-                card_number:
-                  type: string
-                  example: '5531886652142950'
-                cvv:
-                  type: string
-                  example: '564'
-                expiry_month:
-                  type: string
-                  example: '09'
-                expiry_year:
-                  type: string
-                  example: '32'
                 account_bank:
                   type: string
                   example: '044'
@@ -91,34 +75,66 @@ paths:
                 network:
                   type: string
                   example: 'MTN'
-                card_holder_name:
-                  type: string
-                  description: Card holder name (required for AMEX transactions)
-                  example: 'John Doe'
-                authorization:
-                  type: object
-                  description: Authorization data for PIN or AVS flows — second call only, after initial charge returns the required mode.
-                  properties:
-                    mode:
-                      type: string
-                      enum: [pin, avs_noauth]
-                      description: Authorization mode returned by the initial charge response.
-                    pin:
-                      type: string
-                      description: Card PIN (for pin mode)
-                    city:
-                      type: string
-                    address:
-                      type: string
-                    state:
-                      type: string
-                    country:
-                      type: string
-                    zipcode:
-                      type: string
       responses:
         '200':
           description: Charge initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeResponse'
+        '400':
+          description: Bad request, invalid data.
+        '401':
+          description: Unauthorized, invalid API key.
+  /tokenized-charges:
+    post:
+      summary: Charge a saved card by token
+      description: >-
+        Charge a card saved from an earlier 3DS checkout payment, using the token from that
+        payment (data.card.token). Request fields as measured in Test Mode (candidate V3 spec,
+        0.1.0-candidate+20261122); the docs list token, currency, amount, email and tx_ref.
+        Required flags are not measured yet. By default the charge runs 3DS and answers with a
+        redirect, so the customer must be present (Michael, 2026-11-22; to verify).
+      operationId: createTokenizedCharge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: 'flw-t1nf-c25d14a3a6b5afaf8022fe88212a3eaa-k3n'
+                currency:
+                  type: string
+                  example: 'NGN'
+                country:
+                  type: string
+                  example: 'NG'
+                amount:
+                  type: number
+                  example: 100
+                email:
+                  type: string
+                  example: 'user@example.com'
+                tx_ref:
+                  type: string
+                  example: 'MC-158523s09v5050e8'
+                narration:
+                  type: string
+                redirect_url:
+                  type: string
+                  example: 'https://example.com/callback'
+              required:
+                - token
+                - currency
+                - amount
+                - email
+                - tx_ref
+      responses:
+        '200':
+          description: Charge initiated.
           content:
             application/json:
               schema:

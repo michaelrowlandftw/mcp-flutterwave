@@ -1,10 +1,5 @@
 import { server } from '../../server.js';
 import {
-  createCardPaymentMethod,
-  CreateCardPaymentMethodSchema,
-  type CreateCardPaymentMethodArgs,
-} from './createCardPaymentMethod.js';
-import {
   createCustomer,
   CreateCustomerSchema,
   type CreateCustomerArgs,
@@ -158,16 +153,6 @@ import {
   type GetTransferRateArgs,
 } from './getTransferRate.js';
 import {
-  createOrchestratorCharge,
-  CreateOrchestratorChargeSchema,
-  type CreateOrchestratorChargeArgs,
-} from './createOrchestratorCharge.js';
-import {
-  createOrchestratorOrder,
-  CreateOrchestratorOrderSchema,
-  type CreateOrchestratorOrderArgs,
-} from './createOrchestratorOrder.js';
-import {
   createOrchestratorTransfer,
   CreateOrchestratorTransferSchema,
   type CreateOrchestratorTransferArgs,
@@ -280,18 +265,6 @@ function createErrorResponse(message: string) {
   };
 }
 
-export async function handleCreateCardPaymentMethod(
-  args: CreateCardPaymentMethodArgs,
-) {
-  try {
-    return await createCardPaymentMethod(args);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return createErrorResponse(
-      `Error creating card payment method: ${message}`,
-    );
-  }
-}
 
 export async function handleCreateCustomer(args: CreateCustomerArgs) {
   try {
@@ -581,27 +554,7 @@ export async function handleGetTransferRate(args: GetTransferRateArgs) {
   }
 }
 
-export async function handleCreateOrchestratorCharge(
-  args: CreateOrchestratorChargeArgs,
-) {
-  try {
-    return await createOrchestratorCharge(args);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return createErrorResponse(`Error creating orchestrator charge: ${message}`);
-  }
-}
 
-export async function handleCreateOrchestratorOrder(
-  args: CreateOrchestratorOrderArgs,
-) {
-  try {
-    return await createOrchestratorOrder(args);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return createErrorResponse(`Error creating orchestrator order: ${message}`);
-  }
-}
 
 export async function handleCreateOrchestratorTransfer(
   args: CreateOrchestratorTransferArgs,
@@ -821,29 +774,19 @@ export function registerV4Tools() {
     [
       'Create a Flutterwave v4 customer (POST /customers).',
       'Email is required. Optional name, phone, and address improve later charge flows.',
-      'Use the returned customer id with create_card_payment_method and create_charge.',
+      'Use the returned customer id with create_charge, together with a payment method saved from a hosted checkout or order.',
       'Available in v4 mode (the default).',
     ].join(' '),
     CreateCustomerSchema,
     async (args) => handleCreateCustomer(args),
   );
 
-  server.tool(
-    'create_card_payment_method',
-    [
-      'Create a Flutterwave v4 card payment method (POST /payment-methods).',
-      'Pass the plaintext card number, CVV, and expiry. The server encrypts each field with AES-256-GCM before the request.',
-      'Use the returned payment method id on a later charge. Available in v4 mode (the default).',
-    ].join(' '),
-    CreateCardPaymentMethodSchema,
-    async (args) => handleCreateCardPaymentMethod(args),
-  );
 
   server.tool(
     'create_charge',
     [
       'Create a Flutterwave v4 charge (POST /charges).',
-      'Requires customer_id from create_customer and payment_method_id from create_card_payment_method.',
+      'Requires customer_id from create_customer and payment_method_id of a card saved from a 3DS hosted checkout or order (see list_payment_methods). Card numbers cannot be entered through this server. By default the charge runs 3DS, so the customer must be present: follow the redirect in the result.',
       'Also pass amount, currency, and a unique reference. Available in v4 mode (the default).',
     ].join(' '),
     CreateChargeSchema,
@@ -898,7 +841,7 @@ export function registerV4Tools() {
     'get_payment_method',
     [
       'Retrieve a Flutterwave v4 payment method by id (GET /payment-methods/{id}).',
-      'Use after create_card_payment_method. Available in v4 mode (the default).',
+      'Payment methods come from cards saved on a hosted checkout or order; this server does not create card payment methods. Available in v4 mode (the default).',
     ].join(' '),
     GetPaymentMethodSchema,
     async (args) => handleGetPaymentMethod(args),
@@ -951,7 +894,7 @@ export function registerV4Tools() {
     'update_charge',
     [
       'Update a Flutterwave v4 charge (PUT /charges/{id}).',
-      'Pass meta and/or an authorization object (otp, pin, external_3ds, or avs).',
+      'Pass meta and/or an authorization object (otp, external_3ds, or avs). PIN authorization is not available through this server: card PINs must not pass through the AI model.',
       'Available in v4 mode (the default).',
     ].join(' '),
     UpdateChargeSchema,
@@ -1185,27 +1128,7 @@ export function registerV4Tools() {
     async (args) => handleGetTransferRate(args),
   );
 
-  server.tool(
-    'create_orchestrator_charge',
-    [
-      'Create a Flutterwave v4 charge with inline customer and card details (POST /orchestration/direct-charges).',
-      'Card fields are encrypted with FLW_ENCRYPTION_KEY_V4 before the request is sent.',
-      'Available in v4 mode (the default).',
-    ].join(' '),
-    CreateOrchestratorChargeSchema,
-    async (args) => handleCreateOrchestratorCharge(args),
-  );
 
-  server.tool(
-    'create_orchestrator_order',
-    [
-      'Create a Flutterwave v4 order with inline customer and card details (POST /orchestration/direct-orders).',
-      'Card fields are encrypted with FLW_ENCRYPTION_KEY_V4 before the request is sent.',
-      'Available in v4 mode (the default).',
-    ].join(' '),
-    CreateOrchestratorOrderSchema,
-    async (args) => handleCreateOrchestratorOrder(args),
-  );
 
   server.tool(
     'create_orchestrator_transfer',

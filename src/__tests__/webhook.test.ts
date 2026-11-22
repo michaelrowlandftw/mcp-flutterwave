@@ -186,3 +186,29 @@ describe('replay memory (review N7)', () => {
     expect(parse(await verifyWebhook(args, deps)).replay_suspected).toBe(true);
   });
 });
+
+describe('production-shaped v3 webhook (RFC DX-RFC-001 open item 6.5)', () => {
+  // Synthetic values in the exact shape of a real production delivery: a failed card
+  // attempt on hosted checkout sent charge.completed with status failed.
+  const prod = JSON.parse(
+    readFileSync(new URL('./fixtures/webhooks/v3-production-shape/charge.completed_card_failed.json', import.meta.url), 'utf8'),
+  ) as { headers: Record<string, string>; body: Record<string, unknown> };
+
+  it('parses as one failed payment attempt, read by id', () => {
+    const p = parseWebhook(prod.body, 'v3');
+    expect(p).toMatchObject({ kind: 'payment', shape: 'v3 {event, data}', webhook_status_normalised: 'failed', id: '900000001' });
+  });
+
+  it('is never safe to give value on, and the API status is fetched', async () => {
+    const payment = vi.fn(async () => ({ content: [{ type: 'text' as const, text: JSON.stringify({ safe_to_give_value: false }) }] }));
+    const out = JSON.parse(
+      (await verifyWebhook(
+        { raw_body: JSON.stringify(prod.body), headers: prod.headers, expected_amount: 100, expected_currency: 'NGN', expected_reference: 'synthetic-checkout-0001' },
+        { secret: SECRET, version: 'v3', payment },
+      )).content[0].text,
+    );
+    expect(out.signature_valid).toBe(true);
+    expect(payment).toHaveBeenCalledWith(expect.objectContaining({ id: '900000001' }), 'v3');
+    expect(out.safe_to_give_value).toBe(false);
+  });
+});

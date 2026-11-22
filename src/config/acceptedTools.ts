@@ -12,7 +12,7 @@ export const V3_ACCEPTED_TOOLS = [
   'list_beneficiaries',
   'create_payment_plan',
   'get_payment_plans',
-  'charge_card',
+  'charge_tokenized_card',
   'charge_bank_account',
   'charge_mobile_money',
   'charge_mpesa',
@@ -47,7 +47,6 @@ export const V3_ACCEPTED_TOOLS = [
 
 export const V4_ACCEPTED_TOOLS = [
   'create_customer',
-  'create_card_payment_method',
   'create_charge',
   'get_charge',
   'create_refund',
@@ -80,8 +79,6 @@ export const V4_ACCEPTED_TOOLS = [
   'get_virtual_account',
   'quote_transfer_rate',
   'get_transfer_rate',
-  'create_orchestrator_charge',
-  'create_orchestrator_order',
   'create_orchestrator_transfer',
   'resend_webhook',
   'get_bank_branches',

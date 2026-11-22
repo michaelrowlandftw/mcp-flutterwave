@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     createTransactionUI, createCheckoutUI, createTransferUI, createTimelineUI,
-    createChargeUI, createPinAuthUI, createAvsAuthUI, create3dsRedirectUI, createOtpPromptUI,
+    createChargeUI, create3dsRedirectUI, createOtpPromptUI,
 } from '../ui/index.js';
 
 describe('createTransactionUI', () => {
@@ -137,54 +137,6 @@ describe('createChargeUI', () => {
     it('renders charge type label in header', () => {
         const resource = createChargeUI({ tx_ref: 'MC-009', status: 'pending', amount: 100, currency: 'UGX', charge_type: 'mobile_money_uganda', email: 'user@example.com' });
         expect(JSON.stringify(resource)).toContain('Mobile Money Uganda');
-    });
-});
-
-describe('createPinAuthUI', () => {
-    it('renders transaction reference', () => {
-        const resource = createPinAuthUI({ tx_ref: 'MC-PIN-001', charge_type: 'card' });
-        expect(JSON.stringify(resource)).toContain('MC-PIN-001');
-    });
-    it('renders PIN Required heading', () => {
-        const resource = createPinAuthUI({ tx_ref: 'MC-PIN-002', charge_type: 'card' });
-        expect(JSON.stringify(resource)).toContain('PIN Required');
-    });
-    it('renders charge_type label', () => {
-        const resource = createPinAuthUI({ tx_ref: 'MC-PIN-003', charge_type: 'card' });
-        expect(JSON.stringify(resource)).toContain('Card');
-    });
-    it('includes instruction to call charge_card again', () => {
-        const resource = createPinAuthUI({ tx_ref: 'MC-PIN-004', charge_type: 'card' });
-        expect(JSON.stringify(resource)).toContain('charge_card');
-    });
-    it('indicates no charge made yet', () => {
-        const resource = createPinAuthUI({ tx_ref: 'MC-PIN-005', charge_type: 'card' });
-        expect(JSON.stringify(resource)).toContain('No charge made yet');
-    });
-});
-
-describe('createAvsAuthUI', () => {
-    const fields = ['city', 'address', 'state', 'country', 'zipcode'];
-    it('renders transaction reference', () => {
-        const resource = createAvsAuthUI({ tx_ref: 'MC-AVS-001', charge_type: 'card', fields });
-        expect(JSON.stringify(resource)).toContain('MC-AVS-001');
-    });
-    it('renders Address Verification heading', () => {
-        const resource = createAvsAuthUI({ tx_ref: 'MC-AVS-002', charge_type: 'card', fields });
-        expect(JSON.stringify(resource)).toContain('Address Verification');
-    });
-    it('renders all required field chips', () => {
-        const resource = createAvsAuthUI({ tx_ref: 'MC-AVS-003', charge_type: 'card', fields });
-        const str = JSON.stringify(resource);
-        fields.forEach(f => expect(str).toContain(f));
-    });
-    it('includes avs_noauth mode instruction', () => {
-        const resource = createAvsAuthUI({ tx_ref: 'MC-AVS-004', charge_type: 'card', fields });
-        expect(JSON.stringify(resource)).toContain('avs_noauth');
-    });
-    it('indicates no charge made yet', () => {
-        const resource = createAvsAuthUI({ tx_ref: 'MC-AVS-005', charge_type: 'card', fields });
-        expect(JSON.stringify(resource)).toContain('No charge made yet');
     });
 });
 

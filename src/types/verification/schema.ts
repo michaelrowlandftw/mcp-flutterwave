@@ -11,6 +11,9 @@ export const InitiateBvnSchema = {
 
 export const GetBvnDetailsSchema = {
     reference: z.string().min(1, 'reference returned from initiate_bvn_verification is required'),
+    expected_first_name: z.string().min(1, 'The first name you expect is required').describe('The first name you expect on the BVN record.'),
+    expected_last_name: z.string().min(1, 'The last name you expect is required').describe('The last name you expect on the BVN record.'),
+    expected_date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').optional().describe('Optional: the date of birth you expect, YYYY-MM-DD.'),
 };
 
 export const ResolveBankAccountSchema = {

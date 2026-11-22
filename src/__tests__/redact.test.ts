@@ -75,13 +75,13 @@ describe('every tool result is redacted', () => {
     expect(boom.content[0].text).toContain('[CARD ****4242]');
   });
 
-  it('cleans the confirmation summary of a raw card tool', async () => {
+  it('cleans card data from a confirmation summary (defence in depth: no tool takes card numbers)', async () => {
     const server = new McpServer({ name: 't', version: '0' });
-    server.tool('charge_card', 'Charge.', { card_number: z.string(), cvv: z.string(), amount: z.number() }, async () => ({
+    server.tool('create_charge', 'Charge.', { card_number: z.string(), cvv: z.string(), amount: z.number() }, async () => ({
       content: [{ type: 'text', text: 'sent' }],
     }));
-    applyToolPolicy(server, { rawCardTools: true });
-    const out = await (registeredTools(server).charge_card.handler as (a: unknown, e: unknown) => Promise<{ content: Array<{ text: string }> }>)(
+    applyToolPolicy(server, {});
+    const out = await (registeredTools(server).create_charge.handler as (a: unknown, e: unknown) => Promise<{ content: Array<{ text: string }> }>)(
       { card_number: '5531886652142950', cvv: '564', amount: 100 },
       { },
     );

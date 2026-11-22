@@ -2,8 +2,10 @@ openapi: 3.0.3
 info:
   title: Flutterwave Verification API
   description: >
-    KYC and integrity verification services — BVN verification (Nigeria),
-    bank account resolution, and card BIN lookup.
+    BVN match checks (Nigeria), bank account resolution and card BIN lookup.
+    The server never returns BVN identity data: get_bvn_details compares the
+    names the merchant expects and returns match / no-match only (Security
+    review of DX-RFC-001, 2026-11-22).
   version: 1.0.0
 servers:
   - url: https://api.flutterwave.com/v3
