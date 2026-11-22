@@ -4,7 +4,7 @@
 
 Please **do not** open a public issue for a security problem.
 
-Email **security@flutterwave.com** *(placeholder: to be confirmed by the Flutterwave security team before release)* with:
+Email **security@flutterwave.com** (confirmed by Flutterwave Security on DX-RFC-001, 2026-11-17) with:
 
 - a description of the problem and its impact,
 - steps to reproduce, or a proof of concept,

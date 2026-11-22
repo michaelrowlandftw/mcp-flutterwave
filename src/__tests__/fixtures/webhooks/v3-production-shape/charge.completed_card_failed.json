@@ -1,0 +1,52 @@
+{
+  "source": "SYNTHETIC. Field names and types copied from the shape of a real production delivery (flw-api-monitor data/parity/hooks-2026-11.jsonl: env live, charge.completed, CARD_TRANSACTION, status failed, verif-hash correct, received 2026-11-22T11:45Z). The Worker stores only the shape, so every value here is made up; no production data.",
+  "headers": {
+    "verif-hash": "<temporary test value>",
+    "content-type": "application/json"
+  },
+  "body": {
+    "event": "charge.completed",
+    "event.type": "CARD_TRANSACTION",
+    "data": {
+      "id": 900000001,
+      "tx_ref": "synthetic-checkout-0001",
+      "flw_ref": "FLW-SYNTHETIC-0001",
+      "device_fingerprint": "synthetic",
+      "amount": 100,
+      "currency": "NGN",
+      "charged_amount": 100,
+      "app_fee": 0,
+      "merchant_fee": 0,
+      "processor_response": "Declined",
+      "auth_model": "VBVSECURECODE",
+      "ip": "192.0.2.1",
+      "narration": "Synthetic checkout",
+      "status": "failed",
+      "payment_type": "card",
+      "created_at": "2026-11-22T11:44:00.000Z",
+      "account_id": 1,
+      "card": {
+        "first_6digits": "000000",
+        "last_4digits": "0000",
+        "issuer": "SYNTHETIC",
+        "country": "NG",
+        "type": "VISA",
+        "expiry": "01/30"
+      },
+      "customer": {
+        "id": 1,
+        "name": "Synthetic Customer",
+        "phone_number": "N/A",
+        "email": "customer@example.com",
+        "created_at": "2026-11-22T11:44:00.000Z"
+      }
+    },
+    "meta_data": {
+      "__CheckoutInitAddress": "https://checkout.example/v3/hosted/pay",
+      "__FingerprintConfidenceScore": "0",
+      "data1": "",
+      "data2": "",
+      "data3": ""
+    }
+  }
+}
