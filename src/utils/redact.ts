@@ -17,7 +17,7 @@ const SECRET_FIELDS = [
   'cvv', 'cvv2', 'cvc', 'pin', 'otp', 'card_number', 'cardnumber', 'pan', 'expiry_month', 'expiry_year',
   'password', 'secret', 'secret_key', 'secret_hash', 'client_secret', 'access_token', 'refresh_token',
   'encryption_key', 'authorization', 'encrypted_card_number', 'encrypted_cvv', 'encrypted_expiry_month',
-  'encrypted_expiry_year', 'encrypted_pin',
+  'encrypted_expiry_year', 'encrypted_pin', 'bvn',
 ];
 const FIELDS = SECRET_FIELDS.join('|');
 

@@ -78,7 +78,7 @@ export function checkToken(tool: string, args: Args, token: string, now = Date.n
  * existing payment; initiate_fx_trade uses a quote from request_fx_quote, whose
  * quantity is capped.
  */
-export const NO_AMOUNT_TOOLS = new Set(['validate_charge', 'update_charge', 'update_order']);
+export const NO_AMOUNT_TOOLS = new Set(['validate_charge', 'update_charge', 'update_order', 'initiate_bvn_verification']);
 
 /**
  * Tools that send money out but carry no amount: they act on a transfer or quote

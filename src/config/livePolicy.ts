@@ -1,5 +1,5 @@
 import type { ApiVersion } from './apiVersion.js';
-import { isReadOnlyTool, MONEY_MOVING } from './toolSafety.js';
+import { CONFIRMED_WRITES, isReadOnlyTool, MONEY_MOVING } from './toolSafety.js';
 import { envKeysChosenExplicitly, keySource } from './keychain.js';
 
 /**
@@ -28,6 +28,8 @@ export const MONEY_CATEGORIES: Record<string, readonly string[]> = {
   disputes: ['create_chargeback', 'update_chargeback'],
   bills: ['pay_bill'],
   fx: ['initiate_fx_trade', 'convert_to_stablecoin'],
+  // Not money, but a full BVN: approved on its own like a money category.
+  identity: ['initiate_bvn_verification'],
 };
 
 export function categoryOf(tool: string): string | undefined {
@@ -77,7 +79,7 @@ export function liveConditionProblems(request: LiveRequest, env: NodeJS.ProcessE
   // Security addition: read-only by default; writes need --read-only=false on the command line.
   const listed = tools.filter((t) => t !== 'all');
   const writes = listed.filter((t) => !isReadOnlyTool(t));
-  const moneyTools = listed.filter((t) => MONEY_MOVING.has(t));
+  const moneyTools = listed.filter((t) => MONEY_MOVING.has(t) || CONFIRMED_WRITES.has(t));
   if (writes.length > 0 && request.readOnlyFlag !== false) {
     problems.push('With live keys the server is read-only unless --read-only=false is passed on the command line.');
   }

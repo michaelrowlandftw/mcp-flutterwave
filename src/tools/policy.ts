@@ -1,7 +1,7 @@
 import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Options } from '../types/index.js';
 import { describeEnvironment, VERIFY_HINT } from '../verify/environment.js';
-import { annotationsFor, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
+import { annotationsFor, CONFIRMED_WRITES, isReadOnlyTool, MONEY_MOVING } from '../config/toolSafety.js';
 import { capConfigured, capError, guardMoneyTool, isLive, OUTGOING_NO_AMOUNT_TOOLS } from './confirm.js';
 import { z } from 'zod';
 import { redactResult } from '../utils/redact.js';
@@ -115,7 +115,7 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
         return cap ? { isError: true, content: [{ type: 'text', text: cap }] } : inner(args, extra);
       };
     }
-    if (MONEY_MOVING.has(name)) {
+    if (MONEY_MOVING.has(name) || CONFIRMED_WRITES.has(name)) {
       // The SDK stores a zod/mini object (no .extend), so rebuild it from its shape.
       const shape = (tool.inputSchema as unknown as { shape?: z.ZodRawShape } | undefined)?.shape;
       if (shape) {
@@ -127,7 +127,9 @@ export function applyToolPolicy(server: McpServer, options: Options): string[] {
             .describe('Leave empty on the first call. The server returns a token after the user confirms the summary.'),
         });
       }
-      tool.description = `${tool.description ?? ''} Moves money: the server asks for confirmation first, and refuses amounts above FLW_MAX_AMOUNT when set.`;
+      tool.description = MONEY_MOVING.has(name)
+        ? `${tool.description ?? ''} Moves money: the server asks for confirmation first, and refuses amounts above FLW_MAX_AMOUNT when set.`
+        : `${tool.description ?? ''} Sends personal data: the server asks for confirmation first.`;
       (tool as { handler: unknown }).handler = guardMoneyTool(
         server,
         name,

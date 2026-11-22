@@ -32,6 +32,8 @@ export const V3_ACCEPTED_TOOLS = [
   'get_fx_quote',
   'initiate_fx_trade',
   'get_fx_trade',
+  'initiate_bvn_verification',
+  'get_bvn_details',
   'resolve_bank_account',
   'verify_card_bin',
   'get_stablecoin_fee',
