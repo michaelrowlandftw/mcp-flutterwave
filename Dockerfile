@@ -33,4 +33,4 @@ COPY --from=builder /app/build ./build
 # Run as the unprivileged node user, not root (security review L6).
 USER node
 
-CMD ["node", "build/index.js", "--tools=all"]
+CMD ["node", "build/index.js", "--tools=all", "--read-only"]
